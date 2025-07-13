@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QListWidget, QLabel, QVBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt
 from . import style
+from . import shared
 
 class ClearFocusListWidget(QListWidget):
     def __init__(self):
@@ -10,26 +11,26 @@ class ClearFocusListWidget(QListWidget):
         # Floating overlay on the QListWidget itself, not the viewport
         self.overlay = QWidget(self)
         self.overlay.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.overlay.setStyleSheet("background-color: transparent; border-radius: 2px;")
+        self.overlay.setStyleSheet('background-color: transparent')
         
         self.overlayLayout = QVBoxLayout(self.overlay)
         self.overlayLayout.setAlignment(Qt.AlignTop | Qt.AlignRight)
 
-        self.overlay.resize(150, self.overlayHeight)
+        self.overlay.resize(200, self.overlayHeight)
         self.overlay.raise_()  # Ensure it's above the scroll area
 
     def SetName(self, name):
         nameWidget = QLabel(name)
+        nameWidget.setStyleSheet('font-size: 14px; font-style: italic;')
+        nameWidget.setWordWrap(True)
         nameWidget.setFixedHeight(30)
-        nameWidget.setAlignment(Qt.AlignCenter)
+        nameWidget.setAlignment(Qt.AlignRight)
         nameWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        style.AdjustLabelColor(nameWidget, style.backgroundColor)
         self.overlayLayout.addWidget(nameWidget)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        # Keep the overlay in top-left (or adjust geometry if needed)
-        self.overlay.move(250, 5)  # top-left corner
+        self.overlay.move(210, 5)  # top-left corner
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)

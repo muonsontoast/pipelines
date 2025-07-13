@@ -4,7 +4,6 @@ from . import shared
 
 backgroundColor = "#181818"
 tabColor = "#282523"
-#4082CD
 PVSelectedColor = "#74BC80"
 tabSelectedColor = "#3F5142"
 tabHoverColor = "#303F33"
@@ -109,7 +108,7 @@ def PushButtonBorderlessStyle(**kwargs):
     border: none;
     border-radius: 3px;
     margin-top: {kwargs.get('marginTop', 0)}px;
-    margin-bottom: {kwargs.get('marginBottom', 0)}px;
+    margin-bottom: {kwargs.get('marginBottom', -1)}px;
     }}
     QPushButton:hover {{
     background-color: {kwargs.get('hoverColor', buttonHoverColor)};
@@ -296,7 +295,7 @@ def LabelStyle(**kwargs):
 
 def InspectorHeaderStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `hoverColor`, `borderRadius`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `hoverColor`, `borderColor`, `borderRadius`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
     QWidget {{
     background-color: transparent;
@@ -319,8 +318,9 @@ def InspectorHeaderStyle(**kwargs):
     padding-top: 5px;
     padding-right: 10px;
     padding-bottom: 5px;
-    border: none;
+    border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
     border-radius: 5px;
+    margin-left: 1px;
     margin-bottom: 10px;
     }}
     QPushButton:hover {{
@@ -333,14 +333,15 @@ def InspectorHeaderStyle(**kwargs):
     padding-top: 5px;
     padding-right: 10px;
     padding-bottom: 5px;
-    border: none;
+    border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
     border-radius: 5px;
+    margin-left: 1px;
     margin-bottom: 10px;
     }}'''
 
 def InspectorHeaderHousingStyle(**kwargs): 
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `fontColor`, `fontSize`, `fontFamily`'''
+    `borderColor`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
     QWidget {{
     background-color: transparent;
@@ -354,6 +355,21 @@ def InspectorHeaderHousingStyle(**kwargs):
     padding-left: 15px;
     margin-left: -3px;
     }}'''
+
+def InspectorNameHousingStyle(**kwargs): 
+    '''Accepts kwargs which should be set to #ABCDEF color strings.\n
+    `color`, `fontColor`, `fontSize`, `fontFamily`'''
+    return f'''
+    QLabel {{
+    background-color: {kwargs.get('color', buttonColor)};
+    color: {kwargs.get('fontColor', fontColor)};
+    font-size: {kwargs.get('fontSize', fontSize)};
+    font-family: {kwargs.get('fontFamily', fontFamily)};
+    padding: 0px;
+    margin: 0px;
+    text-align: center;
+    }}'''
+
 def ListWidget(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
     `fontColor`, `fontSize`, `fontFamily`'''
@@ -406,6 +422,24 @@ def ScrollBarStyle(**kwargs):
     }}
     QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
     background: none;
+    }}
+    QScrollBar:horizontal {{
+    border: none;
+    background: {kwargs.get('backgroundColor', buttonColor)};
+    height: 15px;
+    margin: 0px 0px 0px 0px;
+    }}
+    QScrollBar::handle:horizontal {{
+    background: {kwargs.get('handleColor', tabSelectedColor)};
+    min-width: 20px;
+    border-radius: 2px;
+    }}
+    QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+    width: 0px;
+    subcontrol-origin: margin;
+    }}
+    QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+    background: none;
     }}'''
 
 def MenuStyle(**kwargs):
@@ -454,6 +488,20 @@ def ListWidgetStyle(**kwargs):
         color: inherit;
     }}'''
 
+def EditorControlsStyle(**kwargs): 
+    '''Accepts kwargs which should be set to #ABCDEF color strings.\n
+    `color`, `borderColor`, `fontColor`, `fontSize`, `fontFamily`'''
+    return f'''
+    QWidget {{
+    background-color: {kwargs.get('color', buttonColor)};
+    color: {kwargs.get('fontColor', fontColor)};
+    font-size: {kwargs.get('fontSize', fontSize)};
+    font-family: {kwargs.get('fontFamily', fontFamily)};
+    text-align: left;
+    border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
+    border-radius: 4px;
+    }}'''
+
 def EditorStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
     `color`, `fontColor`, `fontSize`, `fontFamily`'''
@@ -467,18 +515,19 @@ def EditorStyle(**kwargs):
 
 def PVStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `borderColor`, `borderThickness`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`'''
-    f'''
+    `color`, `borderColor`, `borderThickness`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`'''
+    print('color is:', kwargs.get('color'), '!')
+    return f'''
     QWidget {{
-    background-color: transparent;
-    color: {kwargs.get('fontColor', fontColor)};
+    background-color: {kwargs.get('color', 'blue')};
+    color: {kwargs.get('fontColor', fontColor)}
     font-size: {kwargs.get('fontSize', fontSize)};
     font-family: {kwargs.get('fontFamily', fontFamily)};
     border: none;
     }}
     QFrame#PV {{
-    background-color: {kwargs.get('hoverColor', tabHoverColor)};
-    color: {kwargs.get('fontColor', fontColor)};
+    background-color: {kwargs.get('color', 'red')};
+    color: {kwargs.get('fontColor', fontColor)}
     font-size: {kwargs.get('fontSize', fontSize)};
     font-family: {kwargs.get('fontFamily', fontFamily)};
     border-radius: 5px;
@@ -491,36 +540,28 @@ def ApplyMainStyle(**kwargs):
     return WidgetStyle(**kwargs.get('widget', dict())) + FrameStyle(**kwargs.get('frame', dict())) + ScrollBarStyle(**kwargs.get('scrollbar', dict())) + PushButtonStyle(**kwargs.get('pushbutton', dict())) + ToolButtonStyle(**kwargs.get('toolbutton', dict())) + ComboStyle(**kwargs.get('combo', dict())) + LineEditStyle(**kwargs.get('lineedit', dict())) + TabStyle(**kwargs.get('tab', dict())) + TabWidgetStyle(**kwargs.get('tabwidget', dict())) + LabelStyle(**kwargs.get('label', dict())) + ListWidgetStyle(**kwargs.get('listwidget', dict())) + ProgressBarStyle(**kwargs.get('progressbar', dict()))
 
 def Light01():
-    shared.editor.scene.setBackgroundBrush(QColor(229, 223, 204))
-    shared.editor.fitInView(shared.editor.scene.sceneRect(), Qt.IgnoreAspectRatio)
-    return WidgetStyle(color = "#D8D3C0", fontColor = "#1C1C1C") + FrameStyle(color = "#E5DFCC", fontColor = "#1C1C1C") + ScrollBarStyle(handleColor = '#E5DFCC', backgroundColor = "#C9C3B1") + PushButtonStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', padding = '0px', fontColor = "#1C1C1C") + PushButtonBorderlessStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', fontColor = '#1e1e1e') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#1C1C1C") + ComboStyle() + LineEditStyle() + TabStyle(color = "#D2C5A0", hoverColor = "#527458", selectedColor = "#69A073", fontColor = '#1C1C1C') + TabWidgetStyle(fontColor = '#1C1C1C') + EditorStyle() + LabelStyle(fontColor = '#1c1c1c') + ProgressBarStyle(color = '#E5DFCC', borderColor = '#D2C5A0', borderRadius = 5, fontColor = '#1e1e1e')
+    shared.lightModeOn = not shared.lightModeOn
+    for p in shared.PVs:
+        p.UpdateColors() # Apply a color update without toggling the selection state of the PV.
+    for e in shared.expandables:
+        e.UpdateColors() # Apply a color update to the expandable widgets in the inspector if a PV is currently selected.
+    for e in shared.editors:
+        e.scene.setBackgroundBrush(QColor(229, 223, 204))
+        e.popup.UpdateColors()
+    shared.workspace.UpdateColors()
+    return WidgetStyle(color = "#D8D3C0", fontColor = "#1C1C1C") + FrameStyle(color = "#E5DFCC", fontColor = "#1C1C1C") + ScrollBarStyle(handleColor = '#B5AB8D', backgroundColor = "#C9C3B1") + PushButtonStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', padding = '0px', fontColor = "#1C1C1C") + PushButtonBorderlessStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', fontColor = '#1e1e1e') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#1C1C1C") + ComboStyle() + LineEditStyle(color = '#D2C5A0') + TabStyle(color = "#E5DFCC", hoverColor = "#B5AB8D", selectedColor = "#D2C5A0", fontColor = '#1C1C1C') + TabWidgetStyle(fontColor = '#1C1C1C') + EditorStyle() + LabelStyle(fontColor = '#1c1c1c') + ProgressBarStyle(color = '#E5DFCC', borderColor = '#D2C5A0', borderRadius = 5, fontColor = '#1e1e1e')
 
 def Dark01():
-    shared.editor.scene.setBackgroundBrush(QColor(28, 28, 28))
-    shared.editor.fitInView(shared.editor.scene.sceneRect(), Qt.IgnoreAspectRatio)
-    return WidgetStyle(color = "#0C0C0C", fontColor = "#C4C4C4") + FrameStyle(color = "#1c1c1c", fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#1c1c1c") + PushButtonStyle(color = "#1c1c1c", hoverColor = "#2D2D2D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#1c1c1c', hoverColor = "#2d2d2d", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle() + TabStyle(color = "#1c1c1c", hoverColor = '#303f33', selectedColor = "#3F5142", fontColor = '#C4C4C4') + TabWidgetStyle(color = '#1c1c1c', fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#1c1c1c", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
-
-
-def TogglePV(pv, state):
-    if state == 'active':
-        pv.setStyleSheet(f'''292B2E
-        QWidget {{
-        background-color: transparent;
-        color: {fontColor};
-        font-size: {fontSize};
-        font-family: {fontFamily};
-        border: none;
-        }}
-        QFrame#PV {{
-        background-color: {tabHoverColor};
-        color: {fontColor};
-        font-size: {fontSize};
-        font-family: {fontFamily};
-        border-radius: 5px;
-        border: 2px solid {PVSelectedColor};
-        }}''')
-    else:
-        pv.setStyleSheet(PVStyle)
+    shared.lightModeOn = not shared.lightModeOn
+    for p in shared.PVs:
+        p.UpdateColors() # Apply a color update without toggling the selection state of the PV.
+    for e in shared.expandables:
+        e.UpdateColors() # Apply a color update to the expandable widgets in the inspector if a PV is currently selected.
+    for e in shared.editors:
+        e.scene.setBackgroundBrush(QColor(38, 38, 38))
+        e.popup.UpdateColors()
+    shared.workspace.UpdateColors()
+    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#262626", fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#262626') + TabStyle(color = "#262626", hoverColor = "#2D2D2D", selectedColor = "#363636", fontColor = '#C4C4C4') + TabWidgetStyle(color = '#1c1c1c', fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
 
 def indicatorStyle(radius):
     return f'''

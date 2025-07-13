@@ -2,8 +2,8 @@ from PySide6.QtWidgets import QWidget, QLabel
 from PySide6.QtCore import Qt, QPoint
 
 class Draggable(QWidget):
-    def __init__(self, window):
-        super().__init__(window)
+    def __init__(self):
+        super().__init__()
         self.startDragPosition = None
         self.cursorMoved = False
 

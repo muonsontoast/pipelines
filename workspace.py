@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
-    QPushButton, QTabWidget, QMenu, QStackedLayout, QSizePolicy
+    QPushButton, QTabWidget, QMenu, QStackedLayout, QSizePolicy, QLabel
 )
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import QPoint
 from .monitor import Monitor
 from .controlpanel import ControlPanel
 from . import entity
@@ -14,9 +14,9 @@ class Workspace(QTabWidget):
     def __init__(self, window):
         super().__init__()
         self.parent = window
-        self.setContentsMargins(0, 0, 0, 0)
+        self.setFixedWidth(1250)
         shared.workspace = self
-        self.monitors, self.controlPanels, self.optimisationPanels = dict(), dict(), dict()
+        self.editors, self.monitors, self.controlPanels, self.optimisationPanels =  dict(), dict(), dict(), dict()
         self.settings = dict()
         self.Push()
 
@@ -36,28 +36,41 @@ class Workspace(QTabWidget):
         else:
             self.setFixedHeight(size[1])
             sizePolicy[1] = QSizePolicy.Preferred
-        # Set size policy
         self.setSizePolicy(*sizePolicy)
-        # A separate tab for each opened window in the editor.
-        # Main editor tab
-        self.editor = editor.Editor()
-        shared.editor = self.editor # store the global reference.
-        self.editor.setLayout(QStackedLayout())
-        self.addTab(self.editor, '\U0001F441\uFE0F Editor')
+        self.AddEditor()
         # Corner widget
         self.addButton = QPushButton('Add Window')
         self.addButton.setFixedHeight(25)
-        self.addButton.setStyleSheet(style.PushButtonBorderlessStyle(marginBottom = -1))
-        # self.addButton.setStyleSheet(style.PushButtonBorderlessStyle(marginBottom = -2, marginTop = -4, paddingBottom = 8, paddingTop = 10))
         self.menu = QMenu()
-        if shared.lightModeOn:
-            self.menu.setStyleSheet(style.MenuStyle(color = '#3C4048', hoverColor = '#303F33', fontColor = '#1c1c1c'))
-        else:
-            self.menu.setStyleSheet(style.MenuStyle(color = '#3C4048', hoverColor = '#303F33', fontColor = '#c4c4c4'))
+        self.UpdateColors()
+        self.menu.addAction('Editor', self.AddEditor)
         self.menu.addAction('Monitor', self.AddMonitor)
         self.menu.addAction('Control Panel', self.AddControlPanel)
         self.addButton.clicked.connect(self.ShowMenu)
         self.setCornerWidget(self.addButton)
+
+    def UpdateColors(self):
+        if shared.lightModeOn:
+            self.menu.setStyleSheet(style.MenuStyle(color = '#B5AB8D', hoverColor = '#D2C5A0', fontColor = '#1e1e1e'))
+        else:
+            self.menu.setStyleSheet(style.MenuStyle(color = '#363636', hoverColor = '#2D2D2D', fontColor = '#c4c4c4'))
+
+    def AddEditor(self):
+        editorPanel = editor.Editor(self)
+        editorPanel.setStyleSheet(style.EditorStyle())
+        idx = 0
+        for e in self.editors.values():
+            if e.settings['name'] != f'Editor ({idx})':
+                break
+            idx += 1
+        name = f'Editor ({idx})'
+        editorPanel.AssignSettings(name = name)
+        entity.AddEntity(entity.Entity(f'editor{idx}', 'GUI', entity.AssignEntityID(), widget = editor.Editor))
+        self.editors[idx] = editorPanel
+        tabName = '\U0001F441\uFE0F ' + name if idx > 0 else '\U0001F441\uFE0F Editor'
+        self.addTab(editorPanel, tabName)
+        shared.editors.append(editorPanel)
+        shared.editorOpenIdx = len(shared.editors) - 1
 
     def AddControlPanel(self):
         controlPanel = ControlPanel(self)
@@ -68,7 +81,6 @@ class Workspace(QTabWidget):
             idx += 1
         name = f'Control Panel ({idx})'
         controlPanel.AssignSettings(name = name)
-        # Add an entity
         entity.AddEntity(entity.Entity(f'controlPanel{idx}', 'GUI', entity.AssignEntityID(), widget = ControlPanel))
         self.controlPanels[idx] = controlPanel
         tabName = name if idx > 0 else 'Control Panel'
@@ -83,11 +95,11 @@ class Workspace(QTabWidget):
             idx += 1
         name = f'Monitor ({idx})'
         monitor.AssignSettings(name = name)
-        # Add an entity
         entity.AddEntity(entity.Entity(f'monitor{idx}', 'GUI', entity.AssignEntityID(), widget = Monitor))
         self.monitors[idx] = monitor
         tabName = name if idx > 0 else 'Monitor'
         self.addTab(monitor, tabName)
+        shared.editors[shared.editorOpenIdx].AddWidget(QLabel('haha, I\'m embedded!'))
 
     def ShowMenu(self):
         position = self.addButton.mapToGlobal(QPoint(0, self.addButton.height()))

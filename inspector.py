@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from .expandable import Expandable
 from .clearfocuslist import ClearFocusListWidget
+from . import shared
 
 class Inspector(QTabWidget):
     '''Inspector widget that holds contextual information on currently selected items in the app.'''
@@ -39,7 +40,6 @@ class Inspector(QTabWidget):
         else:
             self.setFixedHeight(size[1])
             sizePolicy[1] = QSizePolicy.Preferred
-        # Set size policy
         self.setSizePolicy(*sizePolicy)
     
     def Push(self, pv = None, component = None):
@@ -92,6 +92,7 @@ class Inspector(QTabWidget):
                 expandables[_].ToggleContent()
             self.main.addItem(items[_])
             self.main.setItemWidget(items[_], expandables[_])
+        shared.expandables = expandables
 
     def ClearLayout(self):
         for i in reversed(range(self.count())):

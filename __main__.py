@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QProgressBar, QStackedLayout, QStyleFactory,
 )
 from PySide6.QtGui import (
-    QIcon, QShortcut, QKeySequence #, QAction, QFont
+    QIcon, QShortcut, QKeySequence
 )
 from PySide6.QtCore import Qt
 import matplotlib.pyplot as plt
@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f'{shared.windowTitle} - Version {shared.appVersion}')
-        self.setWindowIcon(QIcon(f'{cwd}\\BO\\app\\PVBuddy.png'))
+        self.setWindowIcon(QIcon(f'{cwd}\\app\\PVBuddy.png'))
         self.lightModeOn = False
         entity.mainWindow = self
         # Allow crtl+W shortcut for exit
@@ -75,6 +75,7 @@ class MainWindow(QMainWindow):
         }
         # Display twiss parameters in the lattice canvas?
         self.showTwiss = False
+        shared.lightModeOn = False
         # Does a save file already exist?
         if len(shared.entities) == 1: # no
             # Instantiate the main app components - lattice, editor, inspector, controls, objectives, settings
@@ -93,11 +94,12 @@ class MainWindow(QMainWindow):
                 if e.type == 'GUI':
                     if e.name in ['latticeCanvas', 'editor', 'inspector', 'controlPVs', 'objectivePVs']: # Check against a whitelist
                         setattr(self, e.name, e.widget()) # Instantiate and make entities directly accessible from the main window.
+        shared.lightModeOn = True
+        self.page.setStyleSheet(style.Dark01())
         self.page.layout().addWidget(self.latticeCanvas, 1, 1, 1, 8)
         self.page.layout().addWidget(self.workspace, 2, 1, 2, 6)
         self.page.layout().addWidget(self.inspector, 2, 7, 1, 2)
         self.page.layout().addWidget(QWidget(), 3, 7, 1, 2)
-        self.page.setStyleSheet(style.Dark01())
         screenPad = 0
         # Small amount of padding at the left of the screen.
         leftPad = QWidget()
@@ -146,12 +148,13 @@ class MainWindow(QMainWindow):
     
     def ToggleDisplayMode(self):
         if shared.lightModeOn:
+            print('Light mode currently active.')
             self.page.setStyleSheet(style.Dark01())
             self.toggleDarkModeButton.setText('\u26AA Light Mode')
         else:
+            print('Dark mode currently active.')
             self.page.setStyleSheet(style.Light01())
             self.toggleDarkModeButton.setText('\u26AB Dark Mode')
-        shared.lightModeOn = not shared.lightModeOn
         shared.app.processEvents()
 
     def closeEvent(self, event):

@@ -25,26 +25,34 @@ class Expandable(QWidget):
         self.headerHeight = 40
         self.widgetsDrawn = False
         # Header button
-        self.name = f'Control PV {name[9:]}' if name[:9] == 'controlPV' else name
-        nameHousing = QWidget()
-        nameHousing.setStyleSheet(style.inspectorHeaderHousingStyle)
-        nameHousing.setLayout(QHBoxLayout())
-        nameHousing.setContentsMargins(0, 0, 0, 0)
+        # self.name = f'Control PV {name[9:]}' if name[:9] == 'controlPV' else name
+        self.name = name
+        self.nameHousing = QWidget()
+        self.nameHousing.setLayout(QHBoxLayout())
+        self.nameHousing.setContentsMargins(0, 0, 0, 0)
         self.header = QPushButton(f'\u25BA    {self.name}')
         self.header.setFixedSize(200, self.headerHeight)
         self.header.setCheckable(True)
-        self.header.setStyleSheet(style.inspectorHeaderStyle)
         self.header.clicked.connect(self.ToggleContent)
-        nameHousing.setFixedHeight(self.headerHeight)
-        nameHousing.layout().addWidget(self.header)
-        nameHousing.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
-        self.layout().addWidget(nameHousing)
+        self.nameHousing.setFixedHeight(self.headerHeight)
+        self.nameHousing.layout().addWidget(self.header)
+        self.nameHousing.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Fixed))
+        self.layout().addWidget(self.nameHousing)
         # Expandable area
         self.content = QListWidget()
-        self.content.setStyleSheet(style.inspectorSectionStyle)
+        self.content.setStyleSheet(style.InspectorSectionStyle())
         self.content.setVisible(False)
         self.layout().addWidget(self.content)
         self.parent.setSizeHint(QSize(self.width, self.headerHeight + 10))
+        self.UpdateColors()
+
+    def UpdateColors(self):
+        if shared.lightModeOn:
+            self.nameHousing.setStyleSheet(style.InspectorHeaderHousingStyle(fontColor = '#1e1e1e'))
+            self.header.setStyleSheet(style.InspectorHeaderStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', borderColor = "#A1946D", fontColor = '#1e1e1e'))
+        else:
+            self.nameHousing.setStyleSheet(style.InspectorHeaderHousingStyle(fontColor = '#c4c4c4'))
+            self.header.setStyleSheet(style.InspectorHeaderStyle(color = '#363636', hoverColor = '#2d2d2d', borderColor = '#1e1e1e', fontColor = '#c4c4c4'))
 
     def ToggleContent(self):
         shared.app.processEvents()
@@ -82,27 +90,3 @@ class Expandable(QWidget):
 
         if shouldUpdateWidgets:
             self.contentWidgets = updatedWidgets
-
-    # def sizeHint(self):
-    #     return self.header.sizeHint() + self.content.sizeHint()
-
-    # def sizeHint(self):
-    #     # h = self.header.sizeHint().height()
-    #     # if self.content.isVisible():
-    #     #     h += self.content.height()
-    #     # else:
-    #     #     print('content not visible')
-    #     # print('Final size hint is', self.header.sizeHint().width(), ',', h)
-    #     # print('------')
-    #     # return QSize(self.header.sizeHint().width(), h)
-    #     return QSize(self.header.width(), self.header.height() + self.content.sizeHint().height())
-
-    # def ToggleExpandableArea(self):
-    #     print('content visibility', self.content.isVisible())
-    #     # self.content.setVisible(True)
-    #     # QApplication.processEvents()
-    #     # time.sleep(2)
-    #     print('is the content now visible?', self.content.isVisible())
-    #     print('****************')
-    #     # if hasattr(self, 'item'):
-    #     #     self.item.setSizeHint(self.sizeHint())
