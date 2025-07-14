@@ -11,22 +11,29 @@ class ClearFocusListWidget(QListWidget):
         # Floating overlay on the QListWidget itself, not the viewport
         self.overlay = QWidget(self)
         self.overlay.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.overlay.setStyleSheet('background-color: transparent')
+        self.overlay.setStyleSheet('background-color: transparent;')
         
         self.overlayLayout = QVBoxLayout(self.overlay)
         self.overlayLayout.setAlignment(Qt.AlignTop | Qt.AlignRight)
 
         self.overlay.resize(200, self.overlayHeight)
         self.overlay.raise_()  # Ensure it's above the scroll area
+        self.nameWidget = None
 
     def SetName(self, name):
-        nameWidget = QLabel(name)
-        nameWidget.setStyleSheet('font-size: 14px; font-style: italic;')
-        nameWidget.setWordWrap(True)
-        nameWidget.setFixedHeight(30)
-        nameWidget.setAlignment(Qt.AlignRight)
-        nameWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        self.overlayLayout.addWidget(nameWidget)
+        self.nameWidget = QLabel(name)
+        self.nameWidget.setStyleSheet('font-size: 14px; font-style: italic;')
+        self.nameWidget.setWordWrap(True)
+        self.nameWidget.setFixedHeight(30)
+        self.nameWidget.setAlignment(Qt.AlignRight)
+        self.nameWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.overlayLayout.addWidget(self.nameWidget)
+
+    def RemoveName(self):
+        if self.nameWidget is not None:
+            self.overlayLayout.removeWidget(self.nameWidget)
+            del self.nameWidget
+            self.nameWidget = None
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

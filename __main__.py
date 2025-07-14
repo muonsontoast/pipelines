@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt
 import matplotlib.pyplot as plt
 import signal
 import sys
+import os
 from pathlib import Path
 from .settings import Settings
 from .inspector import Inspector
@@ -20,6 +21,7 @@ from .font import SetFontToBold
 from . import entity
 from . import style
 from . import shared
+from . import linkedcomponent # remove this after testing
 
 plt.rcParams['font.size'] = 10 # Define the font size for plots.
 
@@ -31,6 +33,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle(f'{shared.windowTitle} - Version {shared.appVersion}')
         self.setWindowIcon(QIcon(f'{cwd}\\app\\PVBuddy.png'))
+        shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), '..', 'Lattice', 'dls_ltb.mat')) # for now ...
         self.lightModeOn = False
         entity.mainWindow = self
         # Allow crtl+W shortcut for exit
@@ -144,15 +147,16 @@ class MainWindow(QMainWindow):
         self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
         self.page.layout().addWidget(self.buttonHousing, 4, 8)
 
+        # testing linked lattice element here
+        l = linkedcomponent.Link(None, None)
+
         self.showMaximized() # This throws a known but harmless error in PySide 6.9.1, to be corrected in the next version.
     
     def ToggleDisplayMode(self):
         if shared.lightModeOn:
-            print('Light mode currently active.')
             self.page.setStyleSheet(style.Dark01())
             self.toggleDarkModeButton.setText('\u26AA Light Mode')
         else:
-            print('Dark mode currently active.')
             self.page.setStyleSheet(style.Light01())
             self.toggleDarkModeButton.setText('\u26AB Dark Mode')
         shared.app.processEvents()

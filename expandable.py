@@ -7,7 +7,7 @@ from . import style
 from . import shared
 
 class Expandable(QWidget):
-    def __init__(self, listWidget, item, name):
+    def __init__(self, listWidget, item, name, pv, componentIdx):
         '''`list` the ListWidget containing the expandable widget.\n
         `item` is the ListWidgetItem this expandable is attached to.\n
         Accepts a list of kwarg widgets to display in the expandable content region.'''
@@ -17,15 +17,15 @@ class Expandable(QWidget):
         self.setLayout(QVBoxLayout())
         self.setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
-        # A dict of content widgets
-        self.contentWidgets = dict()
+        self.pv = pv
+        self.componentIdx = componentIdx
         # Bool to keep track of whether to display the content.
         self.showingContent = False
         self.width = self.width()
         self.headerHeight = 40
         self.widgetsDrawn = False
+        self.widget = None
         # Header button
-        # self.name = f'Control PV {name[9:]}' if name[:9] == 'controlPV' else name
         self.name = name
         self.nameHousing = QWidget()
         self.nameHousing.setLayout(QHBoxLayout())
@@ -50,34 +50,27 @@ class Expandable(QWidget):
         if shared.lightModeOn:
             self.nameHousing.setStyleSheet(style.InspectorHeaderHousingStyle(fontColor = '#1e1e1e'))
             self.header.setStyleSheet(style.InspectorHeaderStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', borderColor = "#A1946D", fontColor = '#1e1e1e'))
+            if self.widget is not None:
+                self.widget.UpdateColors()
         else:
             self.nameHousing.setStyleSheet(style.InspectorHeaderHousingStyle(fontColor = '#c4c4c4'))
             self.header.setStyleSheet(style.InspectorHeaderStyle(color = '#363636', hoverColor = '#2d2d2d', borderColor = '#1e1e1e', fontColor = '#c4c4c4'))
+            if self.widget is not None:
+                self.widget.UpdateColors()
 
     def ToggleContent(self):
         shared.app.processEvents()
-        # A new dict of housed widgets - saved the first time this expandable is opened.
-        updatedWidgets = dict()
-        shouldUpdateWidgets = False
         expandedHeight = 0
         if not self.showingContent:
             self.header.setText(f'\u25BC    {self.name}')
-            for k, v in self.contentWidgets.items():
-                # Is this the first time drawing widgets for this expandable?
-                if not self.widgetsDrawn:
-                    item = QListWidgetItem()
-                    widget = QWidget()
-                    widget.setContentsMargins(10, 0, 0, 0)
-                    widget.setLayout(QHBoxLayout())
-                    widget.layout().addWidget(v)
-                    item.setSizeHint(widget.layout().sizeHint())
-                    self.content.addItem(item)
-                    self.content.setItemWidget(item, widget)
-                    updatedWidgets[k] = widget
-                    shouldUpdateWidgets = True
-                else:
-                    widget = self.contentWidgets[k]
-                expandedHeight += widget.height()
+            # Is this the first time drawing widgets for this expandable?
+            if not self.widgetsDrawn:
+                item = QListWidgetItem()
+                self.widget = self.pv.settings['components'][self.componentIdx]['type'](self.pv, self.componentIdx) # Instantiate the widget
+                item.setSizeHint(self.widget.layout().sizeHint())
+                self.content.addItem(item)
+                self.content.setItemWidget(item, self.widget)
+            expandedHeight += self.widget.height()
             self.widgetsDrawn = True
             self.content.setVisible(True)
         else:
@@ -86,7 +79,4 @@ class Expandable(QWidget):
         
         self.content.setFixedHeight(expandedHeight)
         self.showingContent = not self.showingContent
-        self.parent.setSizeHint(QSize(self.width, self.headerHeight + expandedHeight + 10))
-
-        if shouldUpdateWidgets:
-            self.contentWidgets = updatedWidgets
+        self.parent.setSizeHint(QSize(self.sizeHint().width(), self.headerHeight + expandedHeight + 20))

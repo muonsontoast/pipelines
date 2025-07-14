@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QFrame, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsProxyWidget, QGraphicsWidget,
     QWidget, QLabel, QGridLayout, QHBoxLayout, QGraphicsGridLayout, QVBoxLayout, QSizePolicy
 )
-from PySide6.QtCore import Qt, QRectF, QPropertyAnimation, QEasingCurve, Property, QPoint, QPointF, QSizeF, QRect
+from PySide6.QtCore import Qt, QEvent, QRectF, QPropertyAnimation, QEasingCurve, Property, QPoint, QPointF, QSizeF, QRect
 from PySide6.QtGui import QColor, QBrush, QTransform, QPen, QPainter, QRegion
 from . import shared
 from . import pv
@@ -36,9 +36,9 @@ class Editor(QGraphicsView):
         super().__init__()
         self.parent = window
         self.settings = dict()
+        self.viewport().installEventFilter(self)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
-        self.viewport().setCursor(Qt.ArrowCursor)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -70,23 +70,35 @@ class Editor(QGraphicsView):
 
     def mousePressEvent(self, event):
         self.startPos = event.pos()
+        hovering = False
+        for p in shared.PVs:
+            if p.hovering:
+                hovering = True
+        if not hovering:
+            self.setDragMode(QGraphicsView.ScrollHandDrag)
+        else:
+            self.setDragMode(QGraphicsView.NoDrag)
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
-        if shared.selectedPV is not None:
-            delta = event.pos() - self.startPos
-            hovering = False
-            for p in shared.PVs:
-                if p.hovering:
-                    hovering = True
-                    break
-            if not hovering and (delta.x() ** 2 + delta.y() ** 2) ** .5 < shared.cursorTolerance:
-                shared.selectedPV.cursorMoved = False
-                shared.selectedPV.ToggleStyling()
-                shared.selectedPV.startPos = None
-                shared.selectedPV = None
-                entity.mainWindow.inspector.Push()
+        delta = event.pos() - self.startPos
+        hovering = False
+        for p in shared.PVs:
+            if p.hovering:
+                hovering = True
+        if not hovering and (delta.x() ** 2 + delta.y() ** 2) ** .5 < shared.cursorTolerance:
+            if shared.selectedPV is not None:
+                self.DeselectPV()
         super().mouseReleaseEvent(event)
+
+    def DeselectPV(self):
+        shared.selectedPV.cursorMoved = False
+        shared.selectedPV.ToggleStyling()
+        shared.selectedPV.startPos = None
+        shared.selectedPV = None
+        shared.editorPopup.objectType.setText('')
+        shared.inspector.mainWindowTitle.setText('')
+        entity.mainWindow.inspector.Push(deselecting = True)
 
     def wheelEvent(self, event):
         if event.angleDelta().y() != 0:

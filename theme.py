@@ -1,1 +1,0 @@
-from PySide6.QtWidgets import QWidget, QColorDialog

@@ -6,6 +6,8 @@ from .indicator import Indicator
 from .clickablewidget import ClickableWidget
 from . import shared
 from . import entity
+from . import valuecomponent
+from . import linkedcomponent
 
 class PV(Draggable):
     def __init__(self, window, name):
@@ -25,8 +27,9 @@ class PV(Draggable):
         self.startPos = None
         # Each component correpsonds to a dropdown in the inspector.
         self.settings['components'] = [
-            dict(name = 'Value', value = 0, min = 0, max = 100, units = ''),
-            dict(name = 'Linked Lattice Element', value = 0, min = 0, max = 100, units = ''),
+            dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = 'Amps', type = valuecomponent.Value),
+            dict(name = 'Linked Lattice Element', value = 0, min = 0, max = 100, default = 0, units = '', type = linkedcomponent.Link), # for now ... 
+            dict(name = 'Value2', value = 0, min = 0, max = 100, default = 0, units = 'Amps', type = valuecomponent.Value),
         ]
         self.settings['type'] = 'PV'
         self.indicator = None
@@ -88,6 +91,7 @@ class PV(Draggable):
                 shared.selectedPV = self
                 shared.editorPopup.Push(self.settings)
             else:
+                shared.inspector.mainWindowTitle.setText('')
                 entity.mainWindow.inspector.Push()
             self.ToggleStyling()
         self.cursorMoved = False

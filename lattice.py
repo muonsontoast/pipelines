@@ -8,17 +8,16 @@ from datetime import datetime
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-loadedLattice = None
-sElementList = None
-
 def GetLatticeInfo(lattice):
-    elements = [[None for _ in range(3)] for _ in range(len(lattice))]
+    elements = [[None for _ in range(4)] for _ in range(len(lattice))]
+    sElementList = lattice.get_s_pos()
     for idx, element in enumerate(lattice):
         elements[idx][0] = element.FamName
         elements[idx][1] = type(element).__name__
         elements[idx][2] = sElementList[idx]
+        elements[idx][3] = idx
     elements = pd.DataFrame(elements)
-    elements.columns = ['Name', 'Type', 's (m)']
+    elements.columns = ['Name', 'Type', 's (m)', 'Index']
     return elements
 
 def DrawBeam(beamIn, xlim = 3, ylim = 3, pxlim = 1.25, pylim = 1.25, numBins = 50, marginalScaleFactor = .075, marginalColor = 'tab:purple'):

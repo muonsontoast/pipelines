@@ -1,20 +1,45 @@
 from PySide6.QtWidgets import (
-    QWidget, QTabWidget, QListWidget, QListWidgetItem, QSlider, QSpacerItem,
+    QWidget, QTabWidget, QListWidget, QListWidgetItem, QLabel, QSlider, QSpacerItem,
     QHBoxLayout, QVBoxLayout, QSizePolicy
 )
 from PySide6.QtCore import Qt
 from .expandable import Expandable
-from .clearfocuslist import ClearFocusListWidget
 from . import shared
+from . import style
 
 class Inspector(QTabWidget):
     '''Inspector widget that holds contextual information on currently selected items in the app.'''
     def __init__(self, window):
         super().__init__()
+        shared.inspector = self
         self.parent = window
         self.setContentsMargins(0, 0, 0, 0)
         self.settings = dict()
         self.SetSizePolicy()
+        self.mainWindow = QWidget()
+        self.mainWindow.setLayout(QVBoxLayout())
+        self.mainWindow.setContentsMargins(0, 0, 0, 0)
+        self.mainWindowTitle = QLabel('')
+        self.mainWindowTitle.setFixedHeight(25)
+        self.mainWindowTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.main = QListWidget()
+        self.main.setFrameShape(QListWidget.NoFrame)
+        self.main.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.main.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.main.setVerticalScrollMode(QListWidget.ScrollPerPixel)
+        self.main.setSpacing(0)
+        self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # Construct the main window
+        self.mainWindow.layout().addWidget(self.mainWindowTitle)
+        self.mainWindow.layout().addWidget(self.main)
+        # Define the scan tab for detailed information on scanning.
+        self.scan = QListWidget()
+        # Define the optimiser tab for detailed information on optimisation.
+        self.optimiser = QListWidget()
+        # Add tabs
+        self.addTab(self.mainWindow, 'Inspector')
+        self.addTab(self.scan, 'Scan')
+        self.addTab(self.optimiser, 'Optimiser')
         self.Push()
 
     def AssignSettings(self, **kwargs):
@@ -42,24 +67,10 @@ class Inspector(QTabWidget):
             sizePolicy[1] = QSizePolicy.Preferred
         self.setSizePolicy(*sizePolicy)
     
-    def Push(self, pv = None, component = None):
-        self.ClearLayout()
-        self.main = ClearFocusListWidget()
-        self.main.setFrameShape(QListWidget.NoFrame)
-        self.main.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.main.setVerticalScrollMode(QListWidget.ScrollPerPixel)
-        self.main.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.main.setSpacing(0)
-        self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # Define the scan tab for detailed information on scanning.
-        self.scan = QListWidget()
-        # Define the optimiser tab for detailed information on optimisation.
-        self.optimiser = QListWidget()
-        # Add tabs
-        self.addTab(self.main, 'Inspector')
-        self.addTab(self.scan, 'Scan')
-        self.addTab(self.optimiser, 'Optimiser')
-        # Has a PV been supplied?
+    def Push(self, pv = None, component = None, deselecting = False):
+        if not deselecting:
+            self.main.setUpdatesEnabled(False) # prevents flashing when redrawing the inspector
+        self.main.clear()
         if pv is None:
             return
         if component is None:
@@ -67,39 +78,20 @@ class Inspector(QTabWidget):
         # Add a row for PV generic information.
         pvName = pv.settings['name']
         name = f'Control PV {pvName[9:]}' if pvName[:9] == 'controlPV' else pvName
-        self.main.SetName(name)
+        self.mainWindowTitle.setText(name)
 
         numComponents = len(pv.settings['components'])
         items = [None] * numComponents
         expandables = [None] * numComponents
         for _, c in enumerate(pv.settings['components']):
+            name = c['name'] + f' ({c['units']})' if c['units'] != '' else c['name']
             items[_] = QListWidgetItem()
-            expandables[_] = Expandable(self.main, items[_], c['name'])    
-            # Expand the component if it is the one being selected.
-            for k, v in c.items():
-                if k == 'value':
-                    w = QWidget()
-                    w.setLayout(QHBoxLayout())
-                    w.setContentsMargins(0, 0, 0, 0)
-                    slider = QSlider(Qt.Horizontal)
-                    slider.setMinimum(0)
-                    slider.setMaximum(1000000)
-                    slider.setValue(0)
-                    w.layout().addWidget(slider)
-                    w.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
-                    expandables[_].contentWidgets[k] = w
+            expandables[_] = Expandable(self.main, items[_], name, pv, _)
             if c['name'] == component:
                 expandables[_].ToggleContent()
+            items[_].setSizeHint(expandables[_].sizeHint())
             self.main.addItem(items[_])
             self.main.setItemWidget(items[_], expandables[_])
         shared.expandables = expandables
-
-    def ClearLayout(self):
-        for i in reversed(range(self.count())):
-            self.removeTab(i)
-        while self.layout() and self.layout().count():
-            item = self.layout().takeAt(0)
-            widget = item.widget()
-            if widget:
-                widget.setParent(None)
-                widget.deleteLater()
+        if not deselecting:
+            self.main.setUpdatesEnabled(True)

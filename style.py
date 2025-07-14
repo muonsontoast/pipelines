@@ -61,34 +61,37 @@ def WidgetStyle(**kwargs):
     QWidget {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     }}'''
 
 def PushButtonStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderColor`, `hoverColor`, `padding`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderColor`, `borderRadius`, `hoverColor`, `padding`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
     QPushButton {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding: {kwargs.get('padding', 8)}px;
     border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
-    border-radius: 3px;
+    border-radius: {kwargs.get('borderRadius', 3)}px;
+    text-align: center;
+    margin: 2px;
     }}
     QPushButton:hover {{
     background-color: {kwargs.get('hoverColor', buttonHoverColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding: {kwargs.get('padding', 8)}px;
     border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
-    border-radius: 3px;
+    border-radius: {kwargs.get('borderRadius', 3)}px;
+    text-align: center;
     }}'''
 
 def PushButtonBorderlessStyle(**kwargs):
@@ -98,7 +101,7 @@ def PushButtonBorderlessStyle(**kwargs):
     QPushButton {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding-left: 10px;
@@ -113,7 +116,7 @@ def PushButtonBorderlessStyle(**kwargs):
     QPushButton:hover {{
     background-color: {kwargs.get('hoverColor', buttonHoverColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding-left: 10px;
@@ -131,13 +134,13 @@ def InspectorSectionStyle(**kwargs):
     QWidget {{
     background-color: transparent;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     text-align: left;
     border: none;
     border-radius: 0px;
     padding: 5px;
-    padding-left: 15px;
+    padding-left: 5px;
     }}'''
 
 def ToolButtonStyle(**kwargs):
@@ -147,7 +150,7 @@ def ToolButtonStyle(**kwargs):
     QToolButton {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding: 5px;
@@ -156,7 +159,7 @@ def ToolButtonStyle(**kwargs):
     QToolButton:hover {{
     background-color: {kwargs.get('hoverColor', buttonHoverColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding: 5px;
@@ -173,7 +176,7 @@ def ComboStyle(**kwargs):
     QComboBox {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding: 5px;
@@ -183,14 +186,16 @@ def ComboStyle(**kwargs):
 
 def LineEditStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderColor`, `borderRadius`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderColor`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
     QLineEdit {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
-    border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
+    text-align: center;
+    padding-left: {kwargs.get('paddingLeft', 0)}px;
+    padding-bottom: {kwargs.get('paddingBottom', 0)}px;
     border-radius: {kwargs.get('borderRadius', 3)};
     }}'''
 
@@ -201,7 +206,7 @@ def TabStyle(**kwargs):
     QTabBar::tab {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding-left: 10px;
@@ -216,7 +221,7 @@ def TabStyle(**kwargs):
     QTabBar::tab:selected {{
     background-color: {kwargs.get('selectedColor', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding-left: 10px;
@@ -231,7 +236,7 @@ def TabStyle(**kwargs):
     QTabBar::tab:hover {{
     background-color: {kwargs.get('hoverColor', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding-left: 10px;
@@ -246,21 +251,20 @@ def TabStyle(**kwargs):
 
 def TabWidgetStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `backgroundColor`, `borderRadius`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderRadius`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
-    QTabWidget {{
-    background: transparent;
-    color: {kwargs.get('color', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    QTabWidget::pane {{
+    background: {kwargs.get('color', 'transparent')};
+    color: {kwargs.get('fontColor', fontColor)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
-    font-weight: bold;
     border: none;
-    border-radius: {kwargs.get('borderRadius', 0)};
+    border-radius: {kwargs.get('borderRadius', 2)};
     }}
     QTabBar::pane {{
     background: transparent;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     border: none;
@@ -276,7 +280,7 @@ def FrameStyle(**kwargs):
     QFrame {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     }}'''
@@ -288,7 +292,7 @@ def LabelStyle(**kwargs):
     QLabel {{
     background-color: transparent;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     padding-left: 10px;
     }}'''
@@ -300,7 +304,7 @@ def InspectorHeaderStyle(**kwargs):
     QWidget {{
     background-color: transparent;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     text-align: left;
     border: none;
@@ -311,7 +315,7 @@ def InspectorHeaderStyle(**kwargs):
     QPushButton {{
     background-color: {kwargs.get('color', tabSelectedColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding-left: 10px;
@@ -326,7 +330,7 @@ def InspectorHeaderStyle(**kwargs):
     QPushButton:hover {{
     background-color: {kwargs.get('hoverColor', tabHoverColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     padding-left: 10px;
@@ -346,7 +350,7 @@ def InspectorHeaderHousingStyle(**kwargs):
     QWidget {{
     background-color: transparent;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     text-align: left;
     border: none;
@@ -363,7 +367,7 @@ def InspectorNameHousingStyle(**kwargs):
     QLabel {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     padding: 0px;
     margin: 0px;
@@ -377,7 +381,7 @@ def ListWidget(**kwargs):
     QListWidget {{
     background-color: transparent;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     border: none;
@@ -394,7 +398,7 @@ def ProgressBarStyle(**kwargs):
     QProgressBar {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     text-align: center;
     border: 2px solid {kwargs.get('borderColor', 'black')};
@@ -453,7 +457,7 @@ def MenuStyle(**kwargs):
     padding-right: 30px;
     padding-bottom: 10px;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     border: none;
@@ -465,7 +469,7 @@ def MenuStyle(**kwargs):
     padding-right: 30px;
     padding-bottom: 10px;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     border: none;
@@ -478,7 +482,7 @@ def ListWidgetStyle(**kwargs):
     QListWidget {{
     background-color: transparent;
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
     border: none;
@@ -488,6 +492,41 @@ def ListWidgetStyle(**kwargs):
         color: inherit;
     }}'''
 
+def SliderStyle(**kwargs):
+    '''Accepts kwargs which should be set to #ABCDEF color strings.\n
+    `backgroundColor`, `handleColor`, `handleEdgeColor`, `fillColor`'''
+    return f'''
+    QSlider::groove:horizontal {{
+    height: 10px;
+    background: {kwargs.get('backgroundColor')};
+    border-radius: 5px;
+    margin: 0 0px;
+    margin-left: -1px;
+    margin-right: -1x;
+    }}
+    QSlider::handle:horizontal {{
+    background: {kwargs.get('handleColor')};
+    height: 18px;
+    width: 18px;
+    border-radius: 9px;
+    margin-top: -4px;
+    margin-bottom: -4px;
+    margin-left: -1px;
+    margin-right: -1px;
+    }}
+    QSlider::sub-page:horizontal {{
+    background: {kwargs.get('fillColor')};
+    margin-left: 0px;
+    border-radius: 5px;
+    }}
+    QSlider::add-page:horizontal {{
+    background: transparent;
+    margin: 0 -2px;
+    margin-right: 0px;
+    border-radius: 5px;
+    }}
+    '''
+
 def EditorControlsStyle(**kwargs): 
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
     `color`, `borderColor`, `fontColor`, `fontSize`, `fontFamily`'''
@@ -495,7 +534,7 @@ def EditorControlsStyle(**kwargs):
     QWidget {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     text-align: left;
     border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
@@ -508,7 +547,7 @@ def EditorStyle(**kwargs):
     return f'''
     Editor {{
     color: {kwargs.get('color', buttonColor)};
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     text-align: center;
     }}'''
@@ -516,19 +555,18 @@ def EditorStyle(**kwargs):
 def PVStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
     `color`, `borderColor`, `borderThickness`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`'''
-    print('color is:', kwargs.get('color'), '!')
     return f'''
     QWidget {{
     background-color: {kwargs.get('color', 'blue')};
     color: {kwargs.get('fontColor', fontColor)}
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     border: none;
     }}
     QFrame#PV {{
     background-color: {kwargs.get('color', 'red')};
     color: {kwargs.get('fontColor', fontColor)}
-    font-size: {kwargs.get('fontSize', fontSize)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     border-radius: 5px;
     border: {kwargs.get('borderThickness')}px solid {kwargs.get('borderColor', buttonBorderColor)};
@@ -545,9 +583,13 @@ def Light01():
         p.UpdateColors() # Apply a color update without toggling the selection state of the PV.
     for e in shared.expandables:
         e.UpdateColors() # Apply a color update to the expandable widgets in the inspector if a PV is currently selected.
+        if e.widget is not None:
+            e.widget.UpdateColors()
     for e in shared.editors:
         e.scene.setBackgroundBrush(QColor(229, 223, 204))
         e.popup.UpdateColors()
+    shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#E5DFCC'))
+    shared.inspector.mainWindowTitle.setStyleSheet(LabelStyle(fontColor = '#1e1e1e', fontSize = 16))
     shared.workspace.UpdateColors()
     return WidgetStyle(color = "#D8D3C0", fontColor = "#1C1C1C") + FrameStyle(color = "#E5DFCC", fontColor = "#1C1C1C") + ScrollBarStyle(handleColor = '#B5AB8D', backgroundColor = "#C9C3B1") + PushButtonStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', padding = '0px', fontColor = "#1C1C1C") + PushButtonBorderlessStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', fontColor = '#1e1e1e') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#1C1C1C") + ComboStyle() + LineEditStyle(color = '#D2C5A0') + TabStyle(color = "#E5DFCC", hoverColor = "#B5AB8D", selectedColor = "#D2C5A0", fontColor = '#1C1C1C') + TabWidgetStyle(fontColor = '#1C1C1C') + EditorStyle() + LabelStyle(fontColor = '#1c1c1c') + ProgressBarStyle(color = '#E5DFCC', borderColor = '#D2C5A0', borderRadius = 5, fontColor = '#1e1e1e')
 
@@ -557,11 +599,15 @@ def Dark01():
         p.UpdateColors() # Apply a color update without toggling the selection state of the PV.
     for e in shared.expandables:
         e.UpdateColors() # Apply a color update to the expandable widgets in the inspector if a PV is currently selected.
+        if e.widget is not None:
+            e.widget.UpdateColors()
     for e in shared.editors:
         e.scene.setBackgroundBrush(QColor(38, 38, 38))
         e.popup.UpdateColors()
+    shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#262626'))
+    shared.inspector.mainWindowTitle.setStyleSheet(LabelStyle(fontColor = '#c4c4c4', fontSize = 16))
     shared.workspace.UpdateColors()
-    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#262626", fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#262626') + TabStyle(color = "#262626", hoverColor = "#2D2D2D", selectedColor = "#363636", fontColor = '#C4C4C4') + TabWidgetStyle(color = '#1c1c1c', fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
+    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#262626", fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#262626') + TabStyle(color = "#262626", hoverColor = "#2D2D2D", selectedColor = "#363636", fontColor = '#C4C4C4') + TabWidgetStyle(fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
 
 def indicatorStyle(radius):
     return f'''

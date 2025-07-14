@@ -36,12 +36,11 @@ class Popup(QGraphicsProxyWidget):
         self.minimiseButton.setStyleSheet(f'''
         background-color: #3d3d3d;
         color: #c4c4c4;
-        padding: 2px;
-        padding-bottom: 4px;
+        padding: 4px;
         border: none;
         border-radius: 0px;
         ''')
-        self.minimiseButton.setFixedSize(20, 20)
+        self.minimiseButton.setFixedSize(25, 20)
         self.minimiseButton.clicked.connect(self.MinimiseOrExpandPopup)
         self.topBar.layout().addWidget(self.minimiseButton)
         # Close button
@@ -49,19 +48,18 @@ class Popup(QGraphicsProxyWidget):
         self.closeButton.setStyleSheet(f'''
         background-color: #eb4034;
         color: #c4c4c4;
-        padding: 2px;
-        padding-right: 2px;
+        padding: 4px;
         border: none;
         border-radius: 0px;
         ''')
-        self.closeButton.setFixedSize(20, 20)
+        self.closeButton.setFixedSize(25, 20)
         self.topBar.layout().addWidget(self.closeButton)
         self.background.layout().addWidget(self.topBar, 0, 0, 1, 4)
         # The main body
         self.body = QWidget()
         self.background.layout().addWidget(self.body, 1, 0, 1, 4) # body placeholder.
         self.separator = QWidget()
-        self.separator.setStyleSheet('background-color: red')
+        # self.separator.setStyleSheet('background-color: red')
         self.background.layout().addWidget(self.separator, 2, 0, 1, 4)
         # The button section
         self.buttons = QWidget()
@@ -91,6 +89,8 @@ class Popup(QGraphicsProxyWidget):
         self.objectType.setText(objectType)
 
     def UpdateColors(self):
+        if self.minimised:
+            return
         if shared.lightModeOn:
             self.background.setStyleSheet(style.EditorControlsStyle(color = '#D2C5A0', borderColor = '#B5AB8D', fontColor = '#1e1e1e'))
             self.background.setStyleSheet('background-color: #D2C5A0; padding-left: 0px; color: #1e1e1e')
@@ -108,7 +108,7 @@ class Popup(QGraphicsProxyWidget):
             if shared.lightModeOn:
                 self.background.setStyleSheet('background-color: #D2C5A0;')
             else:
-                self.background.setStyleSheet('background-color: #2D2D2D;')
+                self.background.setStyleSheet('background-color: #2d2d2d;')
             self.background.setFixedSize(self.width, self.height)
             self.background.move(self.x, self.y)
         else:
@@ -117,7 +117,10 @@ class Popup(QGraphicsProxyWidget):
             self.buttons.setVisible(False)
             self.contextBar.setVisible(False)
             self.objectType.setVisible(False)
-            self.background.setStyleSheet('background-color: transparent')
+            if shared.lightModeOn:
+                self.background.setStyleSheet('background-color: transparent;')
+            else:
+                self.background.setStyleSheet('background-color: transparent;')
             self.background.setFixedSize(75, 30)
             self.background.move(self.x + self.width - 75, self.y)
         self.minimised = not self.minimised
