@@ -4,7 +4,7 @@ from copy import deepcopy
 
 class Simulator:
     '''Handles offline simulations with the lattice.'''
-    def __init__(self, window, lattice, numParticles = 10000, inputTwiss = None):
+    def __init__(self, lattice, numParticles = 10000, inputTwiss = None, window = None):
         self.parent = window
         self.lattice = lattice
         self.numParticles = numParticles

@@ -1,4 +1,3 @@
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from . import shared
 
@@ -186,7 +185,7 @@ def ComboStyle(**kwargs):
 
 def LineEditStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderColor`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderColor`, `borderRadius`, `hoverColor`, `paddingLeft`, `paddingBottom`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
     QLineEdit {{
     background-color: {kwargs.get('color', buttonColor)};
@@ -287,14 +286,13 @@ def FrameStyle(**kwargs):
 
 def LabelStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `fontColor`, `fontSize`, `fontFamily`'''
+    `padding`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
     QLabel {{
-    background-color: transparent;
     color: {kwargs.get('fontColor', fontColor)};
     font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
-    padding-left: 10px;
+    padding-left: {kwargs.get('padding', 10)}px;
     }}'''
 
 def InspectorHeaderStyle(**kwargs):
@@ -581,7 +579,7 @@ def Light01():
     shared.lightModeOn = not shared.lightModeOn
     for p in shared.PVs:
         p.UpdateColors() # Apply a color update without toggling the selection state of the PV.
-    for e in shared.expandables:
+    for e in shared.expandables.values():
         e.UpdateColors() # Apply a color update to the expandable widgets in the inspector if a PV is currently selected.
         if e.widget is not None:
             e.widget.UpdateColors()
@@ -597,7 +595,7 @@ def Dark01():
     shared.lightModeOn = not shared.lightModeOn
     for p in shared.PVs:
         p.UpdateColors() # Apply a color update without toggling the selection state of the PV.
-    for e in shared.expandables:
+    for e in shared.expandables.values():
         e.UpdateColors() # Apply a color update to the expandable widgets in the inspector if a PV is currently selected.
         if e.widget is not None:
             e.widget.UpdateColors()

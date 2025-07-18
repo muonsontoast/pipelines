@@ -9,15 +9,16 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 def GetLatticeInfo(lattice):
-    elements = [[None for _ in range(4)] for _ in range(len(lattice))]
+    elements = [[None for _ in range(5)] for _ in range(len(lattice))]
     sElementList = lattice.get_s_pos()
     for idx, element in enumerate(lattice):
         elements[idx][0] = element.FamName
         elements[idx][1] = type(element).__name__
         elements[idx][2] = sElementList[idx]
-        elements[idx][3] = idx
+        elements[idx][3] = element.Length
+        elements[idx][4] = idx
     elements = pd.DataFrame(elements)
-    elements.columns = ['Name', 'Type', 's (m)', 'Index']
+    elements.columns = ['Name', 'Type', 's (m)', 'Length', 'Index']
     return elements
 
 def DrawBeam(beamIn, xlim = 3, ylim = 3, pxlim = 1.25, pylim = 1.25, numBins = 50, marginalScaleFactor = .075, marginalColor = 'tab:purple'):
@@ -293,19 +294,6 @@ def DrawTrajectories(lattice, pOut, **kwargs):
     ax[0, 1].grid(alpha = .35)
     ax[1, 0].grid(alpha = .35)
     ax[1, 1].grid(alpha = .35)
-
-# def ApplyCorrectorStrengths(lattice, cVec = np.zeros(12)):
-#     '''cVec should take the form [HSTR1, ..., VSTR1, ...]'''
-#     cVec = list(cVec)
-#     HSTRIdxs = lattice.get_uint32_index('HSTR')
-#     VSTRIdxs = lattice.get_uint32_index('VSTR')
-#     cVecHSTR = cVec[:len(HSTRIdxs)]
-#     cVecVSTR = cVec[len(HSTRIdxs):]
-    
-#     for i, idx in enumerate(HSTRIdxs):
-#         lattice[idx].KickAngle[0] = cVecHSTR[i]
-#     for i, idx in enumerate(VSTRIdxs):
-#         lattice[idx].KickAngle[1] = cVecVSTR[i]
 
 def LoadLattice(pth):
     return at.load_mat(pth, mat_key = 'THERING', energy = 1e8, periodicity = 0)

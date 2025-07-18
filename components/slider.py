@@ -1,20 +1,23 @@
 from PySide6.QtWidgets import (
     QWidget, QLineEdit, QSlider, QLabel, QPushButton,
-    QGridLayout, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+    QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt
-from . import shared
-from . import style
+from .. import shared
+from .. import style
 
-class Value(QWidget):
-    def __init__(self, pv, componentIdx, sliderSteps = 1000000, floatdp = 3):
+class SliderComponent(QWidget):
+    def __init__(self, pv, component, sliderSteps = 1000000, floatdp = 3):
         super().__init__()
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
+        # self.item = item
         self.pv = pv
-        self.componentIdx = componentIdx
+        self.component = component
+        # self.componentIdx = componentIdx
         self.floatdp = int(floatdp)
-        self.range = pv.settings['components'][componentIdx]['max'] - pv.settings['components'][componentIdx]['min']
+        self.range = pv.settings['components'][component]['max'] - pv.settings['components'][component]['min']
         self.steps = sliderSteps
         # Slider row
         sliderRow = QWidget()
@@ -24,12 +27,12 @@ class Value(QWidget):
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setFixedWidth(150)
         self.slider.setRange(0, sliderSteps)
-        self.slider.setValue(self.ToSliderValue(pv.settings['components'][componentIdx]['value']))
+        self.slider.setValue(self.ToSliderValue(pv.settings['components'][component]['value']))
         self.slider.valueChanged.connect(self.UpdateSliderValue)
         sliderRow.layout().addWidget(self.slider, alignment = Qt.AlignLeft)
         sliderRow.layout().addItem(QSpacerItem(30, 0, QSizePolicy.Fixed, QSizePolicy.Fixed))
         # Value
-        self.value = QLineEdit(f'{pv.settings['components'][componentIdx]['value']:.{self.floatdp}f}')
+        self.value = QLineEdit(f'{pv.settings['components'][component]['value']:.{self.floatdp}f}')
         self.value.setAlignment(Qt.AlignCenter)
         self.value.setFixedSize(75, 25)
         self.value.returnPressed.connect(self.SetSliderValue)
@@ -39,7 +42,6 @@ class Value(QWidget):
         self.resetButton = QPushButton('Reset')
         self.resetButton.setFixedWidth(65)
         self.resetButton.clicked.connect(self.Reset)
-        # sliderRow.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
         sliderRow.layout().addWidget(self.resetButton)
         # Context row
         contextRow = QWidget()
@@ -49,7 +51,7 @@ class Value(QWidget):
         self.minimumLabel = QLabel('Min')
         self.minimumLabel.setAlignment(Qt.AlignCenter)
         contextRow.layout().addWidget(self.minimumLabel, alignment = Qt.AlignLeft)
-        self.minimum = QLineEdit(f'{pv.settings['components'][componentIdx]['min']:.{self.floatdp}f}')
+        self.minimum = QLineEdit(f'{pv.settings['components'][component]['min']:.{self.floatdp}f}')
         self.minimum.setAlignment(Qt.AlignCenter)
         self.minimum.setFixedSize(75, 25)
         self.minimum.returnPressed.connect(self.SetMinimum)
@@ -58,7 +60,7 @@ class Value(QWidget):
         self.maximumLabel = QLabel('Max')
         self.maximumLabel.setAlignment(Qt.AlignCenter)
         contextRow.layout().addWidget(self.maximumLabel, alignment = Qt.AlignLeft)
-        self.maximum = QLineEdit(f'{pv.settings['components'][componentIdx]['max']:.{self.floatdp}f}')
+        self.maximum = QLineEdit(f'{pv.settings['components'][component]['max']:.{self.floatdp}f}')
         self.maximum.setAlignment(Qt.AlignCenter)
         self.maximum.setFixedSize(75, 25)
         self.maximum.returnPressed.connect(self.SetMaximum)
@@ -71,7 +73,7 @@ class Value(QWidget):
         self.defaultLabel = QLabel('Default')
         self.defaultLabel.setAlignment(Qt.AlignCenter)
         defaultRow.layout().addWidget(self.defaultLabel, alignment = Qt.AlignLeft)
-        self.default = QLineEdit(f'{pv.settings['components'][componentIdx]['default']:.{self.floatdp}f}')
+        self.default = QLineEdit(f'{pv.settings['components'][component]['default']:.{self.floatdp}f}')
         self.default.setAlignment(Qt.AlignCenter)
         self.default.setFixedSize(75, 25)
         self.default.returnPressed.connect(self.SetDefault)
@@ -85,64 +87,67 @@ class Value(QWidget):
         self.UpdateColors()
 
     def ToAbsolute(self, v):
-        return self.pv.settings['components'][self.componentIdx]['min'] + v / self.steps * self.range
+        return self.pv.settings['components'][self.component]['min'] + v / self.steps * self.range
     
     def ToSliderValue(self, v):
-        return (v - self.pv.settings['components'][self.componentIdx]['min']) / self.range * self.steps
+        return (v - self.pv.settings['components'][self.component]['min']) / self.range * self.steps
 
     def UpdateSliderValue(self):
         v = self.ToAbsolute(self.slider.value())
         self.value.setText(f'{v:.{self.floatdp}f}')
-        self.pv.settings['components'][self.componentIdx]['value'] = v
+        self.pv.settings['components'][self.component]['value'] = v
 
     def SetSliderValue(self):
         self.value.clearFocus()
         self.value.setText(f'{float(self.value.text()):.{self.floatdp}f}')
-        self.pv.settings['components'][self.componentIdx]['value'] = float(self.value.text())
+        self.pv.settings['components'][self.component]['value'] = float(self.value.text())
         self.UpdateSlider()
 
     def UpdateSlider(self):
         self.slider.setValue(self.ToSliderValue(float(self.value.text())))
 
     def Reset(self):
-        self.slider.setValue(self.ToSliderValue(self.pv.settings['components'][self.componentIdx]['default']))
+        self.slider.setValue(self.ToSliderValue(self.pv.settings['components'][self.component]['default']))
 
     def SetDefault(self):
         self.default.clearFocus()
-        default = max(self.pv.settings['components'][self.componentIdx]['min'], min(self.pv.settings['components'][self.componentIdx]['max'], float(self.default.text())))
+        default = max(self.pv.settings['components'][self.component]['min'], min(self.pv.settings['components'][self.component]['max'], float(self.default.text())))
         self.default.setText(f'{default:.{self.floatdp}f}')
-        self.pv.settings['components'][self.componentIdx]['default'] = default
+        self.pv.settings['components'][self.component]['default'] = default
 
     def SetMinimum(self):
         self.minimum.clearFocus()
         v = float(self.minimum.text())
-        self.pv.settings['components'][self.componentIdx]['min'] = v
-        self.pv.settings['components'][self.componentIdx]['default'] = max(v, self.pv.settings['components'][self.componentIdx]['default'])
-        self.default.setText(f'{self.pv.settings['components'][self.componentIdx]['default']:.{self.floatdp}f}')
-        self.range = self.pv.settings['components'][self.componentIdx]['max'] - v
-        self.default.setText(f'{self.pv.settings['components'][self.componentIdx]['default']:.{self.floatdp}f}')
+        self.pv.settings['components'][self.component]['min'] = v
+        self.pv.settings['components'][self.component]['default'] = max(v, self.pv.settings['components'][self.component]['default'])
+        self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
+        self.range = self.pv.settings['components'][self.component]['max'] - v
+        self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
         self.minimum.setText(f'{v:.{self.floatdp}f}')
         newSliderValue = max(float(self.value.text()), v)
         self.slider.setValue(self.ToSliderValue(newSliderValue))
         self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
-        self.pv.settings['components'][self.componentIdx]['value'] = newSliderValue
+        self.pv.settings['components'][self.component]['value'] = newSliderValue
     
     def SetMaximum(self):
         self.maximum.clearFocus()
         v = float(self.maximum.text())
-        self.pv.settings['components'][self.componentIdx]['max'] = v
-        self.pv.settings['components'][self.componentIdx]['default'] = min(v, self.pv.settings['components'][self.componentIdx]['default'])
-        self.default.setText(f'{self.pv.settings['components'][self.componentIdx]['default']:.{self.floatdp}f}')
-        self.range = v - self.pv.settings['components'][self.componentIdx]['min']
+        self.pv.settings['components'][self.component]['max'] = v
+        self.pv.settings['components'][self.component]['default'] = min(v, self.pv.settings['components'][self.component]['default'])
+        self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
+        self.range = v - self.pv.settings['components'][self.component]['min']
         self.maximum.setText(f'{v:.{self.floatdp}f}')
         newSliderValue = min(float(self.value.text()), v)
         self.slider.setValue(self.ToSliderValue(newSliderValue))
         self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
-        self.pv.settings['components'][self.componentIdx]['value'] = newSliderValue
+        self.pv.settings['components'][self.component]['value'] = newSliderValue
 
-    def UpdateColors(self):
+    def UpdateColors(self, **kwargs):
+        '''Override `fillColorLight` and `fillColorDark` with a #ABCDEF color string.'''
+        fillColorDark = kwargs.get('fillColorLight', "#C74343")
+        fillColorLight = kwargs.get('fillColorDark', "#B43C3C")
         if shared.lightModeOn:
-            self.slider.setStyleSheet(style.SliderStyle(backgroundColor = "#D2C5A0", fillColor = "#B23838", handleColor = "#2A2A2A"))
+            self.slider.setStyleSheet(style.SliderStyle(backgroundColor = "#D2C5A0", fillColor = fillColorLight, handleColor = "#2E2E2E"))
             self.minimum.setStyleSheet(style.LineEditStyle(color = '#D2C5A0', fontColor = '#1e1e1e', paddingLeft = 5, paddingBottom = 5))
             self.maximum.setStyleSheet(style.LineEditStyle(color = '#D2C5A0', fontColor = '#1e1e1e', paddingLeft = 5, paddingBottom = 5))
             self.value.setStyleSheet(style.LineEditStyle(color = '#D2C5A0', fontColor = '#1e1e1e', paddingLeft = 5, paddingBottom = 5))
@@ -152,7 +157,7 @@ class Value(QWidget):
             self.defaultLabel.setStyleSheet(style.LabelStyle(fontColor = '#1e1e1e'))
             self.resetButton.setStyleSheet(style.PushButtonStyle(color = '#D2C5A0', borderColor = '#A1946D', hoverColor = '#B5AB8D', fontColor = '#1e1e1e', padding = 4))
             return
-        self.slider.setStyleSheet(style.SliderStyle(backgroundColor = "#2d2d2d", fillColor = "#3FA466", handleColor = "#5d5d5d"))
+        self.slider.setStyleSheet(style.SliderStyle(backgroundColor = "#2d2d2d", fillColor = fillColorDark, handleColor = "#858585"))
         self.minimum.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
         self.maximum.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
         self.value.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))

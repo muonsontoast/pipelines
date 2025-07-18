@@ -2,12 +2,12 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QListWidget, QListWidgetItem, QSpacerItem, QSizePolicy
 )
-from PySide6.QtCore import QSize
+from PySide6.QtCore import Qt, QSize
 from . import style
 from . import shared
 
 class Expandable(QWidget):
-    def __init__(self, listWidget, item, name, pv, componentIdx):
+    def __init__(self, listWidget, item, name, pv, componentKey):
         '''`list` the ListWidget containing the expandable widget.\n
         `item` is the ListWidgetItem this expandable is attached to.\n
         Accepts a list of kwarg widgets to display in the expandable content region.'''
@@ -15,10 +15,10 @@ class Expandable(QWidget):
         self.setFixedWidth(listWidget.viewport().width() - 5)
         self.parent = item
         self.setLayout(QVBoxLayout())
-        self.setContentsMargins(0, 0, 0, 0)
+        self.layout().setContentsMargins(2, 0, 10, 0)
         self.layout().setSpacing(0)
         self.pv = pv
-        self.componentIdx = componentIdx
+        self.componentKey = componentKey
         # Bool to keep track of whether to display the content.
         self.showingContent = False
         self.width = self.width()
@@ -40,6 +40,8 @@ class Expandable(QWidget):
         self.layout().addWidget(self.nameHousing)
         # Expandable area
         self.content = QListWidget()
+        self.content.setFocusPolicy(Qt.NoFocus)
+        self.content.setSelectionMode(QListWidget.NoSelection)
         self.content.setStyleSheet(style.InspectorSectionStyle())
         self.content.setVisible(False)
         self.layout().addWidget(self.content)
@@ -66,11 +68,11 @@ class Expandable(QWidget):
             # Is this the first time drawing widgets for this expandable?
             if not self.widgetsDrawn:
                 item = QListWidgetItem()
-                self.widget = self.pv.settings['components'][self.componentIdx]['type'](self.pv, self.componentIdx) # Instantiate the widget
-                item.setSizeHint(self.widget.layout().sizeHint())
+                self.widget = self.pv.settings['components'][self.componentKey]['type'](self.pv, self.componentKey) # Instantiate the widget
+                item.setSizeHint(self.widget.sizeHint())
                 self.content.addItem(item)
                 self.content.setItemWidget(item, self.widget)
-            expandedHeight += self.widget.height()
+            expandedHeight += self.widget.sizeHint().height()
             self.widgetsDrawn = True
             self.content.setVisible(True)
         else:
@@ -79,4 +81,4 @@ class Expandable(QWidget):
         
         self.content.setFixedHeight(expandedHeight)
         self.showingContent = not self.showingContent
-        self.parent.setSizeHint(QSize(self.sizeHint().width(), self.headerHeight + expandedHeight + 20))
+        self.parent.setSizeHint(QSize(self.sizeHint().width(), self.headerHeight + expandedHeight))

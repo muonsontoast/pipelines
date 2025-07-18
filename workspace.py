@@ -14,7 +14,7 @@ class Workspace(QTabWidget):
     def __init__(self, window):
         super().__init__()
         self.parent = window
-        self.setFixedWidth(1250)
+        self.setMinimumWidth(600) # Allow the editor to shrink on small screen sizes.
         shared.workspace = self
         self.editors, self.monitors, self.controlPanels, self.optimisationPanels =  dict(), dict(), dict(), dict()
         self.settings = dict()

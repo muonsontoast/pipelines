@@ -2,8 +2,6 @@ from PySide6.QtWidgets import (
     QApplication, QWidget, QFrame, QLabel, QPushButton, QCheckBox, QCompleter, QLineEdit,
     QSpacerItem, QMessageBox, QGridLayout, QHBoxLayout, QSizePolicy
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPalette, QColor
 from .settings import CreateSettingElement
 from .scan import Scanner
 

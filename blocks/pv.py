@@ -1,13 +1,15 @@
 from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QSizePolicy
 from PySide6.QtCore import Qt
-from . import style
-from .draggable import Draggable
-from .indicator import Indicator
-from .clickablewidget import ClickableWidget
-from . import shared
-from . import entity
-from . import valuecomponent
-from . import linkedcomponent
+from .. import style
+from ..draggable import Draggable
+from ..indicator import Indicator
+from ..clickablewidget import ClickableWidget
+from .. import shared
+from .. import entity
+from ..components import slider
+from ..components import link
+from ..components import kickangle
+from ..components import errors
 
 class PV(Draggable):
     def __init__(self, window, name):
@@ -25,12 +27,11 @@ class PV(Draggable):
         self.cursorMoved = False
         self.hovering = False
         self.startPos = None
-        # Each component correpsonds to a dropdown in the inspector.
-        self.settings['components'] = [
-            dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = 'Amps', type = valuecomponent.Value),
-            dict(name = 'Linked Lattice Element', value = 0, min = 0, max = 100, default = 0, units = '', type = linkedcomponent.Link), # for now ... 
-            dict(name = 'Value2', value = 0, min = 0, max = 100, default = 0, units = 'Amps', type = valuecomponent.Value),
-        ]
+        self.settings['components'] = {
+            'value': dict(name = 'Angle Errors', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = errors.ErrorsComponent),
+            'slider': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
+            'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
+        }
         self.settings['type'] = 'PV'
         self.indicator = None
         self.Push()

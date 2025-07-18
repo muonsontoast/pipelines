@@ -1,42 +1,17 @@
 from PySide6.QtWidgets import (
-    QFrame, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsProxyWidget, QGraphicsWidget,
-    QWidget, QLabel, QGridLayout, QHBoxLayout, QGraphicsGridLayout, QVBoxLayout, QSizePolicy
+    QFrame, QGraphicsScene, QGraphicsView, QGraphicsProxyWidget,
 )
-from PySide6.QtCore import Qt, QEvent, QRectF, QPropertyAnimation, QEasingCurve, Property, QPoint, QPointF, QSizeF, QRect
-from PySide6.QtGui import QColor, QBrush, QTransform, QPen, QPainter, QRegion
+from PySide6.QtCore import Qt
 from . import shared
-from . import pv
+from .blocks import pv
 from . import entity
-from . import style
 from . import editorpopup
-
-# 2) Your styled widget
-class MyStyledWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        # Let the stylesheet draw the whole background…
-        self.setAttribute(Qt.WA_StyledBackground, True)
-        # …and make the canvas underneath actually transparent
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-
-        self.setStyleSheet("""
-            background-color: #2b2b2b;
-            color: white;
-            border: 2px solid #444;
-            border-radius: 12px;
-            font-weight: bold;
-            padding: 10px;
-        """)
-
-        layout = QHBoxLayout(self)
-        layout.addWidget(QLabel("Rounded, bold text, custom border—all intact!"))
 
 class Editor(QGraphicsView):
     def __init__(self, window):
         super().__init__()
         self.parent = window
         self.settings = dict()
-        self.viewport().installEventFilter(self)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setFrameStyle(QFrame.NoFrame)
@@ -47,7 +22,7 @@ class Editor(QGraphicsView):
         self.setSceneRect(0, 0, 3000, 3000)
         self.popup = editorpopup.Popup(self, 975, 125, 250, 450)
         # Test widget
-        pvWidget = pv.PV(self, 'LOL :)')
+        pvWidget = pv.PV(self, 'HSTR5:SETI')
         proxy = QGraphicsProxyWidget()
         proxy.setWidget(pvWidget)
         proxy.setPos(1500, 1500)

@@ -1,7 +1,7 @@
 '''There is a known QPainter error that is raised when maximising the main window in PySide 6.9.1. This is not 
 a critical issue and will be resolved in version 6.9.2 around August, so update when you have a chance.'''
 from PySide6.QtWidgets import (
-    QMainWindow, QApplication, QWidget, QHBoxLayout, QGridLayout,
+    QMainWindow, QApplication, QWidget, QFrame, QHBoxLayout, QGridLayout,
     QLabel, QPushButton, QProgressBar, QStackedLayout, QStyleFactory,
 )
 from PySide6.QtGui import (
@@ -16,24 +16,34 @@ from pathlib import Path
 from .settings import Settings
 from .inspector import Inspector
 from .workspace import Workspace
-from .latticecanvas import LatticeCanvas
+from .lattice.latticeglobal import LatticeGlobal
+# from .lattice import LatticeCanvas
 from .font import SetFontToBold
 from . import entity
 from . import style
 from . import shared
-from . import linkedcomponent # remove this after testing
+from .lattice import latticeutils
+import at
+from copy import deepcopy
 
 plt.rcParams['font.size'] = 10 # Define the font size for plots.
 
 cwd = str(Path.cwd().resolve()) # Get the current working directory.
-signal.signal(signal.SIGINT, signal.SIG_DFL) # Allow Ctrl+C interrut from terminal.
+signal.signal(signal.SIGINT, signal.SIG_DFL) # Allow Ctrl+C interrupt from terminal.
 
 class MainWindow(QMainWindow):    
     def __init__(self):
         super().__init__()
+        shared.window = self
         self.setWindowTitle(f'{shared.windowTitle} - Version {shared.appVersion}')
         self.setWindowIcon(QIcon(f'{cwd}\\app\\PVBuddy.png'))
         shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), '..', 'Lattice', 'dls_ltb.mat')) # for now ...
+        if shared.elements is None:
+            shared.lattice = latticeutils.LoadLattice(shared.latticePath)
+            revLattice = [e for e in reversed(shared.lattice)]
+            shared.lattice = at.Lattice(shared.lattice + revLattice, name = 'combined RING')
+            shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
+            shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
         self.lightModeOn = False
         entity.mainWindow = self
         # Allow crtl+W shortcut for exit
@@ -49,7 +59,7 @@ class MainWindow(QMainWindow):
         self.page.layout().setContentsMargins(0, 0, 0, 0)
         self.page.layout().setSpacing(15)
         self.page.layout().setRowMinimumHeight(0, 1)
-        self.page.layout().setRowMinimumHeight(1, 165)
+        self.page.layout().setRowMinimumHeight(1, 100)
         self.page.layout().setRowMinimumHeight(2, 250)
         self.page.layout().setRowMinimumHeight(3, 100)
         self.page.layout().setRowStretch(0, .01)
@@ -85,11 +95,11 @@ class MainWindow(QMainWindow):
             self.workspace = Workspace(self)
             self.workspace.setLayout(QStackedLayout())
             entity.AddEntity(entity.Entity('workspace', 'GUI', entity.AssignEntityID(), widget = Workspace))
+            self.latticeGlobal = LatticeGlobal(self)
+            entity.AddEntity(entity.Entity('latticeGlobal', 'GUI', entity.AssignEntityID(), widget = LatticeGlobal))
             self.inspector = Inspector(self)
             self.inspector.AssignSettings(size = (350, None))
             entity.AddEntity(entity.Entity('inspector', 'GUI', entity.AssignEntityID(), widget = Inspector))
-            self.latticeCanvas = LatticeCanvas(self)
-            entity.AddEntity(entity.Entity('latticeCanvas', 'GUI', entity.AssignEntityID(), widget = LatticeCanvas))
             self.settings = Settings(self)
             entity.AddEntity(entity.Entity('settings', 'GUI', entity.AssignEntityID(), widget = Settings))
         else: # yes
@@ -99,7 +109,12 @@ class MainWindow(QMainWindow):
                         setattr(self, e.name, e.widget()) # Instantiate and make entities directly accessible from the main window.
         shared.lightModeOn = True
         self.page.setStyleSheet(style.Dark01())
-        self.page.layout().addWidget(self.latticeCanvas, 1, 1, 1, 8)
+        # Lattice graphics views
+        # self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
+        # print('lattice global width is ', self.latticeGlobal.width())
+        self.page.layout().addWidget(QFrame(), 1, 7, 1, 2)
+        self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
+        # self.page.layout().addWidget(self.latticeCanvas, 1, 1, 1, 8)
         self.page.layout().addWidget(self.workspace, 2, 1, 2, 6)
         self.page.layout().addWidget(self.inspector, 2, 7, 1, 2)
         self.page.layout().addWidget(QWidget(), 3, 7, 1, 2)
@@ -147,8 +162,7 @@ class MainWindow(QMainWindow):
         self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
         self.page.layout().addWidget(self.buttonHousing, 4, 8)
 
-        # testing linked lattice element here
-        l = linkedcomponent.Link(None, None)
+        # orbitresponse.OrbitResponseAction()
 
         self.showMaximized() # This throws a known but harmless error in PySide 6.9.1, to be corrected in the next version.
     

@@ -1,11 +1,10 @@
 from PySide6.QtWidgets import (
-    QWidget, QTabWidget, QListWidget, QListWidgetItem, QLabel, QSlider, QSpacerItem,
-    QHBoxLayout, QVBoxLayout, QSizePolicy
+    QWidget, QTabWidget, QListWidget, QListWidgetItem, QLabel,
+    QVBoxLayout, QSizePolicy
 )
 from PySide6.QtCore import Qt
 from .expandable import Expandable
 from . import shared
-from . import style
 
 class Inspector(QTabWidget):
     '''Inspector widget that holds contextual information on currently selected items in the app.'''
@@ -14,15 +13,19 @@ class Inspector(QTabWidget):
         shared.inspector = self
         self.parent = window
         self.setContentsMargins(0, 0, 0, 0)
+        self.setMinimumWidth(415)
+        # self.resize(200, 100)
         self.settings = dict()
         self.SetSizePolicy()
         self.mainWindow = QWidget()
         self.mainWindow.setLayout(QVBoxLayout())
-        self.mainWindow.setContentsMargins(0, 0, 0, 0)
+        self.mainWindow.layout().setContentsMargins(0, 15, 0, 0)
         self.mainWindowTitle = QLabel('')
         self.mainWindowTitle.setFixedHeight(25)
         self.mainWindowTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.main = QListWidget()
+        self.main.setFocusPolicy(Qt.NoFocus)
+        self.main.setSelectionMode(QListWidget.NoSelection)
         self.main.setFrameShape(QListWidget.NoFrame)
         self.main.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.main.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -74,24 +77,26 @@ class Inspector(QTabWidget):
         if pv is None:
             return
         if component is None:
-            component = pv.settings['components'][0]['name']
+            component = pv.settings['components']['value']['name']
         # Add a row for PV generic information.
         pvName = pv.settings['name']
         name = f'Control PV {pvName[9:]}' if pvName[:9] == 'controlPV' else pvName
         self.mainWindowTitle.setText(name)
 
-        numComponents = len(pv.settings['components'])
-        items = [None] * numComponents
-        expandables = [None] * numComponents
-        for _, c in enumerate(pv.settings['components']):
-            name = c['name'] + f' ({c['units']})' if c['units'] != '' else c['name']
-            items[_] = QListWidgetItem()
-            expandables[_] = Expandable(self.main, items[_], name, pv, _)
+        items = dict()
+        expandables = dict()
+        for k, c in pv.settings['components'].items():
+            if 'units' in c.keys():
+                name = c['name'] + f' ({c['units']})'
+            else:
+                name = c['name']
+            items[k] = QListWidgetItem()
+            expandables[k] = Expandable(self.main, items[k], name, pv, k)
             if c['name'] == component:
-                expandables[_].ToggleContent()
-            items[_].setSizeHint(expandables[_].sizeHint())
-            self.main.addItem(items[_])
-            self.main.setItemWidget(items[_], expandables[_])
+                expandables[k].ToggleContent()
+            items[k].setSizeHint(expandables[k].sizeHint())
+            self.main.addItem(items[k])
+            self.main.setItemWidget(items[k], expandables[k])
         shared.expandables = expandables
         if not deselecting:
             self.main.setUpdatesEnabled(True)

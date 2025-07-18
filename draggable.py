@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QLabel
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtWidgets import QWidget
+from PySide6.QtCore import Qt
 
 class Draggable(QWidget):
     def __init__(self):

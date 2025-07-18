@@ -1,7 +1,5 @@
 from PySide6.QtWidgets import QWidget, QListWidget, QLabel, QVBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt
-from . import style
-from . import shared
 
 class ClearFocusListWidget(QListWidget):
     def __init__(self):
