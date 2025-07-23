@@ -1,19 +1,23 @@
+from .blocks import pv, orbitresponse, kicker
+
 '''Globally relevant variables that are shared between all package scripts.'''
-entities = []
+entities = [] # States that can be saved between sessions.
 appVersion = '0.0.1' # App version.
 windowTitle = 'PV Buddy' # App title.
-app = None
+app = None # A reference to the running app.
 window = None # Reference to the main window instance.
 lightModeOn = True
-inspector = None
-workspace = None
-editors = []
+inspector = None # Displaying additional information about objects.
+workspace = None # Workspace containing editors, monitors, etc.
+editors = [] # Multiple editor tabs.
+proxyPVs = [[]] # Proxy widgets holding the PV widgets.
+PVLinkSource = None # A reference to the PV a link is being drawn from (if any).
 editorOpenIdx = -1;
 controlPVs = None
 objectivePVs = None
 entities = dict() # store each entity along with its ID for sorting and ID assignment reasons.
 entityTypes = ['PV', 'GUI'] # can be more than just PVs, anything you might want to save the state of.
-cursorTolerance = 15 # tolerance with which to ignore cursor moves due to hand shake.
+cursorTolerance = 25 # tolerance with which to ignore cursor moves due to hand shake.
 PVs = []
 expandables = dict() # expandable widgets displayed in the inspector.
 selectedPV = None # PV being displayed in the inspector currently.
@@ -22,3 +26,12 @@ latticePath = ''
 lattice = None # reference to the lattice
 elements = None # lattice element references
 names = None # lattice element names
+ 
+# A dict of block types
+blockTypes = {
+    'PV': pv.PV,
+    'Kicker': kicker.Kicker,
+    'Orbit Response': orbitresponse.OrbitResponse,
+}
+# Need to check whether the cursor is inside a socket. The best way is to keep a record here of all the sockets and their bounding rects.
+socketRects = dict()

@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QProgressBar, QStackedLayout, QStyleFactory,
 )
 from PySide6.QtGui import (
-    QIcon, QShortcut, QKeySequence
+    QIcon, QShortcut, QKeySequence, QCursor
 )
 from PySide6.QtCore import Qt
 import matplotlib.pyplot as plt
@@ -24,7 +24,7 @@ from . import style
 from . import shared
 from .lattice import latticeutils
 import at
-from copy import deepcopy
+from .blocks import orbitresponse
 
 plt.rcParams['font.size'] = 10 # Define the font size for plots.
 
@@ -40,8 +40,6 @@ class MainWindow(QMainWindow):
         shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), '..', 'Lattice', 'dls_ltb.mat')) # for now ...
         if shared.elements is None:
             shared.lattice = latticeutils.LoadLattice(shared.latticePath)
-            revLattice = [e for e in reversed(shared.lattice)]
-            shared.lattice = at.Lattice(shared.lattice + revLattice, name = 'combined RING')
             shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
             shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
         self.lightModeOn = False
@@ -162,7 +160,7 @@ class MainWindow(QMainWindow):
         self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
         self.page.layout().addWidget(self.buttonHousing, 4, 8)
 
-        # orbitresponse.OrbitResponseAction()
+        # orbitresponse.OrbitResponse(self, 'Orbit Response')
 
         self.showMaximized() # This throws a known but harmless error in PySide 6.9.1, to be corrected in the next version.
     

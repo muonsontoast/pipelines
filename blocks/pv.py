@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QSizePolicy
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QHBoxLayout, QSizePolicy, QGraphicsLineItem, QGraphicsProxyWidget
+from PySide6.QtCore import Qt, QLineF, QTimer
+from PySide6.QtGui import QPen, QColor
 from .. import style
 from ..draggable import Draggable
 from ..indicator import Indicator
@@ -10,26 +11,32 @@ from ..components import slider
 from ..components import link
 from ..components import kickangle
 from ..components import errors
+from .socket import Socket
 
 class PV(Draggable):
-    def __init__(self, window, name):
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (200, 50)):
         super().__init__()
+        self.parent = parent
+        self.proxy = proxy
+        self.hoveringSocket = False
         self.setMouseTracking(True)
         shared.PVs.append(self)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.parent = window
-        self.setLayout(QGridLayout())
-        self.setContentsMargins(1, 1, 1, 1)
+        self.setLayout(QHBoxLayout())
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
         self.settings = dict()
         self.settings['name'] = name
+        self.settings['size'] = size
         self.active = False
         self.cursorMoved = False
         self.hovering = False
         self.startPos = None
+        self.linkTarget = None
+        self.links = dict() # link line segments
         self.settings['components'] = {
-            'value': dict(name = 'Angle Errors', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = errors.ErrorsComponent),
-            'slider': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
+            'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = kickangle.KickAngleComponent),
             'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
         }
         self.settings['type'] = 'PV'
@@ -47,14 +54,16 @@ class PV(Draggable):
         self.ClearLayout()
         self.clickable = ClickableWidget(self)
         self.clickable.setLayout(QGridLayout())
+        self.clickable.layout().setContentsMargins(0, 0, 0, 0)
         self.clickable.setObjectName('PV')
         self.widget = QWidget()
         self.widget.setObjectName('pvHousing')
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.setLayout(QGridLayout())
-        self.widget.setContentsMargins(0, 0, 0, 0)
+        self.widget.layout().setContentsMargins(10, 5, 5, 5)
         # Set the size
-        size = self.settings.get('size', (250, 80))
+        size = self.settings.get('size', (300, 100))
+        print(f'size of {self.settings['name']} is {size}')
         self.setFixedSize(*size)
         self.indicator = Indicator(self, 4)
         self.widget.layout().addWidget(self.indicator, 0, 0, alignment = Qt.AlignLeft)
@@ -63,24 +72,53 @@ class PV(Draggable):
         self.title.setObjectName('title')
         self.title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.widget.layout().addWidget(self.title, 0, 1)
-        self.widget.layout().addWidget(QWidget(), 1, 1)
+        self.widget.layout().addWidget(QWidget(), 1, 1) # padding
         self.clickable.layout().addWidget(self.widget)
+        self.links['free'] = QGraphicsLineItem()
+        sockets = QWidget()
+        sockets.setLayout(QHBoxLayout())
+        sockets.layout().setContentsMargins(0, 0, 0, 0)
+        self.socket = Socket(self, 'M', size[1], size[1] / 2, 'right')
+        sockets.layout().addWidget(self.socket)
         self.layout().addWidget(self.clickable)
-
+        self.layout().addWidget(self.socket)
         self.UpdateColors()
 
+    def UpdateSocketPos(self):
+        localPos = self.socket.mapTo(self.proxy.widget(), self.socket.rect().center())
+        self.socketPos = self.proxy.scenePos() + localPos
+
     def mousePressEvent(self, event):
-        self.startPos = event.pos()
+        if self.canDrag:
+            super().mousePressEvent(event)
+            return
+        self.links['free'] = QGraphicsLineItem()
+        self.links['free'].setZValue(-20)
+        self.links['free'].setPen(QPen(QColor('#c4c4c4'), 8))
+        shared.editors[0].scene.addItem(self.links['free'])
+        self.dragging = True
+        shared.PVLinkSource = self
+        shared.activeSocket = self.socket
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if self.startPos is not None:
-            delta = event.pos() - self.startPos
-            if (delta.x() ** 2 + delta.y() ** 2) ** .5 > shared.cursorTolerance:
-                self.cursorMoved = True
         super().mouseMoveEvent(event)
+        self.UpdateSocketPos()
+        for k, v in self.links.items():
+            line = v.line()
+            line.setP1(self.socketPos)
+            self.links[k].setLine(line)
+        if self.dragging:
+            self.links['free'].setLine(QLineF(self.socketPos, self.proxy.mapToScene(event.pos())))
 
     def mouseReleaseEvent(self, event):
+        if not self.canDrag:
+            self.canDrag = True
+            self.dragging = False
+            # Hide the link by default
+            shared.editors[0].scene.removeItem(self.links['free'])
+            super().mouseReleaseEvent(event)
+            return
         if not self.cursorMoved:
             if not self.active:
                 if shared.selectedPV is not None:
@@ -90,7 +128,7 @@ class PV(Draggable):
                         shared.selectedPV.ToggleStyling()
                 entity.mainWindow.inspector.Push(self)
                 shared.selectedPV = self
-                shared.editorPopup.Push(self.settings)
+                # shared.editorPopup.Push(self.settings)
             else:
                 shared.inspector.mainWindowTitle.setText('')
                 entity.mainWindow.inspector.Push()
@@ -100,12 +138,18 @@ class PV(Draggable):
         super().mouseReleaseEvent(event)
 
     def enterEvent(self, event):
-        self.hovering = True
-        super().enterEvent(event)
+        if self.canDrag:
+            self.hovering = True
+            super().enterEvent(event)
+        else:
+            event.accept()
 
     def leaveEvent(self, event):
-        self.hovering = False
+        def logic():
+            self.hovering = False
+        QTimer.singleShot(0, logic)
         super().leaveEvent(event)
+        event.accept()
 
     def UpdateColors(self):
         if not self.active:
@@ -126,13 +170,16 @@ class PV(Draggable):
             QWidget#pvHousing {{
             background-color: #D2C5A0;
             border: 2px solid #B5AB8D;
-            border-radius: 6px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 0px;
+            border-bottom-right-radius: 0px;
+            border-bottom-left-radius: 6px;
             font-weight: bold;
             font-size: {style.fontSize};
             font-family: {style.fontFamily};
             padding: 10px;
             }}
-            QWidget#title {{
+            QLabel {{
             color: #1e1e1e;
             font-weight: bold;
             font-size: {style.fontSize};
@@ -142,14 +189,17 @@ class PV(Draggable):
             self.widget.setStyleSheet(f'''
             QWidget#pvHousing {{
             background-color: #363636;
-            border: 2px solid #1e1e1e;
-            border-radius: 6px;
+            border: 2px solid #3d3d3d;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 0px;
+            border-bottom-right-radius: 0px;
+            border-bottom-left-radius: 6px;
             font-weight: bold;
             font-size: {style.fontSize};
             font-family: {style.fontFamily};
             padding: 10px;
             }}
-            QWidget#title {{
+            QLabel {{
             color: #c4c4c4;
             font-weight: bold;
             font-size: {style.fontSize};
@@ -168,8 +218,8 @@ class PV(Draggable):
             font-family: {style.fontFamily};
             padding: 10px;
             }}
-            QWidget#title {{
-            color: #1e1e1e;
+            QLabel {{
+            color: #c4c4c4;
             font-weight: bold;
             font-size: {style.fontSize};
             font-family: {style.fontFamily};
@@ -177,9 +227,12 @@ class PV(Draggable):
         else:
             self.widget.setStyleSheet(f'''
             QWidget#pvHousing {{
-            background-color: #5C5C5C;
-            border: 4px solid #424242;
-            border-radius: 6px;
+            background-color: #565656;
+            border: 2px solid #3d3d3d;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 0px;
+            border-bottom-right-radius: 0px;
+            border-bottom-left-radius: 6px;
             font-weight: bold;
             font-size: {style.fontSize};
             font-family: {style.fontFamily};

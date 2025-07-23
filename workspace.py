@@ -69,7 +69,6 @@ class Workspace(QTabWidget):
         self.editors[idx] = editorPanel
         tabName = '\U0001F441\uFE0F ' + name if idx > 0 else '\U0001F441\uFE0F Editor'
         self.addTab(editorPanel, tabName)
-        shared.editors.append(editorPanel)
         shared.editorOpenIdx = len(shared.editors) - 1
 
     def AddControlPanel(self):
