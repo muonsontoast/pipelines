@@ -17,7 +17,7 @@ class Editor(QGraphicsView):
         super().__init__()
         self.parent = window
         self.settings = dict()
-        self.setRenderHints(QPainter.Antialiasing)
+        self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setFrameStyle(QFrame.NoFrame)

@@ -45,10 +45,15 @@ class SocketInteractable(QFrame):
             if 'free' in shared.PVLinkSource.links.keys():
                 shared.PVLinkSource.indicator.setStyleSheet(style.indicatorStyle(4, color = "#E0A159", borderColor = "#E7902D"))
                 shared.PVLinkSource.links['free'].setLine(QLineF(shared.PVLinkSource.socketPos, self.parent.parent.GetSocketPos(name)))
-                self.parent.parent.linksIn.append(shared.PVLinkSource.links['free'])
+                self.parent.parent.linksIn[shared.PVLinkSource.links['free']] = name
                 shared.PVLinkSource.links[f'{self.parent.name}'] = shared.PVLinkSource.links.pop('free')
                 # Show the link (reshows free link after hidden by the pv upon mouse release)
                 shared.editors[0].scene.addItem(shared.PVLinkSource.links[f'{self.parent.name}'])
+                # purely for testing ...
+                if self.parent.parent.runningCircle.label.isVisible():
+                    self.parent.parent.runningCircle.Stop()
+                else:
+                    self.parent.parent.runningCircle.Start()
 
     def leaveEvent(self, event):
         self.entered = False

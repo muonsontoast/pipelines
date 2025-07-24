@@ -26,6 +26,7 @@ latticePath = ''
 lattice = None # reference to the lattice
 elements = None # lattice element references
 names = None # lattice element names
+runningCircleFolder = 'C:/Users/shaun/OneDrive/Documents/Optimisation/BO/app/gfx/'
  
 # A dict of block types
 blockTypes = {

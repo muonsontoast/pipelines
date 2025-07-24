@@ -77,7 +77,7 @@ def WidgetStyle(**kwargs):
 
 def PushButtonStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderColor`, `borderRadius`, `hoverColor`, `padding`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderColor`, `borderRadius`, `hoverColor`, `padding`, `textAlign`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
     QPushButton {{
     background-color: {kwargs.get('color', buttonColor)};
@@ -88,7 +88,7 @@ def PushButtonStyle(**kwargs):
     padding: {kwargs.get('padding', 8)}px;
     border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
     border-radius: {kwargs.get('borderRadius', 3)}px;
-    text-align: center;
+    text-align: {kwargs.get('textAlign', 'center')};
     margin: 2px;
     }}
     QPushButton:hover {{
@@ -100,7 +100,7 @@ def PushButtonStyle(**kwargs):
     padding: {kwargs.get('padding', 8)}px;
     border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
     border-radius: {kwargs.get('borderRadius', 3)}px;
-    text-align: center;
+    text-align: {kwargs.get('textAlign', 'center')};
     }}'''
 
 def PushButtonBorderlessStyle(**kwargs):
@@ -526,7 +526,7 @@ def SliderStyle(**kwargs):
     border-radius: 5px;
     margin: 0 0px;
     margin-left: -1px;
-    margin-right: -1x;
+    margin-right: -1px;
     }}
     QSlider::handle:horizontal {{
     background: {kwargs.get('handleColor')};
