@@ -10,6 +10,7 @@ class Draggable(QWidget):
         self.cursorMoved = False
         self.canDrag = True
         self.dragging = False
+        self.hoveringSocket = None
 
     def mousePressEvent(self, event):
         if self.canDrag and event.button() == Qt.LeftButton:

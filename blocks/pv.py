@@ -36,7 +36,7 @@ class PV(Draggable):
         self.linkTarget = None
         self.links = dict() # link line segments
         self.settings['components'] = {
-            'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = kickangle.KickAngleComponent),
+            'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
             'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
         }
         self.settings['type'] = 'PV'
@@ -188,8 +188,8 @@ class PV(Draggable):
         else:
             self.widget.setStyleSheet(f'''
             QWidget#pvHousing {{
-            background-color: #363636;
-            border: 2px solid #3d3d3d;
+            background-color: #2e2e2e;
+            border: none;
             border-top-left-radius: 6px;
             border-top-right-radius: 0px;
             border-bottom-right-radius: 0px;
@@ -227,8 +227,7 @@ class PV(Draggable):
         else:
             self.widget.setStyleSheet(f'''
             QWidget#pvHousing {{
-            background-color: #565656;
-            border: 2px solid #3d3d3d;
+            background-color: #3e3e3e;
             border-top-left-radius: 6px;
             border-top-right-radius: 0px;
             border-bottom-right-radius: 0px;

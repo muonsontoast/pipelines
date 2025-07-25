@@ -1,12 +1,12 @@
 import at
 import numpy as np
 from copy import deepcopy
+from . import shared
 
 class Simulator:
     '''Handles offline simulations with the lattice.'''
-    def __init__(self, lattice, numParticles = 10000, inputTwiss = None, window = None):
+    def __init__(self, numParticles = 10000, inputTwiss = None, window = None):
         self.parent = window
-        self.lattice = lattice
         self.numParticles = numParticles
         if inputTwiss is None:
             self.inputTwiss = {
@@ -30,7 +30,7 @@ class Simulator:
         # sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
         sigmaMat = at.sigma_matrix(**self.inputTwiss)
         beam = at.beam(self.numParticles, sigmaMat)
-        pOut, *_ = self.lattice.track(beam, refpts = np.arange(len(self.lattice)), nturns = 1);
+        pOut, *_ = shared.lattice.track(beam, refpts = np.arange(len(shared.lattice)), nturns = 1);
         return pOut, _
 
     def CalculateSurvivingFraction(self, pOut, returnMask = False):
@@ -49,10 +49,10 @@ class Simulator:
                 # PyAT expects kick angles in units of radians
                 kickAngle[0] *= 1e-3
                 kickAngle[1] *= 1e-3
-                self.lattice[slider['elementIdx']].KickAngle = kickAngle
+                shared.lattice[slider['elementIdx']].KickAngle = kickAngle
 
     def ApplyGlobalBeamPipeAperture(self, bounds):
-        newLattice = deepcopy(self.lattice)
+        newLattice = deepcopy(shared.lattice)
         aperture = at.elements.Aperture('BeamPipe', bounds)
 
         for _ in range(len(newLattice) - 1, -1, -1):

@@ -12,6 +12,7 @@ class RunningCircle(QWidget):
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().addWidget(self.label)
+        self.running = False
         self.frames = []
         self.numFrames = 119
         self.frameSize = 30
@@ -39,11 +40,13 @@ class RunningCircle(QWidget):
         self.label.setVisible(False)
 
     def Stop(self):
+        self.running = False
         self.label.setVisible(False)
         self.timer.stop()
     
     def Start(self, timeout = 15):
         # default refresh rate is 60 fps / 15 ms
+        self.running = True
         self.label.setVisible(True)
         self.timer.start(timeout)
 

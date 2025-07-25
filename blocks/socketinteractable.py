@@ -31,6 +31,8 @@ class SocketInteractable(QFrame):
         '''Another PV mouseMove event is in control until the mouse is released, this method will then be called upon release.'''
         if self.entered:
             return
+        print('Entered the socket of', self.parent.parent.settings['name'])
+        self.parent.parent.hoveringSocket = self.parent
         self.entered = True
         self.parent.parent.canDrag = False
         self.parent.parent.hovering = False
@@ -49,11 +51,19 @@ class SocketInteractable(QFrame):
                 shared.PVLinkSource.links[f'{self.parent.name}'] = shared.PVLinkSource.links.pop('free')
                 # Show the link (reshows free link after hidden by the pv upon mouse release)
                 shared.editors[0].scene.addItem(shared.PVLinkSource.links[f'{self.parent.name}'])
-                # purely for testing ...
-                if self.parent.parent.runningCircle.label.isVisible():
-                    self.parent.parent.runningCircle.Stop()
-                else:
+                if self.parent.parent.__class__ == shared.blockTypes['Orbit Response']:
+                    if self.parent.name == 'Correctors':
+                        self.parent.parent.correctors.append(shared.PVLinkSource)
+                    else:
+                        self.parent.parent.BPMs.append(shared.PVLinkSource)
+
+                if not self.parent.parent.runningCircle.running:
+                    print('Starting running circle')
                     self.parent.parent.runningCircle.Start()
+                else:
+                    print('Stopping running circle')
+                    self.parent.parent.runningCircle.Stop()
+
 
     def leaveEvent(self, event):
         self.entered = False

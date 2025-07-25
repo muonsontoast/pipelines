@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QHBoxLayout, QSizePolicy, QSpacerItem, QGraphicsLineItem, QGraphicsProxyWidget
 from PySide6.QtCore import Qt
 from .pv import PV
+from ..components import kickangle
 from .. import shared
 from .. import style
 
@@ -12,10 +13,11 @@ class Kicker(PV):
         self.typeLabel.setAlignment(Qt.AlignLeft)
         # invoke parent pv constructor
         super().__init__(parent, proxy, name, size)
+        self.settings['alignment'] = alignment
+        self.settings['components']['value'] = dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = kickangle.KickAngleComponent)
         # Add labels to layout
         self.widget.layout().addWidget(self.typeLabel, 1, 1, alignment = Qt.AlignLeft)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Preferred, QSizePolicy.Expanding))
-        self.settings['alignment'] = alignment
         self.typeLabel.setText(f'~ Kicker ({self.settings['alignment']})')
         # Apply colors
         self.UpdateColors()

@@ -30,32 +30,30 @@ class SliderComponent(QWidget):
         self.range = pv.settings['components'][component]['max'] - pv.settings['components'][component]['min']
         self.steps = sliderSteps
         # Slider row
-        sliderRow = QWidget()
-        sliderRow.setLayout(QHBoxLayout())
-        sliderRow.layout().setContentsMargins(self.sliderOffset, 0, 0, 0)
-        sliderRow.layout().setSpacing(0)
+        self.sliderRow = QWidget()
+        self.sliderRow.setLayout(QHBoxLayout())
+        self.sliderRow.layout().setContentsMargins(self.sliderOffset, 0, 0, 0)
+        self.sliderRow.layout().setSpacing(0)
         # Slider
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.slider.setRange(0, sliderSteps)
         self.slider.setValue(self.ToSliderValue(pv.settings['components'][component]['value']))
         self.slider.valueChanged.connect(self.UpdateSliderValue)
-        sliderRow.layout().addWidget(self.slider)
-        sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
+        self.sliderRow.layout().addWidget(self.slider)
+        self.sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
         # Value
         self.value = QLineEdit(f'{pv.settings['components'][component]['value']:.{self.floatdp}f}')
-        if self.hideRange:
-            self.value.setEnabled(False)
         self.value.setAlignment(Qt.AlignCenter)
         self.value.setFixedSize(75, 25)
         self.value.returnPressed.connect(self.SetSliderValue)
-        sliderRow.layout().addWidget(self.value, alignment = Qt.AlignRight)
-        sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
+        self.sliderRow.layout().addWidget(self.value, alignment = Qt.AlignRight)
+        self.sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
         # Reset
         self.resetButton = QPushButton('Reset')
         self.resetButton.setFixedWidth(65)
         self.resetButton.clicked.connect(self.Reset)
-        sliderRow.layout().addWidget(self.resetButton)
+        self.sliderRow.layout().addWidget(self.resetButton)
         if not self.hideRange:
             # Minimum
             self.minimumRow = QWidget()
@@ -97,7 +95,7 @@ class SliderComponent(QWidget):
             self.defaultRow.layout().addWidget(self.default, alignment = Qt.AlignRight)
             self.defaultRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
         # Add rows
-        self.layout().addWidget(sliderRow)
+        self.layout().addWidget(self.sliderRow)
         if not self.hideRange:
             self.layout().addWidget(self.minimumRow)
             self.layout().addWidget(self.maximumRow)
@@ -120,6 +118,17 @@ class SliderComponent(QWidget):
         self.value.clearFocus()
         self.value.setText(f'{float(self.value.text()):.{self.floatdp}f}')
         self.pv.settings['components'][self.component]['value'] = float(self.value.text())
+        if self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
+            value = QLineEdit(f'{self.pv.settings['components'][self.component]['value']:.{self.floatdp}f}')
+            value.setAlignment(Qt.AlignCenter)
+            value.setFixedSize(75, 25)
+            value.returnPressed.connect(self.SetSliderValue)
+            self.sliderRow.layout().replaceWidget(self.value, value)
+            self.value.setParent(None)
+            self.value.deleteLater()
+            shared.app.processEvents()
+            self.value = value
+            self.UpdateColors()
         self.UpdateSlider()
 
     def UpdateSlider(self):
@@ -210,8 +219,8 @@ class SliderComponent(QWidget):
                 self.defaultLabel.setStyleSheet(style.LabelStyle(fontColor = '#1e1e1e'))
             self.resetButton.setStyleSheet(style.PushButtonStyle(color = '#D2C5A0', borderColor = '#A1946D', hoverColor = '#B5AB8D', fontColor = '#1e1e1e', padding = 4))
             return
-        self.slider.setStyleSheet(style.SliderStyle(backgroundColor = "#2d2d2d", fillColor = fillColorDark, handleColor = "#858585"))
-        self.value.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))
+        self.slider.setStyleSheet(style.SliderStyle(backgroundColor = "#202020", fillColor = fillColorDark, handleColor = "#858585"))
+        self.value.setStyleSheet(style.LineEditStyle(color = '#202020', bold = True, fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))
         if not self.hideRange:
             self.minimum.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))
             self.maximum.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))

@@ -1,12 +1,13 @@
-from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QLabel, QMenu, QSpacerItem, QGridLayout, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox
-from PySide6.QtCore import Qt, QPointF, QPoint
-from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QGraphicsLineItem, QLabel, QMenu, QSpacerItem, QGridLayout, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox
+from PySide6.QtCore import Qt, QPointF, QPoint, QLineF
+from PySide6.QtGui import QAction, QPen, QColor
 from ..draggable import Draggable
 from .socket import Socket
 from ..ui.runningcircle import RunningCircle
 from .. import shared
 from .. import style
 from ..components.slider import SliderComponent
+from ..actions.orbitresponse import OrbitResponseAction
 import os
 
 '''
@@ -24,13 +25,18 @@ class OrbitResponse(Draggable):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.parent = parent
         self.proxy = proxy
+        self.correctors = list()
+        self.BPMs = list()
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
+        self.data = None # holds the data which is accessed by downstream blocks.
         self.settings = dict()
         self.settings['name'] = name
         self.settings['components'] = {
+            'current': dict(name = 'Current', value = .5, min = .05, max = 5, default = .5, units = 'mrad', type = SliderComponent),
             'steps': dict(name = 'Steps', value = 3, min = 3, max = 9, default = 3, units = 'mrad', type = SliderComponent),
+            'repeats': dict(name = 'Repeats', value = 5, min = 1, max = 20, default = 5, units = '', type = SliderComponent)
         }
         self.active = False
         self.cursorMoved = False
@@ -39,10 +45,14 @@ class OrbitResponse(Draggable):
         # These need to be dicts, key = link / line item, value = socket
         self.linksIn = dict()
         self.linksOut = dict()
+        self.action = OrbitResponseAction()
         self.Push()
 
     def Push(self):
         self.ClearLayout()
+        self.main = QWidget()
+        self.main.setLayout(QVBoxLayout())
+        self.main.layout().setContentsMargins(0, 0, 0, 0)
         self.widget = QWidget()
         self.widget.setObjectName('orbitResponse')
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -50,10 +60,11 @@ class OrbitResponse(Draggable):
         self.widget.layout().setContentsMargins(0, 0, 0, 0)
         self.widget.layout().setSpacing(0)
         # Set the size
-        size = self.settings.get('size', (500, 350))
+        size = self.settings.get('size', (550, 440))
         self.setFixedSize(*size)
         # Header
         header = QWidget()
+        header.setStyleSheet(style.WidgetStyle(color = "#2867B5", borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
         header.setFixedHeight(40)
         header.setLayout(QHBoxLayout())
         header.layout().setContentsMargins(15, 0, 15, 0)
@@ -63,20 +74,13 @@ class OrbitResponse(Draggable):
         self.title.layout().setContentsMargins(0, 0, 0, 0)
         self.title.setObjectName('title')
         self.title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        # self.widget.layout().addWidget(self.title)
         header.layout().addWidget(self.title)
         # Running
         self.runningCircle = RunningCircle()
         self.runningCircle.CreateTimer()
-        # self.widget.layout().addWidget(self.runningCircle)
         header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
         # Add header to layout
         self.widget.layout().addWidget(header)
-        # some pad
-        space = QWidget()
-        space.setStyleSheet('background-color: #3d3d3d')
-        space.setFixedHeight(10)
-        self.widget.layout().addWidget(space)
         # On/off-line
         self.online = False
         self.mode = QWidget()
@@ -110,33 +114,13 @@ class OrbitResponse(Draggable):
         self.order.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
         self.order.layout().addWidget(self.orderOptions)
         self.widget.layout().addWidget(self.order)
+        # # Corrector step current / kick
+        self.CreateSection('current', 'Kick / step (mrad)', 1e6, 3)
         # Corrector steps
-        stepsHousing = QWidget()
-        stepsHousing.setLayout(QHBoxLayout())
-        stepsHousing.layout().setContentsMargins(15, 20, 15, 0)
-        stepsTitle = QLabel('Corrector steps (centered on 0 mrad)')
-        stepsTitle.setStyleSheet(style.LabelStyle(padding = 0, fontColor = '#c4c4c4'))
-        stepsHousing.layout().addWidget(stepsTitle)
-        self.widget.layout().addWidget(stepsHousing, alignment = Qt.AlignLeft)
-        stepsWidget = QWidget()
-        stepsWidget.setFixedHeight(50)
-        stepsWidget.setLayout(QVBoxLayout())
-        stepsWidget.layout().setContentsMargins(15, 10, 15, 0)
-        self.steps = QListWidget()
-        stepsWidget.layout().addWidget(self.steps)
-        self.steps.setFocusPolicy(Qt.NoFocus)
-        self.steps.setSelectionMode(QListWidget.NoSelection)
-        self.steps.setStyleSheet(style.InspectorSectionStyle())
-        self.steps.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.steps.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.steps.setVerticalScrollMode(QListWidget.ScrollPerPixel)
-        self.stepsAmount = SliderComponent(self, 'steps', 3, 0, hideRange = True, paddingBottom = 5, sliderOffset = 0, sliderRowSpacing = 15)
-        self.stepsAmount.setMaximumWidth(320)
-        item = QListWidgetItem()
-        item.setSizeHint(self.stepsAmount.sizeHint())
-        self.steps.addItem(item)
-        self.steps.setItemWidget(item, self.stepsAmount)
-        self.widget.layout().addWidget(stepsWidget)
+        self.CreateSection('steps', '# Steps', 3, 0)
+        # BPM Repeats ...
+        self.CreateSection('repeats', '# BPM measurements (0.2s wait)', 19, 0)
+        # Some padding
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)) # for spacing
         # Sockets
         sockets = QWidget()
@@ -171,9 +155,75 @@ class OrbitResponse(Draggable):
         # Add sockets to layout
         self.layout().addWidget(sockets)
         # Add orbit response widget to layout
-        self.layout().addWidget(self.widget)
+        self.main.layout().addWidget(self.widget)
+        # Control buttons
+        self.buttons = QWidget()
+        buttonsHeight = 35
+        self.buttons.setFixedHeight(buttonsHeight)
+        self.buttons.setLayout(QHBoxLayout())
+        self.buttons.layout().setContentsMargins(15, 2, 15, 10)
+        self.start = QPushButton('Start')
+        self.start.setFixedHeight(buttonsHeight)
+        self.start.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
+        self.start.clicked.connect(self.Start)
+        self.pause = QPushButton('Pause')
+        self.pause.setFixedHeight(buttonsHeight)
+        self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
+        self.stop = QPushButton('Stop')
+        self.stop.setFixedHeight(buttonsHeight)
+        self.stop.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
+        self.clear = QPushButton('Clear')
+        self.clear.setFixedHeight(buttonsHeight)
+        self.clear.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
+        self.buttons.layout().addWidget(self.start)
+        self.buttons.layout().addWidget(self.pause)
+        self.buttons.layout().addWidget(self.stop)
+        self.buttons.layout().addWidget(self.clear)
+        self.main.layout().addWidget(self.buttons)
+        self.layout().addWidget(self.main)
+        # Output socket
+        self.outputSocketHousing = QWidget()
+        self.outputSocketHousing.setLayout(QHBoxLayout())
+        self.outputSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
+        self.outputSocketHousing.setFixedSize(50, 50)
+        self.outputSocket = Socket(self, 'M', 50, 25, 'right', 'Output')
+        self.outputSocketHousing.layout().addWidget(self.outputSocket)
+        self.layout().addWidget(self.outputSocketHousing)
         # Update colors
         self.UpdateColors()
+
+    def Start(self):
+        print('Starting orbit response measurement')
+        self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
+
+    def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
+        housing = QWidget()
+        housing.setLayout(QHBoxLayout())
+        housing.layout().setContentsMargins(15, 20, 15, 0)
+        title = QLabel(title)
+        title.setStyleSheet(style.LabelStyle(padding = 0, fontColor = '#c4c4c4'))
+        housing.layout().addWidget(title)
+        self.widget.layout().addWidget(housing, alignment = Qt.AlignLeft)
+        widget = QWidget()
+        widget.setFixedHeight(50)
+        widget.setLayout(QVBoxLayout())
+        widget.layout().setContentsMargins(15, 10, 15, 0)
+        setattr(self, name, QListWidget())
+        v = getattr(self, name)
+        widget.layout().addWidget(v)
+        v.setFocusPolicy(Qt.NoFocus)
+        v.setSelectionMode(QListWidget.NoSelection)
+        v.setStyleSheet(style.InspectorSectionStyle())
+        setattr(self, f'{name}Amount', SliderComponent(self, f'{name}', sliderSteps, floatdp, hideRange = True, paddingBottom = 5, sliderOffset = 0, sliderRowSpacing = 15))
+        amount = getattr(self, f'{name}Amount')
+        if disableValue:
+            amount.value.setEnabled(False)
+        amount.setMaximumWidth(320)
+        item = QListWidgetItem()
+        item.setSizeHint(amount.sizeHint())
+        v.addItem(item)
+        v.setItemWidget(item, amount)
+        self.widget.layout().addWidget(widget)
 
     def SwitchMode(self):
         if self.online:
@@ -207,6 +257,20 @@ class OrbitResponse(Draggable):
 
     def mousePressEvent(self, event):
         self.startPos = event.pos()
+        print('Pressing down on orbit response block.')
+        if self.canDrag or (self.hoveringSocket and self.hoveringSocket.name != 'Output'):
+            print('but it can be dragged')
+            super().mousePressEvent(event)
+            return
+        self.hoveringSocket = None
+        print('drawing link')
+        self.linksOut['free'] = QGraphicsLineItem()
+        self.linksOut['free'].setZValue(-20)
+        self.linksOut['free'].setPen(QPen(QColor('#c4c4c4'), 8))
+        shared.editors[0].scene.addItem(self.linksOut['free'])
+        self.dragging = True
+        shared.PVLinkSource = self
+        shared.activeSocket = self.outputSocket
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
@@ -215,6 +279,33 @@ class OrbitResponse(Draggable):
             line = link.line()
             line.setP2(self.GetSocketPos(socket))
             link.setLine(line)
+        if not self.canDrag:
+            outputSocketPos = self.GetSocketPos('output')
+            for k, v in self.linksOut.items():
+                line = v.line()
+                line.setP1(outputSocketPos)
+                self.linksOut[k].setLine(line)
+            if self.dragging:
+                self.linksOut['free'].setLine(QLineF(outputSocketPos, self.proxy.mapToScene(event.pos())))
+
+    def mouseReleaseEvent(self, event):
+        if not self.canDrag:
+            self.canDrag = True
+            self.dragging = False
+            # Hide the link by default
+            shared.editors[0].scene.removeItem(self.linksOut['free'])
+            super().mouseReleaseEvent(event)
+            return
+        if not self.cursorMoved:
+            if not self.active:
+                if shared.selectedPV is not None:
+                    if shared.selectedPV != self:
+                        shared.selectedPV.startPos = None
+                        shared.selectedPV.cursorMoved = False
+                # shared.editorPopup.Push(self.settings)
+        self.cursorMoved = False
+        self.startPos = None
+        super().mouseReleaseEvent(event)
 
     def ClearLayout(self):
         while self.layout() and self.layout().count():
@@ -243,11 +334,12 @@ class OrbitResponse(Draggable):
             font-family: {style.fontFamily};
             }}''')
         else:
+            "#282828"
             self.widget.setStyleSheet(f'''
             QWidget#orbitResponse {{
-            background-color: #363636;
-            border: 2px solid #3d3d3d;
-            border-radius: 4px;
+            background-color: #2e2e2e;
+            border: none;
+            border-radius: 12px;
             font-weight: bold;
             font-size: {style.fontSize};
             font-family: {style.fontFamily};
@@ -261,13 +353,8 @@ class OrbitResponse(Draggable):
             }}''')
             self.correctorSocketHousing.setStyleSheet(f'''
             QWidget#correctorSocketTitle {{
-            background-color: #363636;
+            background-color: #2e2e2e;
             color: #c4c4c4;
-            border-left: 2px solid #3d3d3d;
-            border-top: 2px solid #3d3d3d;
-            border-right: none;
-            border-bottom: 2px solid #3d3d3d;          
-            border-radius: 0px;
             font-weight: bold;
             font-size: {style.fontSize};
             font-family: {style.fontFamily};
@@ -276,13 +363,8 @@ class OrbitResponse(Draggable):
             ''')
             self.BPMSocketHousing.setStyleSheet(f'''
             QWidget#BPMSocketTitle {{
-            background-color: #363636;
+            background-color: #2e2e2e;
             color: #c4c4c4;
-            border-left: 2px solid #3d3d3d;
-            border-top: 2px solid #3d3d3d;
-            border-right: none;
-            border-bottom: 2px solid #3d3d3d;          
-            border-radius: 0px;
             font-weight: bold;
             font-size: {style.fontSize};
             font-family: {style.fontFamily};

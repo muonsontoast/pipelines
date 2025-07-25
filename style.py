@@ -55,11 +55,22 @@ dark01 = {
 
 def WidgetStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderRadius`, `borderThickness`, `borderColor`, `borders` = list(<left/top/right/down> (str)), `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderRadius`, `borderRadius<TopLeft/TopRight/BottomRight/BottomLeft>`, `borderThickness`, `borderColor`, `borders` = list(<left/top/right/down> (str)), `fontColor`, `fontSize`, `fontFamily`'''
     borders = kwargs.get('borders', list())
     borderThickness = f'{kwargs.get('borderThickness', 2)}px solid {kwargs.get('borderColor'), 'transparent'}'
+    borderRadius = kwargs.get('borderRadius', '')
+    if borderRadius != '':
+        borderRadius = f'''
+        border-radius: {borderRadius}px;
+        '''
+    else:
+        borderRadius = f'''
+        border-top-left-radius: {kwargs.get('borderRadiusTopLeft', '0')}px;
+        border-top-right-radius: {kwargs.get('borderRadiusTopRight', '0')}px;
+        border-bottom-right-radius: {kwargs.get('borderRadiusBottomRight', '0')}px;
+        border-bottom-left-radius: {kwargs.get('borderRadiusBottomLeft', '0')}px;
+        '''
     borders = f'''
-    border-radius: {kwargs.get('borderRadius', 0)}px;
     border-left: {"none" if "left" not in borders else borderThickness};
     border-top: {"none" if "top" not in borders else borderThickness};
     border-right: {"none" if "right" not in borders else borderThickness};
@@ -67,11 +78,12 @@ def WidgetStyle(**kwargs):
     '''
     return f'''
     QWidget {{
-    background-color: {kwargs.get('color', buttonColor)};
+    background-color: {kwargs.get('color', '#242424')};
     color: {kwargs.get('fontColor', fontColor)};
     font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
+    {borderRadius}
     {borders}
     }}'''
 
@@ -87,7 +99,7 @@ def PushButtonStyle(**kwargs):
     font-weight: bold;
     padding: {kwargs.get('padding', 8)}px;
     border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
-    border-radius: {kwargs.get('borderRadius', 3)}px;
+    border-radius: {kwargs.get('borderRadius', 5)}px;
     text-align: {kwargs.get('textAlign', 'center')};
     margin: 2px;
     }}
@@ -99,7 +111,7 @@ def PushButtonStyle(**kwargs):
     font-weight: bold;
     padding: {kwargs.get('padding', 8)}px;
     border: 2px solid {kwargs.get('borderColor', buttonBorderColor)};
-    border-radius: {kwargs.get('borderRadius', 3)}px;
+    border-radius: {kwargs.get('borderRadius', 5)}px;
     text-align: {kwargs.get('textAlign', 'center')};
     }}'''
 
@@ -195,13 +207,15 @@ def ComboStyle(**kwargs):
 
 def LineEditStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderColor`, `borderRadius`, `hoverColor`, `paddingLeft`, `paddingBottom`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderColor`, `borderRadius`, `hoverColor`, `paddingLeft`, `paddingBottom`, `bold`, `fontColor`, `fontSize`, `fontFamily`'''
+    bold = 'font-weight: bold;' if kwargs.get('bold', False) else ''
     return f'''
     QLineEdit {{
     background-color: {kwargs.get('color', buttonColor)};
     color: {kwargs.get('fontColor', fontColor)};
     font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
+    {bold}
     text-align: center;
     padding-left: {kwargs.get('paddingLeft', 0)}px;
     padding-bottom: {kwargs.get('paddingBottom', 0)}px;
@@ -627,7 +641,8 @@ def Dark01():
         if e.widget is not None:
             e.widget.UpdateColors()
     for e in shared.editors:
-        e.scene.setBackgroundBrush(QColor(38, 38, 38))
+        '#242424'
+        e.scene.setBackgroundBrush(QColor(34, 34, 34))
         if hasattr(e, 'popup'):
             e.popup.UpdateColors()
     shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#262626'))

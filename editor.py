@@ -17,15 +17,16 @@ class Editor(QGraphicsView):
         super().__init__()
         self.parent = window
         self.settings = dict()
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        # self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scene = QGraphicsScene()
         self.setScene(self.scene)
-        self.setSceneRect(0, 0, 3000, 3000)
+        self.setSceneRect(0, 0, 10000, 10000)
         shared.editors.append(self)
         # self.popup = editorpopup.Popup(self, 975, 125, 250, 450)
         # Test widget
@@ -104,9 +105,10 @@ class Editor(QGraphicsView):
         entity.mainWindow.inspector.Push(deselecting = True)
 
     def wheelEvent(self, event):
-        if event.angleDelta().y() != 0:
-            return
-        super().wheelEvent(event)
+        angle = event.angleDelta().y()
+        zoomFactor = 1 + angle / 1000
+        self.scale(zoomFactor, zoomFactor)
+        event.accept()
 
     def AssignSettings(self, **kwargs):
         for k, v in kwargs.items():

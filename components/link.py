@@ -18,6 +18,7 @@ class LinkComponent(QWidget):
         self.component = component
         self.linkedElement = None
         self.displayHeight = 0
+        self.pvHasLinkedElement = 'linkedElement' in self.pv.settings.keys()
         # Lattice elements and a list of names + indexes
         if shared.elements is None:
             shared.lattice = latticeutils.LoadLattice(shared.latticePath)
@@ -47,7 +48,8 @@ class LinkComponent(QWidget):
         self.type.layout().setContentsMargins(0, 0, 0, 0)
         self.typeTitle = QLabel('Type')
         self.type.layout().addWidget(self.typeTitle, alignment = Qt.AlignLeft)
-        self.typeEdit = QLineEdit('None')
+        text = 'None' if not self.pvHasLinkedElement else self.pv.settings['linkedElement'].Type
+        self.typeEdit = QLineEdit(text)
         self.typeEdit.setAlignment(Qt.AlignCenter)
         self.typeEdit.setFixedWidth(100)
         self.typeEdit.setEnabled(False)
@@ -59,7 +61,8 @@ class LinkComponent(QWidget):
         self.position.layout().setContentsMargins(0, 0, 0, 0)
         self.positionTitle = QLabel('Position (m)')
         self.position.layout().addWidget(self.positionTitle, alignment = Qt.AlignLeft)
-        self.positionEdit = QLineEdit('None')
+        text = 'None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].iloc[2]:.3f}'
+        self.positionEdit = QLineEdit(text)
         self.positionEdit.setAlignment(Qt.AlignCenter)
         self.positionEdit.setFixedWidth(80)
         self.positionEdit.setEnabled(False)
@@ -71,7 +74,8 @@ class LinkComponent(QWidget):
         self.index.layout().setContentsMargins(0, 0, 0, 0)
         self.indexTitle = QLabel('Index')
         self.index.layout().addWidget(self.indexTitle, alignment = Qt.AlignLeft)
-        self.indexEdit = QLineEdit('None')
+        text = 'None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].Index}'
+        self.indexEdit = QLineEdit(text)
         self.indexEdit.setAlignment(Qt.AlignCenter)
         self.indexEdit.setFixedWidth(80)
         self.indexEdit.setEnabled(False)
@@ -94,6 +98,7 @@ class LinkComponent(QWidget):
         self.typeEdit.setText(self.linkedElement.Type)
         self.positionEdit.setText(f'{self.linkedElement.iloc[2]:.3f}')
         self.indexEdit.setText(f'{self.linkedElement.Index}')
+        self.pv.settings['linkedElement'] = self.linkedElement
 
     def UpdateColors(self):
         if shared.lightModeOn:
