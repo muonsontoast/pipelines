@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsProxyWidget
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QPixmap, QImage
-from .. import shared
 import os
+from .. import memoryutils
+from .. import shared
 
 class RunningCircle(QWidget):
     def __init__(self):
@@ -32,7 +33,7 @@ class RunningCircle(QWidget):
             scaledFrame = QPixmap.fromImage(scaledFrame)
             scaledFrame.setDevicePixelRatio(1.0)
             self.frames.append(scaledFrame)
-        print('Finished loading running circle frames into memory')
+        print(f'Finished loading frames ({memoryutils.GetFrameArraySize(self.frames):.2f} MB)')
 
         self.currentFrame = 0
         self.label.setPixmap(self.frames[self.currentFrame])
