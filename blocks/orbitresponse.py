@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QGraphicsLineItem, QLabel, QMenu, QSpacerItem, QGridLayout, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox
-from PySide6.QtCore import Qt, QPointF, QPoint, QLineF
-from PySide6.QtGui import QAction, QPen, QColor
+from PySide6.QtCore import Qt, QPointF, QPoint, QLineF, QTimer
+from PySide6.QtGui import QPen, QColor
 from ..draggable import Draggable
 from .socket import Socket
 from ..ui.runningcircle import RunningCircle
@@ -8,7 +8,6 @@ from .. import shared
 from .. import style
 from ..components.slider import SliderComponent
 from ..actions.orbitresponse import OrbitResponseAction
-import os
 
 '''
 Orbit Response Block handles orbit response measurements off(on)line. It has two F sockets, one for Correctors, one for BPMs. 
@@ -19,19 +18,17 @@ to save the data, or for further processing in a pipeline.
 
 class OrbitResponse(Draggable):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, name):
-        super().__init__()
+        super().__init__(proxy)
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.parent = parent
-        self.proxy = proxy
         self.correctors = list()
         self.BPMs = list()
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
         self.data = None # holds the data which is accessed by downstream blocks.
-        self.settings = dict()
         self.settings['name'] = name
         self.settings['components'] = {
             'current': dict(name = 'Current', value = .5, min = .05, max = 5, default = .5, units = 'mrad', type = SliderComponent),
@@ -39,7 +36,6 @@ class OrbitResponse(Draggable):
             'repeats': dict(name = 'Repeats', value = 5, min = 1, max = 20, default = 5, units = '', type = SliderComponent)
         }
         self.active = False
-        self.cursorMoved = False
         self.hovering = False
         self.startPos = None
         # These need to be dicts, key = link / line item, value = socket
@@ -49,7 +45,7 @@ class OrbitResponse(Draggable):
         self.Push()
 
     def Push(self):
-        self.ClearLayout()
+        super().Push()
         self.main = QWidget()
         self.main.setLayout(QVBoxLayout())
         self.main.layout().setContentsMargins(0, 0, 0, 0)
@@ -59,21 +55,14 @@ class OrbitResponse(Draggable):
         self.widget.setLayout(QVBoxLayout())
         self.widget.layout().setContentsMargins(0, 0, 0, 0)
         self.widget.layout().setSpacing(0)
-        # Set the size
-        size = self.settings.get('size', (550, 440))
-        self.setFixedSize(*size)
         # Header
         header = QWidget()
         header.setStyleSheet(style.WidgetStyle(color = "#2867B5", borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
         header.setFixedHeight(40)
         header.setLayout(QHBoxLayout())
         header.layout().setContentsMargins(15, 0, 15, 0)
-        name = f'Orbit Response (Empty)'
-        self.title = QLabel(name)
-        self.title.setLayout(QVBoxLayout())
-        self.title.layout().setContentsMargins(0, 0, 0, 0)
+        self.title = QLabel(f'{self.settings['name']} (Empty)')
         self.title.setObjectName('title')
-        self.title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         header.layout().addWidget(self.title)
         # Running
         self.runningCircle = RunningCircle()
@@ -132,7 +121,7 @@ class OrbitResponse(Draggable):
         self.correctorSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.correctorSocketHousing.layout().setSpacing(0)
         self.correctorSocketHousing.setFixedSize(140, 50)
-        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'Correctors', acceptableTypes = [shared.blockTypes['Kicker'], shared.blockTypes['PV']])
+        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'corrector', acceptableTypes = [shared.blockTypes['Kicker'], shared.blockTypes['PV']])
         self.correctorSocketHousing.layout().addWidget(self.correctorSocket)
         correctorSocketTitle = QLabel('Correctors')
         correctorSocketTitle.setObjectName('correctorSocketTitle')
@@ -145,7 +134,7 @@ class OrbitResponse(Draggable):
         self.BPMSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.BPMSocketHousing.layout().setSpacing(0)
         self.BPMSocketHousing.setFixedSize(140, 50)
-        self.BPMSocket = Socket(self, 'F', 50, 25, 'left', 'BPMs', acceptableTypes = [shared.blockTypes['PV']])
+        self.BPMSocket = Socket(self, 'F', 50, 25, 'left', 'BPM', acceptableTypes = [shared.blockTypes['BPM']])
         self.BPMSocketHousing.layout().addWidget(self.BPMSocket)
         BPMSocketTitle = QLabel('BPMs')
         BPMSocketTitle.setObjectName('BPMSocketTitle')
@@ -186,7 +175,7 @@ class OrbitResponse(Draggable):
         self.outputSocketHousing.setLayout(QHBoxLayout())
         self.outputSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.outputSocketHousing.setFixedSize(50, 50)
-        self.outputSocket = Socket(self, 'M', 50, 25, 'right', 'Output')
+        self.outputSocket = Socket(self, 'M', 50, 25, 'right', 'output')
         self.outputSocketHousing.layout().addWidget(self.outputSocket)
         self.layout().addWidget(self.outputSocketHousing)
         # Update colors
@@ -194,7 +183,15 @@ class OrbitResponse(Draggable):
 
     def Start(self):
         print('Starting orbit response measurement')
-        self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
+        self.runningCircle.Start()
+        self.data = self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
+        print('Stopping orbit response measurement')
+        # for testing, will be removed ...
+        def dummy():
+            self.runningCircle.Stop()
+            self.title.setText('Orbit Response (Holding Data)')
+        QTimer.singleShot(2000, dummy)
+        #
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()
@@ -242,78 +239,31 @@ class OrbitResponse(Draggable):
         position = self.orderOptions.mapToGlobal(QPoint(0, self.orderOptions.height()))
         self.orderMenu.popup(position)
 
-    def GetSocketPos(self, name):
-        socket = getattr(self, f'{name}Socket')
-        anchor = QPointF(30, socket.rect().height() / 2) # add a small horizontal pad for display tidiness
-        localPos = socket.mapTo(self.proxy.widget(), anchor)
-        return self.proxy.scenePos() + localPos
-
-    def UpdateColors(self):
-        if not self.active:
-            print('Applying base styling')
-            self.BaseStyling()
-            return
-        self.SelectedStyling()
-
     def mousePressEvent(self, event):
         self.startPos = event.pos()
-        print('Pressing down on orbit response block.')
         if self.canDrag or (self.hoveringSocket and self.hoveringSocket.name != 'Output'):
-            print('but it can be dragged')
+            print('returning')
             super().mousePressEvent(event)
             return
-        self.hoveringSocket = None
-        print('drawing link')
-        self.linksOut['free'] = QGraphicsLineItem()
-        self.linksOut['free'].setZValue(-20)
-        self.linksOut['free'].setPen(QPen(QColor('#c4c4c4'), 8))
-        shared.editors[0].scene.addItem(self.linksOut['free'])
-        self.dragging = True
+        # self.hoveringSocket = None
+        # print('drawing link')
+        # self.linksOut['free'] = QGraphicsLineItem()
+        # self.linksOut['free'].setZValue(-20)
+        # self.linksOut['free'].setPen(QPen(QColor('#c4c4c4'), 8))
+        # shared.editors[0].scene.addItem(self.linksOut['free'])
+        # self.dragging = True
         shared.PVLinkSource = self
         shared.activeSocket = self.outputSocket
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event):
-        super().mouseMoveEvent(event)
-        for link, socket in self.linksIn.items():
-            line = link.line()
-            line.setP2(self.GetSocketPos(socket))
-            link.setLine(line)
-        if not self.canDrag:
-            outputSocketPos = self.GetSocketPos('output')
-            for k, v in self.linksOut.items():
-                line = v.line()
-                line.setP1(outputSocketPos)
-                self.linksOut[k].setLine(line)
-            if self.dragging:
-                self.linksOut['free'].setLine(QLineF(outputSocketPos, self.proxy.mapToScene(event.pos())))
-
-    def mouseReleaseEvent(self, event):
-        if not self.canDrag:
-            self.canDrag = True
-            self.dragging = False
-            # Hide the link by default
-            shared.editors[0].scene.removeItem(self.linksOut['free'])
-            super().mouseReleaseEvent(event)
+    def UpdateColors(self):
+        if not self.active:
+            self.BaseStyling()
             return
-        if not self.cursorMoved:
-            if not self.active:
-                if shared.selectedPV is not None:
-                    if shared.selectedPV != self:
-                        shared.selectedPV.startPos = None
-                        shared.selectedPV.cursorMoved = False
-                # shared.editorPopup.Push(self.settings)
-        self.cursorMoved = False
-        self.startPos = None
-        super().mouseReleaseEvent(event)
+        self.SelectedStyling()
 
-    def ClearLayout(self):
-        while self.layout() and self.layout().count():
-            item = self.layout().takeAt(0)
-            widget = item.widget()
-            if widget:
-                widget.setParent(None)
-                widget.deleteLater()
+    def ToggleStyling(self):
+        pass
 
     def BaseStyling(self):
         if shared.lightModeOn:
@@ -327,12 +277,7 @@ class OrbitResponse(Draggable):
             font-family: {style.fontFamily};
             padding: 0px;
             }}
-            QWidget#title {{
-            color: #1e1e1e;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            }}''')
+            ''')
         else:
             "#282828"
             self.widget.setStyleSheet(f'''
@@ -345,12 +290,8 @@ class OrbitResponse(Draggable):
             font-family: {style.fontFamily};
             padding: 0px;
             }}
-            QWidget#title {{
-            color: #c4c4c4;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            }}''')
+            ''')
+            self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 14, fontColor = '#c4c4c4'))
             self.correctorSocketHousing.setStyleSheet(f'''
             QWidget#correctorSocketTitle {{
             background-color: #2e2e2e;
@@ -384,12 +325,7 @@ class OrbitResponse(Draggable):
             font-family: {style.fontFamily};
             padding: 10px;
             }}
-            QWidget#title {{
-            color: #1e1e1e;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            }}''')
+            ''')
         else:
             self.widget.setStyleSheet(f'''
             QWidget#pvHousing {{
@@ -401,9 +337,4 @@ class OrbitResponse(Draggable):
             font-family: {style.fontFamily};
             padding: 10px;
             }}
-            QWidget#title {{
-            color: #c4c4c4;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            }}''')
+            ''')

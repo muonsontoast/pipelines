@@ -6,7 +6,7 @@ from . import slider
 from .. import shared
 from .. import style
 
-class KickAngleComponent(QWidget):
+class BPMComponent(QWidget):
     def __init__(self, pv, component):
         super().__init__()
         self.pv = pv
@@ -31,8 +31,6 @@ class KickAngleComponent(QWidget):
         # self.toggle.clicked.connect(self.SwapPlane)
         # self.planeRow.layout().addWidget(self.toggle)
         # self.layout().addWidget(self.planeRow)
-        self.slider = slider.SliderComponent(pv, component)
-        self.layout().addWidget(self.slider)
         self.UpdateColors()
 
     # def SwapPlane(self):
@@ -49,3 +47,9 @@ class KickAngleComponent(QWidget):
             self.slider.UpdateColors(fillColorDark = "#338522", fillColorLight = "#318720")
         else:
             self.slider.UpdateColors()
+        if shared.lightModeOn:
+            self.state.setStyleSheet(style.LabelStyle(fontColor = '#1e1e1e'))
+            self.toggle.setStyleSheet(style.PushButtonStyle(color = '#D2C5A0', borderColor = '#A1946D', hoverColor = '#B5AB8D', fontColor = '#1e1e1e'))
+        else: 
+            self.state.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
+            self.toggle.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))

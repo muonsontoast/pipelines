@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton,
     QListWidget, QListWidgetItem, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt, QSize
@@ -46,6 +46,7 @@ class Expandable(QWidget):
         self.content.setVisible(False)
         self.layout().addWidget(self.content)
         self.parent.setSizeHint(QSize(self.width, self.headerHeight + 10))
+        self.widget = self.pv.settings['components'][self.componentKey]['type'](self.pv, self.componentKey) # Instantiate the widget
         self.UpdateColors()
 
     def UpdateColors(self):
@@ -68,7 +69,6 @@ class Expandable(QWidget):
             # Is this the first time drawing widgets for this expandable?
             if not self.widgetsDrawn:
                 item = QListWidgetItem()
-                self.widget = self.pv.settings['components'][self.componentKey]['type'](self.pv, self.componentKey) # Instantiate the widget
                 item.setSizeHint(self.widget.sizeHint())
                 self.content.addItem(item)
                 self.content.setItemWidget(item, self.widget)
