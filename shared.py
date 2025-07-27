@@ -1,4 +1,4 @@
-from .blocks import pv, orbitresponse, kicker, bpm
+from .blocks import pv, orbitresponse, kicker, bpm, view
 
 '''Globally relevant variables that are shared between all package scripts.'''
 entities = [] # States that can be saved between sessions.
@@ -37,6 +37,7 @@ blockTypes = {
     'Kicker': kicker.Kicker,
     'BPM': bpm.BPM,
     'Orbit Response': orbitresponse.OrbitResponse,
+    'View': view.View,
 }
 # Need to check whether the cursor is inside a socket. The best way is to keep a record here of all the sockets and their bounding rects.
 socketRects = dict()

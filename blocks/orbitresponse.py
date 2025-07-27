@@ -17,8 +17,8 @@ to save the data, or for further processing in a pipeline.
 '''
 
 class OrbitResponse(Draggable):
-    def __init__(self, parent, proxy: QGraphicsProxyWidget, name):
-        super().__init__(proxy)
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (550, 440)):
+        super().__init__(proxy, size)
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
@@ -35,6 +35,7 @@ class OrbitResponse(Draggable):
             'steps': dict(name = 'Steps', value = 3, min = 3, max = 9, default = 3, units = 'mrad', type = SliderComponent),
             'repeats': dict(name = 'Repeats', value = 5, min = 1, max = 20, default = 5, units = '', type = SliderComponent)
         }
+        self.settings['size'] = size
         self.active = False
         self.hovering = False
         self.startPos = None

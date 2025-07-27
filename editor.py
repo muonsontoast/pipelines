@@ -34,39 +34,10 @@ class Editor(QGraphicsView):
         self.setSceneRect(0, 0, 10000, 10000)
         shared.editors.append(self)
         # self.popup = editorpopup.Popup(self, 975, 125, 250, 450)
-        # Test widget
-        proxy = QGraphicsProxyWidget()
-        kickerWidget = kicker.Kicker(self, proxy, 'HSTR5:SETI', size = (215, 50))
-        proxy.setWidget(kickerWidget)
-        proxy.setPos(1500, 1500)
-        self.scene.addItem(proxy)
-        shared.proxyPVs[0].append(proxy)
-        # kickerWidget.UpdateSocketPos()
 
-        proxy = QGraphicsProxyWidget()
-        kickerWidget = kicker.Kicker(self, proxy, 'Welp', size = (200, 50))
-        proxy.setWidget(kickerWidget)
-        proxy.setPos(1500, 1600)
-        self.scene.addItem(proxy)
-        shared.proxyPVs[0].append(proxy)
-        # kickerWidget.UpdateSocketPos()
-
-        # Test orbit response
-        proxy = QGraphicsProxyWidget()
-        orbitResponse = orbitresponse.OrbitResponse(self, proxy, 'Orbit Response')
-        proxy.setWidget(orbitResponse)
-        # v = view.View(self, proxy, 'View')
-        # proxy.setWidget(v)
-        proxy.setPos(1850, 1475)
-        self.scene.addItem(proxy)
-
-        proxy = QGraphicsProxyWidget()
-        kickerWidget = kicker.Kicker(self, proxy, 'CI:XFER:VSTR:05-01:I', size = (225, 50))
-        proxy.setWidget(kickerWidget)
-        proxy.setPos(1500, 1700)
-        self.scene.addItem(proxy)
-        shared.proxyPVs[0].append(proxy)
-        # kickerWidget.UpdateSocketPos()
+        self.AddBlock(kicker.Kicker, 'Welp', QPoint(1500, 1600))
+        self.AddBlock(orbitresponse.OrbitResponse, 'Orbit Response', QPoint(1850, 1475))
+        self.AddBlock(view.View, 'View', QPoint(2550, 1475))
 
         proxy = QGraphicsProxyWidget()
         bpmWidget = bpm.BPM(self, proxy, 'BPM #3', size = (225, 50))
@@ -81,6 +52,18 @@ class Editor(QGraphicsView):
         self.startPos = None
         # globalStartPos tracks global cursor position in window -- necessary since startPos doesn't change with drag.
         self.globalStartPos = None
+
+    def AddBlock(self, blockType, name: str, pos: QPoint, size: tuple = ()):
+        '''`size` is an optional tuple specifying width and height. Default values are used if not specified.'''
+        proxy = QGraphicsProxyWidget()
+        if size == ():
+            w = blockType(self, proxy, name)
+        else:
+            w = blockType(self, proxy, name, size)
+        proxy.setWidget(w)
+        proxy.setPos(pos)
+        self.scene.addItem(proxy)
+        shared.proxyPVs[0].append(proxy)
 
     def mousePressEvent(self, event):
         '''Another PV may already be selected so handle this here.'''

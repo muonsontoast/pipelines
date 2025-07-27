@@ -9,8 +9,8 @@ from .. import style
 
 class View(Draggable):
     '''Displays the data of arbitrary blocks.'''
-    def __init__(self, parent, proxy: QGraphicsProxyWidget, name):
-        super().__init__(proxy)
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (550, 440)):
+        super().__init__(proxy, size)
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
@@ -65,7 +65,7 @@ class View(Draggable):
         self.dataSocketHousing.setLayout(QHBoxLayout())
         self.dataSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.dataSocketHousing.setFixedSize(50, 50)
-        self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'Data', acceptableTypes = [shared.blockTypes['Orbit Response'], shared.blockTypes['BPM']])
+        self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'data', acceptableTypes = [shared.blockTypes['Orbit Response'], shared.blockTypes['BPM']])
         self.dataSocketHousing.layout().addWidget(self.dataSocket)
         self.layout().addWidget(self.dataSocket)
         self.layout().addWidget(self.main)
@@ -104,6 +104,7 @@ class View(Draggable):
             padding: 0px;
             }}
             ''')
+            self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 14, fontColor = '#c4c4c4'))
 
     def SelectedStyling(self):
         if shared.lightModeOn:

@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QFrame, QLabel, QGraphicsLineItem, QHBoxLayout
-from PySide6.QtCore import Qt, QSize, QLineF, QEvent, QPoint, QRectF
-from PySide6.QtGui import QPen, QColor, QCursor
+from PySide6.QtWidgets import QFrame
+from PySide6.QtCore import Qt, QLineF, QRectF
+from copy import deepcopy
 from .. import style
 from .. import shared
 
@@ -33,34 +33,50 @@ class SocketInteractable(QFrame):
 
     def enterEvent(self, event):
         '''Another PV mouseMove event is in control until the mouse is released, this method will then be called upon release.'''
+        print('Hovering', self.parent.name)
         self.MapRectToScene()
         if shared.mousePosUponRelease is not None:
             if not self.rectInSceneCoords.contains(shared.mousePosUponRelease):
                 return
         if self.entered:
+            print('b')
             return
         self.parent.parent.hoveringSocket = self.parent
         self.entered = True
         self.parent.parent.canDrag = False
         self.parent.parent.hovering = False
         if shared.PVLinkSource is not None and shared.PVLinkSource != self.parent.parent and self.type in ['F', 'MF']:
+            print('e')
             if shared.PVLinkSource.__class__ not in self.acceptableTypes:
+                print('c')
                 return
+            print('g')
             # some name filtering
             name = self.parent.name
             shared.PVLinkSource.linkTarget = self.parent.parent
+            print('h')
             if 'free' in shared.PVLinkSource.linksOut.keys():
-                shared.PVLinkSource.indicator.setStyleSheet(style.indicatorStyle(4, color = "#E0A159", borderColor = "#E7902D"))
+                print('l')
+                if hasattr(shared.PVLinkSource, 'indicator'):
+                    shared.PVLinkSource.indicator.setStyleSheet(style.indicatorStyle(4, color = "#E0A159", borderColor = "#E7902D"))
+                print('m')
+                print('output pos', shared.PVLinkSource.GetSocketPos('output'))
+                print('data pos', self.parent.parent.GetSocketPos(name))
                 shared.PVLinkSource.linksOut['free'].setLine(QLineF(shared.PVLinkSource.GetSocketPos('output'), self.parent.parent.GetSocketPos(name)))
                 self.parent.parent.linksIn[shared.PVLinkSource.linksOut['free']] = name
                 shared.PVLinkSource.linksOut[f'{self.parent.name}'] = shared.PVLinkSource.linksOut.pop('free')
                 # Show the link (reshows free link after hidden by the pv upon mouse release)
                 shared.editors[0].scene.addItem(shared.PVLinkSource.linksOut[f'{self.parent.name}'])
-                if self.parent.parent.__class__ == shared.blockTypes['Orbit Response']:
+                blockType = self.parent.parent.__class__
+                if blockType == shared.blockTypes['Orbit Response']:
                     if self.parent.name == 'corrector':
                         self.parent.parent.correctors.append(shared.PVLinkSource)
                     else:
                         self.parent.parent.BPMs.append(shared.PVLinkSource)
+                elif blockType == shared.blockTypes['View']:
+                    self.parent.parent.data = deepcopy(shared.PVLinkSource.data)
+                shared.PVLinkSource = None
+        print('d')
 
     def leaveEvent(self, event):
         self.entered = False

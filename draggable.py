@@ -106,6 +106,7 @@ class Draggable(QWidget):
                 line = link.line()
                 line.setP2(self.GetSocketPos(socket))
                 link.setLine(line)
+            # Move origins of links extending out of the block.
             for k, v in self.linksOut.items():
                 line = v.line()
                 line.setP1(outputSocketPos)
