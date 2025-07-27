@@ -17,11 +17,9 @@ class OrbitResponseAction:
     5. Wait time - for online
     '''
     def __init__(self, hstrDict = dict(), vstrDict = dict()):
-        print('Instantiating Orbit Response Action')
         # Step range in Amps / convert to mrad with factor 0.6 mrad / Amp
         # This is how you extract lattice elements by name
         # BPMs = shared.lattice.get_uint32_index('BPM')
-
         # Get a copy of the shared lattice to play with.
         self.lattice = deepcopy(shared.lattice)
         # Instantiate a simulator.

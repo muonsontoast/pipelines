@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QLabel, QMenu, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt, QPoint
-from ..draggable import Draggable
+from .draggable import Draggable
 from .socket import Socket
 from .. import shared
 from .. import style
@@ -16,8 +16,8 @@ to save the data, or for further processing in a pipeline.
 '''
 
 class OrbitResponse(Draggable):
-    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (550, 440)):
-        super().__init__(proxy, size)
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
+        super().__init__(proxy, name = kwargs.pop('name', 'Orbit Response'), type = kwargs.pop('type', OrbitResponse), size = kwargs.pop('size', (550, 440)), **kwargs)
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
@@ -27,19 +27,15 @@ class OrbitResponse(Draggable):
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
-        self.settings['name'] = name
         self.settings['components'] = {
             'current': dict(name = 'Current', value = .5, min = .05, max = 5, default = .5, units = 'mrad', type = SliderComponent),
             'steps': dict(name = 'Steps', value = 3, min = 3, max = 9, default = 3, units = 'mrad', type = SliderComponent),
             'repeats': dict(name = 'Repeats', value = 5, min = 1, max = 20, default = 5, units = '', type = SliderComponent)
         }
-        self.settings['size'] = size
         self.active = False
         self.hovering = False
         self.startPos = None
         # These need to be dicts, key = link / line item, value = socket
-        self.linksIn = dict()
-        self.linksOut = dict()
         self.action = OrbitResponseAction()
         self.runningCircle = RunningCircle()
         # Define orbit response streams
@@ -56,8 +52,6 @@ class OrbitResponse(Draggable):
                 'data': self.data
             },
         }
-        print('stream, raw:')
-        print(self.streams['raw']())
         self.Push()
 
     def Push(self):
@@ -77,10 +71,10 @@ class OrbitResponse(Draggable):
         header.setFixedHeight(40)
         header.setLayout(QHBoxLayout())
         header.layout().setContentsMargins(15, 0, 15, 0)
-        self.title = QLabel(f'{self.settings['name']} (Empty)')
+        self.title = QLabel(f'{self.settings['name']} (Empty)', alignment = Qt.AlignCenter)
         header.layout().addWidget(self.title)
         # Running
-        header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
+        header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight | Qt.AlignVCenter)
         # Add header to layout
         self.widget.layout().addWidget(header)
         # On/off-line
@@ -134,7 +128,7 @@ class OrbitResponse(Draggable):
         self.correctorSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.correctorSocketHousing.layout().setSpacing(0)
         self.correctorSocketHousing.setFixedSize(140, 50)
-        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'corrector', acceptableTypes = [shared.blockTypes['Kicker'], shared.blockTypes['PV']])
+        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'corrector', [shared.blockTypes['Kicker'], shared.blockTypes['PV']])
         self.correctorSocketHousing.layout().addWidget(self.correctorSocket)
         correctorSocketTitle = QLabel('Correctors')
         correctorSocketTitle.setObjectName('correctorSocketTitle')
@@ -203,7 +197,7 @@ class OrbitResponse(Draggable):
         self.runningCircle.Start()
         print('Starting orbit response measurement')
         # re-enable this line ...
-        # self.data = self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
+        self.data = self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
         # Override the data for now -- for testing ...
         # self.data = np.random.randn(12, 5)
         if self.data is not None:
@@ -258,7 +252,6 @@ class OrbitResponse(Draggable):
     def mousePressEvent(self, event):
         self.startPos = event.pos()
         if self.canDrag or (self.hoveringSocket and self.hoveringSocket.name != 'Output'):
-            print('returning')
             super().mousePressEvent(event)
             return
         shared.PVLinkSource = self

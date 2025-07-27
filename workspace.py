@@ -9,22 +9,15 @@ from . import editor
 from . import style
 from . import shared
 
-class Workspace(QTabWidget):
+class Workspace(Entity, QTabWidget):
     '''Main editor window for user interaction.'''
-    def __init__(self, window):
-        super().__init__()
-        self.parent = window
-        self.setMinimumWidth(600) # Allow the editor to shrink on small screen sizes.
-        shared.workspace = self
-        self.editors, self.monitors, self.controlPanels, self.optimisationPanels =  dict(), dict(), dict(), dict()
-        self.settings = dict()
-        self.Push()
-
-    def Push(self):
-        # Set the size
+    def __init__(self, parent):
+        super().__init__(name = 'Workspace', type = Workspace)
+        self.parent = parent
+        self.setLayout(QStackedLayout())
+        self.layout().setContentsMargins(0, 0, 0, 0)
         size = self.settings.get('size', (None, None))
         sizePolicy = [None, None]
-        # Set horizontal
         if size[0] is None:
             sizePolicy[0] = QSizePolicy.Expanding
         else:
@@ -37,6 +30,11 @@ class Workspace(QTabWidget):
             self.setFixedHeight(size[1])
             sizePolicy[1] = QSizePolicy.Preferred
         self.setSizePolicy(*sizePolicy)
+        shared.workspace = self
+        self.editors, self.monitors, self.controlPanels, self.optimisationPanels =  dict(), dict(), dict(), dict()
+        self.Push()
+
+    def Push(self):
         self.AddEditor()
         # Corner widget
         self.addButton = QPushButton('Add Window')
@@ -66,7 +64,7 @@ class Workspace(QTabWidget):
         name = f'Editor ({idx})'
         editorPanel.AssignSettings(name = name)
         # entity.AddEntity(entity.Entity(f'editor{idx}', 'GUI', entity.AssignEntityID(), widget = editor.Editor))
-        Entity(editorPanel)
+        # Entity(editorPanel)
         self.editors[idx] = editorPanel
         tabName = '\U0001F441\uFE0F ' + name if idx > 0 else '\U0001F441\uFE0F Editor'
         self.addTab(editorPanel, tabName)

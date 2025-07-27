@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QFrame
 from PySide6.QtCore import Qt, QLineF, QRectF
-from copy import deepcopy
 from .. import style
 from .. import shared
 
@@ -8,9 +7,6 @@ from .. import shared
 # M extend links
 # F receive links
 # MF extend AND receive links
-
-# List of socket names that aren't pluralised
-socketNameBlacklist = ['Data']
 
 class SocketInteractable(QFrame):
     def __init__(self, parent, diameter, type, alignment, **kwargs):
@@ -48,15 +44,16 @@ class SocketInteractable(QFrame):
             if shared.PVLinkSource.__class__ not in self.acceptableTypes:
                 return
             # some name filtering
-            name = self.parent.name
             shared.PVLinkSource.linkTarget = self.parent.parent
             if 'free' in shared.PVLinkSource.linksOut.keys():
                 if hasattr(shared.PVLinkSource, 'indicator'):
                     shared.PVLinkSource.indicator.setStyleSheet(style.indicatorStyle(4, color = "#E0A159", borderColor = "#E7902D"))
-                shared.PVLinkSource.linksOut['free'].setLine(QLineF(shared.PVLinkSource.GetSocketPos('output'), self.parent.parent.GetSocketPos(name)))
-                self.parent.parent.linksIn[shared.PVLinkSource.linksOut['free']] = name
-                shared.PVLinkSource.linksOut[f'{self.parent.name}'] = shared.PVLinkSource.linksOut.pop('free')
-                shared.editors[0].scene.addItem(shared.PVLinkSource.linksOut[f'{self.parent.name}'])
+                shared.PVLinkSource.linksOut['free'].setLine(QLineF(shared.PVLinkSource.GetSocketPos('output'), self.parent.parent.GetSocketPos(self.parent.name)))
+                if shared.PVLinkSource.ID in self.parent.parent.linksIn.keys():
+                    return
+                self.parent.parent.linksIn[shared.PVLinkSource.ID] = dict(link = shared.PVLinkSource.linksOut['free'], socket = self.parent.name)
+                shared.PVLinkSource.linksOut[self.parent.parent.ID] = shared.PVLinkSource.linksOut.pop('free')
+                shared.editors[0].scene.addItem(shared.PVLinkSource.linksOut[self.parent.parent.ID])
                 blockType = self.parent.parent.__class__
                 if blockType == shared.blockTypes['Orbit Response']:
                     if self.parent.name == 'corrector':
@@ -64,9 +61,7 @@ class SocketInteractable(QFrame):
                     else:
                         self.parent.parent.BPMs.append(shared.PVLinkSource)
                 elif blockType == shared.blockTypes['View']:
-                    print('This is a view block')
                     if shared.PVLinkSource.__class__ == shared.blockTypes['Orbit Response']:
-                        print('Input block is an orbit response')
                         self.parent.parent.title.setText('View (Connected)')
                         self.parent.parent.PVIn = shared.PVLinkSource
                         self.parent.parent.DrawCanvas()

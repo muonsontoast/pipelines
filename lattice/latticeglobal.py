@@ -1,16 +1,16 @@
 from PySide6.QtWidgets import (
-    QWidget, QFrame, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem, QVBoxLayout, QHBoxLayout
+    QWidget, QFrame, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem, QVBoxLayout
 )
-from PySide6.QtCore import Qt, QPoint, QPointF
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QFont
+from ..utils.entity import Entity
 from .. import shared
-import at
 
-class LatticeGlobal(QWidget):
+class LatticeGlobal(QWidget, Entity):
     # Lattice should fit into size 1250 width x 50 height
     # (0, 0) is at the top left of the graphics view
     def __init__(self, parent):
-        super().__init__()
+        super().__init__(name = 'Global Lattice', type = LatticeGlobal)
         self.parent = parent
         self.settings = dict()
         self.setLayout(QVBoxLayout())

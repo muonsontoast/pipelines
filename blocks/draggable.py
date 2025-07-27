@@ -1,11 +1,12 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, QLineF, QPointF
 import time
-from . import shared
+from ..utils.entity import Entity
+from .. import shared
 
-class Draggable(QWidget):
-    def __init__(self, proxy, size = (550, 440)):
-        super().__init__()
+class Draggable(Entity, QWidget):
+    def __init__(self, proxy, **kwargs):
+        super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', Draggable), **kwargs)
         self.proxy = proxy
         self.active = False
         self.startDragPosition = None
@@ -16,13 +17,12 @@ class Draggable(QWidget):
         self.hoveringSocket = None
         self.linksIn = dict() # dict of QGraphicsLineItems.
         self.linksOut = dict()
-        self.settings = dict()
         self.data = None # holds the data which is accessed by downstream blocks.
         self.streams = dict() # instructions on how to display different data streams, based on the data held in the block.
         self.timer = None # cumulative time since last clock update.
         self.clock = None
         self.timeout = 1 / shared.UIMoveUpdateRate # seconds between move draws.
-        self.setFixedSize(*size)
+        self.setFixedSize(*kwargs.get('size', (500, 440)))
         shared.PVs.append(self)
 
     def Push(self):
@@ -51,8 +51,6 @@ class Draggable(QWidget):
             self.startDragPos = event.position().toPoint()
             self.clock = time.time()
             self.timer = 0
-        print('links out:')
-        print(self.linksOut.keys())
         event.accept()
         # super().mousePressEvent(event)
 
@@ -106,7 +104,8 @@ class Draggable(QWidget):
             newPos = self.proxy.pos() + mousePosInSceneCoords - startDragPosInSceneCoords
             self.proxy.setPos(newPos)
             # Move endpoints of links coming in to the block.
-            for link, socket in self.linksIn.items():
+            for v in self.linksIn.values():
+                link, socket = v['link'], v['socket']
                 line = link.line()
                 line.setP2(self.GetSocketPos(socket))
                 link.setLine(line)

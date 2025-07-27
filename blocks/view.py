@@ -4,7 +4,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from ..draggable import Draggable
+from .draggable import Draggable
 from .socket import Socket
 from ..ui.runningcircle import RunningCircle
 from .. import shared
@@ -14,8 +14,8 @@ plt.rcParams['text.usetex'] = True
 
 class View(Draggable):
     '''Displays the data of arbitrary blocks.'''
-    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (600, 500), fontsize = 12):
-        super().__init__(proxy, size)
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, fontsize = 12, **kwargs):
+        super().__init__(proxy, name = kwargs.pop('name', 'View'), type = kwargs.pop('type', View), size = kwargs.pop('size', (600, 500)), **kwargs)
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
@@ -23,11 +23,9 @@ class View(Draggable):
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
-        self.settings['name'] = name
         self.active = False
         self.hovering = False
         self.startPos = None
-        self.linksIn = dict()
         self.PVIn = None
         self.stream = None
         self.fontsize = fontsize
@@ -149,7 +147,6 @@ class View(Draggable):
 
     def UpdateColors(self):
         if not self.active:
-            print('Applying base styling')
             self.BaseStyling()
             return
         self.SelectedStyling()

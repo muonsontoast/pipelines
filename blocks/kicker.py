@@ -6,14 +6,15 @@ from .. import shared
 from .. import style
 
 class Kicker(PV):
-    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (225, 50), alignment = 'Vertical'):
-        '''`alignment` = <Horizontal/Vertical> (str)'''
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
+        '''`alignment` = <Horizontal/Vertical>\n
+        `size` = ( x , y )'''
         # Type and Alignment
         self.typeLabel = QLabel('')
         self.typeLabel.setAlignment(Qt.AlignLeft)
         # invoke parent pv constructor
-        super().__init__(parent, proxy, name, size)
-        self.settings['alignment'] = alignment
+        super().__init__(parent, proxy, size = kwargs.pop('size', (225, 50)), name = 'Kicker', type = Kicker)
+        self.settings['alignment'] = kwargs.get('alignment', 'Vertical')
         self.settings['components']['value'] = dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = kickangle.KickAngleComponent)
         # Add labels to layout
         self.widget.layout().addWidget(self.typeLabel, 1, 1, alignment = Qt.AlignLeft)

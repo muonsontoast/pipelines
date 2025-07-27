@@ -5,7 +5,6 @@ from .ui.runningcircle import RunningCircle
 
 '''Globally relevant variables that are shared between all package scripts.'''
 cwd = os.path.join(str(Path.cwd().resolve()), 'app') # Get the current working directory.
-entities = [] # States that can be saved between sessions.
 appVersion = '0.0.1' # App version.
 windowTitle = 'Pipelines' # App title.
 app = None # A reference to the running app.
@@ -31,8 +30,8 @@ latticePath = ''
 lattice = None # reference to the lattice
 elements = None # lattice element references
 names = None # lattice element names
-runningCircleNumFrames = 119 
-runningCircleResolution = 35 # z x z pixels
+runningCircleNumFrames = 119
+runningCircleResolution = 30 # z x z pixels
 runningCircleFrames = [None for _ in range(runningCircleNumFrames)] # frames used by the circle indicating progress in blocks.
 UIMoveUpdateRate = 1000 # number of times to handle UI movement inside the editor per second.
 mousePosUponRelease = None # used to determine if the user released the mouse inside another socket.

@@ -1,13 +1,12 @@
-from PySide6.QtWidgets import QFrame, QLabel, QGraphicsLineItem, QHBoxLayout
-from PySide6.QtCore import Qt, QSize, QLineF, QRect
+from PySide6.QtWidgets import QFrame, QGraphicsLineItem, QHBoxLayout
+from PySide6.QtCore import QSize, QLineF
 from PySide6.QtGui import QPen, QColor
 from .socketinteractable import SocketInteractable
-from .. import style
 from .. import shared
 
 class Socket(QFrame):
     '''Accepts kwargs `borderTopLeftRadius`, `borderTopRightRadius`, `borderBottomRightRadius`, `borderBottomLeftRadius`, `contentOffset`'''
-    def __init__(self, parent, socketType, width, radius, alignment = 'left', acceptableTypes = list(), **kwargs):
+    def __init__(self, parent, socketType, width, radius, alignment = 'left', name = '', acceptableTypes = list(), **kwargs):
         '''`type` should be a string <M/F/MF>\n
         M = extend links\n
         F = receive links\n
@@ -15,6 +14,7 @@ class Socket(QFrame):
         `acceptableTypes` is a list of valid block types that may connect.'''
         super().__init__()
         self.parent = parent
+        self.name = name
         self.setFixedSize(width, width)
         self.setLayout(QHBoxLayout())
         contentOffset = kwargs.get('contentOffset', (0, 0, 0, 0))

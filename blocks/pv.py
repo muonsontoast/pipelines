@@ -1,12 +1,10 @@
 from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QHBoxLayout, QSizePolicy, QGraphicsLineItem, QGraphicsProxyWidget
-from PySide6.QtCore import Qt, QLineF, QTimer
-from PySide6.QtGui import QPen, QColor
+from PySide6.QtCore import Qt
 from .. import style
-from ..draggable import Draggable
+from .draggable import Draggable
 from ..indicator import Indicator
 from ..clickablewidget import ClickableWidget
 from .. import shared
-from ..utils import entity
 from ..components import slider
 from ..components import link
 from ..components import kickangle
@@ -14,8 +12,18 @@ from ..components import errors
 from .socket import Socket
 
 class PV(Draggable):
-    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (200, 50)):
-        super().__init__(proxy)
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
+        '''Accepts `name` and `type` overrides for entity.'''
+        super().__init__(
+            proxy,
+            name = kwargs.pop('name', 'PV'),
+            type = kwargs.pop('type', PV),
+            size = kwargs.pop('size', (200, 50)),
+            components = {
+                'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
+                'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
+            }
+        )
         self.parent = parent
         self.hoveringSocket = False
         self.setMouseTracking(True)
@@ -24,19 +32,10 @@ class PV(Draggable):
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
-        self.settings = dict()
-        self.settings['name'] = name
-        self.settings['size'] = size
         self.cursorMoved = False
         self.hovering = False
         self.startPos = None
         self.linkTarget = None
-        self.linksOut = dict() # link line segments
-        self.settings['components'] = {
-            'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
-            'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
-        }
-        self.settings['type'] = 'PV'
         self.indicator = None
         self.Push()
     
@@ -59,8 +58,7 @@ class PV(Draggable):
         self.widget.setLayout(QGridLayout())
         self.widget.layout().setContentsMargins(10, 5, 5, 5)
         # Set the size
-        size = self.settings.get('size', (300, 100))
-        print(f'size of {self.settings['name']} is {size}')
+        size = self.settings.get('size', (200, 50))
         self.setFixedSize(*size)
         self.indicator = Indicator(self, 4)
         self.widget.layout().addWidget(self.indicator, 0, 0, alignment = Qt.AlignLeft)
@@ -77,14 +75,6 @@ class PV(Draggable):
         self.layout().addWidget(self.outputSocket)
         self.UpdateColors()
 
-    # def UpdateSocketPos(self):
-    #     localPos = self.outputSocket.mapTo(self.proxy.widget(), self.socket.rect().center())
-    #     self.socketPos = self.proxy.scenePos() + localPos
-
-    # def mouseMoveEvent(self, event):
-    #     self.UpdateSocketPos()
-    #     super().mouseMoveEvent(event)
-
     def mouseReleaseEvent(self, event):
         # Store temporary values since Draggable overwrites them in its mouseReleaseEvent override.
         isActive = self.active
@@ -95,12 +85,14 @@ class PV(Draggable):
             return
         if not hasCursorMoved:
             if not isActive:
-                entity.mainWindow.inspector.Push(self)
+                # entity.mainWindow.inspector.Push(self)
+                shared.window.inspector.Push(self)
                 shared.selectedPV = self
                 # shared.editorPopup.Push(self.settings)
             else:
                 shared.inspector.mainWindowTitle.setText('')
-                entity.mainWindow.inspector.Push()
+                shared.window.inspector.Push()
+                # entity.mainWindow.inspector.Push()
 
     def UpdateColors(self):
         if not self.active:

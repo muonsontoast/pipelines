@@ -10,13 +10,13 @@ from .blocks import bpm
 from .blocks import orbitresponse
 from .blocks import view
 from .utils import entity
-from . import editorpopup
 from .utils.transforms import MapDraggableRectToScene
+from .utils.entity import Entity
 
-class Editor(QGraphicsView):
+class Editor(Entity, QGraphicsView):
     def __init__(self, window, minScale = 3, maxScale = .2):
         '''Scale gets larger the more you zoom in, so `minScale` is max zoom in (> 1) and `maxScale` is max zoom out (< 1)'''
-        super().__init__()
+        super().__init__(name = 'Editor', type = Editor)
         self.parent = window
         self.settings = dict()
         self.minScale = minScale
@@ -39,14 +39,7 @@ class Editor(QGraphicsView):
         self.AddBlock(orbitresponse.OrbitResponse, 'Orbit Response', QPoint(1850, 1475))
         self.AddBlock(view.View, 'View', QPoint(2550, 1175))
         self.AddBlock(view.View, 'View', QPoint(2550, 1675))
-
-        proxy = QGraphicsProxyWidget()
-        bpmWidget = bpm.BPM(self, proxy, 'BPM #3', size = (225, 50))
-        proxy.setWidget(bpmWidget)
-        proxy.setPos(1500, 1800)
-        self.scene.addItem(proxy)
-        shared.proxyPVs[0].append(proxy)
-        # bpmWidget.UpdateSocketPos()
+        self.AddBlock(bpm.BPM, 'BPM', QPoint(1500, 1700))
         self.centerOn(1400, 1400)
 
         # startPos tracks cursor position upon press in scene coords.
@@ -58,9 +51,9 @@ class Editor(QGraphicsView):
         '''`size` is an optional tuple specifying width and height. Default values are used if not specified.'''
         proxy = QGraphicsProxyWidget()
         if size == ():
-            w = blockType(self, proxy, name)
+            w = blockType(self, proxy, name = name)
         else:
-            w = blockType(self, proxy, name, size)
+            w = blockType(self, proxy, name = name, size = size)
         proxy.setWidget(w)
         proxy.setPos(pos)
         self.scene.addItem(proxy)

@@ -4,20 +4,19 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from .expandable import Expandable
+from .utils.entity import Entity
 from . import shared
 from . import style
 
-class Inspector(QTabWidget):
+class Inspector(QTabWidget, Entity):
     '''Inspector widget that holds contextual information on currently selected items in the app.'''
-    def __init__(self, window):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(name = 'Inspector', type = Inspector)
         print('setting shared.inspector')
         shared.inspector = self
-        print('has it been assigned?', shared.inspector is not None)
-        self.parent = window
+        self.parent = parent
         self.setContentsMargins(0, 0, 0, 0)
         self.setMinimumWidth(415)
-        # self.resize(200, 100)
         self.settings = dict()
         self.SetSizePolicy()
         self.mainWindow = QWidget()
@@ -137,7 +136,6 @@ class Inspector(QTabWidget):
         else:
             pv.settings['alignment'] = 'Horizontal'
             self.state.setText('Aligned to <span style = "color: #bc4444">Horizontal</span> plane.')
-        print(f'Updating pv colors for {pv.settings['name']}!')
         pv.UpdateColors()
         for e in self.expandables.values():
             e.widget.UpdateColors()
