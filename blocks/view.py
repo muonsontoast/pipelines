@@ -1,15 +1,20 @@
-from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QGraphicsLineItem, QLabel, QMenu, QSpacerItem, QGridLayout, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox
-from PySide6.QtCore import Qt, QPointF, QPoint, QLineF, QTimer
-from PySide6.QtGui import QPen, QColor
+from PySide6.QtWidgets import QWidget, QLabel, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QVBoxLayout, QHBoxLayout
+from PySide6.QtCore import Qt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ..draggable import Draggable
 from ..ui.runningcircle import RunningCircle
 from .socket import Socket
 from .. import shared
 from .. import style
 
+plt.rcParams['text.usetex'] = True
+
 class View(Draggable):
     '''Displays the data of arbitrary blocks.'''
-    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (550, 440)):
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, name, size = (600, 500), fontsize = 12):
         super().__init__(proxy, size)
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -23,6 +28,9 @@ class View(Draggable):
         self.hovering = False
         self.startPos = None
         self.linksIn = dict()
+        self.PVIn = None
+        self.stream = None
+        self.fontsize = fontsize
         self.Push()
 
     def Push(self):
@@ -58,6 +66,29 @@ class View(Draggable):
         # self.outputSocket = Socket(self, 'M', 50, 25, 'right', 'Output')
         # self.outputSocketHousing.layout().addWidget(self.outputSocket)
         # self.layout().addWidget(self.outputSocketHousing)
+        # Figure
+        self.plot = QWidget()
+        self.plot.setLayout(QVBoxLayout())
+        self.plot.layout().setContentsMargins(15, 15, 15, 15)
+        self.figure = Figure(figsize = (6.75, 4.25), dpi = 100)
+        self.figure.set_facecolor('none')
+        self.axes = self.figure.add_subplot(111)
+        self.axes.tick_params(
+            axis = 'both',
+            colors = '#c4c4c4',
+            which = 'both',
+            labelsize = self.fontsize,
+        )
+        self.axes.set_facecolor('none')
+        self.ToggleSpines(False)
+        self.canvas = FigureCanvas(self.figure)
+        self.canvas.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.canvas.setStyleSheet('background: transparent')
+        self.ClearCanvas()
+        self.figure.tight_layout()
+        self.plot.layout().addWidget(self.canvas)
+        self.widget.layout().addWidget(self.plot)
+        self.widget.layout().addWidget(QLabel('hahaha'))
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)) # for spacing
         self.main.layout().addWidget(self.widget)
         # Data socket
@@ -67,9 +98,64 @@ class View(Draggable):
         self.dataSocketHousing.setFixedSize(50, 50)
         self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'data', acceptableTypes = [shared.blockTypes['Orbit Response'], shared.blockTypes['BPM']])
         self.dataSocketHousing.layout().addWidget(self.dataSocket)
+
         self.layout().addWidget(self.dataSocket)
         self.layout().addWidget(self.main)
         self.UpdateColors()
+
+    def DrawCanvas(self, stream = 'raw', **kwargs):
+        print('Drawing view block canvas.')
+        if not self.PVIn:
+            print('No PV input for view block. backing out.')
+            return
+        print('Clearing canvas')
+        self.ToggleSpines(True)
+        self.ClearCanvas()
+        print('Clearing ticks and tick labels')
+        self.stream = self.PVIn.streams[stream](**kwargs)
+        print('Setting labels')
+        xunits = f' ({self.stream['xunits']})' if self.stream['xunits'] != '' else ''
+        self.axes.set_xlabel(f'{self.stream['xlabel']}{xunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
+        yunits = f' ({self.stream['yunits']})' if self.stream['yunits'] != '' else ''
+        self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
+        print('Checking if data exists.')
+        if 'data' in self.stream.keys():
+            self.title.setText('View (Holding Data)')
+            if self.stream['plottype'] == 'imshow':
+                im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
+                divider = make_axes_locatable(self.axes)
+                cax = divider.append_axes("right", size = "5%", pad = 0.075)
+                cb = plt.colorbar(im, cax = cax, ax = self.axes)
+                cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
+                cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
+                self.axes.relim()
+                self.axes.autoscale_view()
+                self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
+                self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
+        else:
+            print('No data found')
+        self.axes.set_aspect('auto')
+        self.figure.tight_layout()
+        self.canvas.draw()
+
+    def ClearCanvas(self):
+        self.figure.clf()
+        self.axes = self.figure.add_subplot(111)
+        self.axes.tick_params(axis='x', which='both', labelbottom = False, length = 0)
+        self.axes.tick_params(axis='y', which='both', labelleft = False, length = 0)
+        self.axes.tick_params(
+            axis = 'both',
+            colors = '#c4c4c4',
+            which = 'both',
+            labelsize = self.fontsize,
+        )
+        self.axes.set_facecolor('none')
+        self.ToggleSpines(False)
+
+    def ToggleSpines(self, override: bool = None):
+        for spine in self.axes.spines.values():
+            state = not spine.get_visible() if not override else override
+            spine.set_visible(state)
 
     def UpdateColors(self):
         if not self.active:
@@ -77,6 +163,9 @@ class View(Draggable):
             self.BaseStyling()
             return
         self.SelectedStyling()
+
+    def ToggleStyling(self):
+        pass
 
     def BaseStyling(self):
         if shared.lightModeOn:
@@ -104,7 +193,7 @@ class View(Draggable):
             padding: 0px;
             }}
             ''')
-            self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 14, fontColor = '#c4c4c4'))
+            self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
 
     def SelectedStyling(self):
         if shared.lightModeOn:

@@ -17,6 +17,8 @@ class Draggable(QWidget):
         self.linksIn = dict()
         self.linksOut = dict()
         self.settings = dict()
+        self.data = None # holds the data which is accessed by downstream blocks.
+        self.streams = dict() # instructions on how to display different data streams, based on the data held in the block.
         self.timer = None # cumulative time since last clock update.
         self.clock = None
         self.timeout = 1 / shared.UIMoveUpdateRate # seconds between move draws.

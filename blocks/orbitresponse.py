@@ -9,6 +9,8 @@ from .. import style
 from ..components.slider import SliderComponent
 from ..actions.orbitresponse import OrbitResponseAction
 
+import numpy as np
+
 '''
 Orbit Response Block handles orbit response measurements off(on)line. It has two F sockets, one for Correctors, one for BPMs. 
 It can take an arbitrary number of both correctors and BPMs and run through the routine to generate individual response matrices 
@@ -28,7 +30,6 @@ class OrbitResponse(Draggable):
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
-        self.data = None # holds the data which is accessed by downstream blocks.
         self.settings['name'] = name
         self.settings['components'] = {
             'current': dict(name = 'Current', value = .5, min = .05, max = 5, default = .5, units = 'mrad', type = SliderComponent),
@@ -43,6 +44,22 @@ class OrbitResponse(Draggable):
         self.linksIn = dict()
         self.linksOut = dict()
         self.action = OrbitResponseAction()
+        # Define orbit response streams
+        # All streams contain a 'raw' entry for the de facto use case.
+        self.streams = {
+            'raw': lambda **kwargs: {
+                'xlabel': 'Corrector Number',
+                'ylabel': 'BPM Number',
+                'xunits': '',
+                'yunits': '',
+                'plottype': 'imshow',
+                'cmap': 'viridis',
+                'cmapLabel': r'$\Delta~x$ / mm',
+                'data': self.data
+            },
+        }
+        print('stream, raw:')
+        print(self.streams['raw']())
         self.Push()
 
     def Push(self):
@@ -63,7 +80,6 @@ class OrbitResponse(Draggable):
         header.setLayout(QHBoxLayout())
         header.layout().setContentsMargins(15, 0, 15, 0)
         self.title = QLabel(f'{self.settings['name']} (Empty)')
-        self.title.setObjectName('title')
         header.layout().addWidget(self.title)
         # Running
         self.runningCircle = RunningCircle()
@@ -182,17 +198,19 @@ class OrbitResponse(Draggable):
         # Update colors
         self.UpdateColors()
 
+    # data can be visualised many ways
+    # there should be a record of the differnt ways of visualising, as well as instructions for how to do so.
+    # the view block will automatically know how to follow these instructions.
+    # blocks that are fed the output of a block holding data, will know which option to pick.
+
     def Start(self):
         print('Starting orbit response measurement')
-        self.runningCircle.Start()
+        # re-enable this line ...
         self.data = self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
-        print('Stopping orbit response measurement')
-        # for testing, will be removed ...
-        def dummy():
-            self.runningCircle.Stop()
+        # Override the data for now -- for testing ...
+        # self.data = np.random.randn(12, 5)
+        if self.data is not None:
             self.title.setText('Orbit Response (Holding Data)')
-        QTimer.singleShot(2000, dummy)
-        #
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()
@@ -246,13 +264,6 @@ class OrbitResponse(Draggable):
             print('returning')
             super().mousePressEvent(event)
             return
-        # self.hoveringSocket = None
-        # print('drawing link')
-        # self.linksOut['free'] = QGraphicsLineItem()
-        # self.linksOut['free'].setZValue(-20)
-        # self.linksOut['free'].setPen(QPen(QColor('#c4c4c4'), 8))
-        # shared.editors[0].scene.addItem(self.linksOut['free'])
-        # self.dragging = True
         shared.PVLinkSource = self
         shared.activeSocket = self.outputSocket
         super().mousePressEvent(event)
@@ -292,7 +303,7 @@ class OrbitResponse(Draggable):
             padding: 0px;
             }}
             ''')
-            self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 14, fontColor = '#c4c4c4'))
+            self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
             self.correctorSocketHousing.setStyleSheet(f'''
             QWidget#correctorSocketTitle {{
             background-color: #2e2e2e;

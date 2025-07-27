@@ -52,7 +52,6 @@ class Socket(QFrame):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        print('moving over', self.name)
         socketPos = self.parent.GetSocketPos(self.name)
         if self.parent.dragging:
             self.parent.linksOut['free'].setLine(QLineF(socketPos, self.parent.proxy.mapToScene(self.mapTo(self.parent, event.position().toPoint()))))

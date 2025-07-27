@@ -37,7 +37,8 @@ class Editor(QGraphicsView):
 
         self.AddBlock(kicker.Kicker, 'Welp', QPoint(1500, 1600))
         self.AddBlock(orbitresponse.OrbitResponse, 'Orbit Response', QPoint(1850, 1475))
-        self.AddBlock(view.View, 'View', QPoint(2550, 1475))
+        self.AddBlock(view.View, 'View', QPoint(2550, 1175))
+        self.AddBlock(view.View, 'View', QPoint(2550, 1675))
 
         proxy = QGraphicsProxyWidget()
         bpmWidget = bpm.BPM(self, proxy, 'BPM #3', size = (225, 50))
