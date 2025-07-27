@@ -12,6 +12,7 @@ class LatticeGlobal(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.settings = dict()
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         # Define width and height of scene

@@ -5,26 +5,26 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QProgressBar, QStackedLayout, QStyleFactory,
 )
 from PySide6.QtGui import (
-    QIcon, QShortcut, QKeySequence, QCursor
+    QIcon, QShortcut, QKeySequence, QPixmap
 )
 from PySide6.QtCore import Qt
 import matplotlib.pyplot as plt
 import signal
 import sys
 import os
+import time
 from pathlib import Path
 from .settings import Settings
 from .inspector import Inspector
 from .workspace import Workspace
 from .lattice.latticeglobal import LatticeGlobal
-# from .lattice import LatticeCanvas
 from .font import SetFontToBold
-from . import entity
+from .utils.entity import Entity
+from .ui.runningcircle import RunningCircle
 from . import style
 from . import shared
 from .lattice import latticeutils
-import at
-from .blocks import orbitresponse
+from .utils import memory
 
 plt.rcParams['font.size'] = 10 # Define the font size for plots.
 
@@ -35,19 +35,61 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         shared.window = self
+        self.settings = dict()
         self.setWindowTitle(f'{shared.windowTitle} - Version {shared.appVersion}')
         self.setWindowIcon(QIcon(f'{cwd}\\app\\PVBuddy.png'))
+        # Create a compressed folder for commonly referenced frames if it doesn't already exist (first time setup).
+        compressedFolderPath = os.path.join(shared.cwd, 'gfx\\compressed')
+        if not os.path.exists(compressedFolderPath):
+            print('There are no existing compressed frames. Compressing and storing them inside the \\gfx\\ folder (first time setup).')
+            os.makedirs(compressedFolderPath)
+            os.makedirs(os.path.join(compressedFolderPath, 'running\\grey'))
+            os.makedirs(os.path.join(compressedFolderPath, 'running\\black'))
+            t = time.time()
+            fullResFrames = [None for _ in range(shared.runningCircleNumFrames)]
+            for _ in range(shared.runningCircleNumFrames):
+                specificPathG = f'running\\grey\\{_}.png'
+                specificPathB = f'running\\black\\{_}.png'
+                path = os.path.join(shared.cwd, 'gfx', specificPathG)
+                frame = QPixmap(path)
+                fullResFrames[_] = frame
+                scaledFrame = frame.scaled(
+                    shared.runningCircleResolution, shared.runningCircleResolution,
+                    Qt.IgnoreAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                scaledFrame.setDevicePixelRatio(1.0)
+                scaledFrame.save(os.path.join(compressedFolderPath, specificPathG))
+                shared.runningCircleFrames[_] = scaledFrame
+                path = os.path.join(shared.cwd, 'gfx', specificPathB)
+                scaledFrame = QPixmap(path).scaled(
+                    shared.runningCircleResolution, shared.runningCircleResolution,
+                    Qt.IgnoreAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                scaledFrame.setDevicePixelRatio(1.0)
+                scaledFrame.save(os.path.join(compressedFolderPath, specificPathB))
+            print(f'Finished compressing and loading frames ({memory.GetFrameArraySize(fullResFrames):.2f} MB compressed to {memory.GetFrameArraySize(shared.runningCircleFrames) * 2:.2f} MB in {time.time() - t:.3f} seconds)')
+        else:
+            print('Loading compressed frames ...')
+            defaultRunningCirclePath = os.path.join(compressedFolderPath, 'running\\grey')
+            t = time.time()
+            for _ in range(shared.runningCircleNumFrames):
+                shared.runningCircleFrames[_] = QPixmap(os.path.join(defaultRunningCirclePath, f'{_}'))
+            print(f'Finished loading compressed frames in {time.time() - t:.3f} seconds.')
+
         shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), '..', 'Lattice', 'dls_ltb.mat')) # for now ...
         if shared.elements is None:
             shared.lattice = latticeutils.LoadLattice(shared.latticePath)
             shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
             shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
         self.lightModeOn = False
-        entity.mainWindow = self
+        shared.mainWindow = self
+        # Create an entity for the main window.
+        Entity(self)
         # Allow crtl+W shortcut for exit
         QShortcut(QKeySequence('Ctrl+W'), self).activated.connect(self.close)
-        # Create an entity for the main window.
-        entity.AddEntity(entity.Entity('Page', 'GUI', entity.AssignEntityID(), widget = MainWindow, maximise = True, theme = 'Dark'))
+        # entity.AddEntity(entity.Entity('Page', 'GUI', entity.AssignEntityID(), widget = MainWindow, maximise = True, theme = 'Dark'))
         # Create a master widget to contain everything.
         self.master = QWidget()
         self.master.setLayout(QStackedLayout())
@@ -92,19 +134,23 @@ class MainWindow(QMainWindow):
             # Instantiate the main app components - lattice, editor, inspector, controls, objectives, settings
             self.workspace = Workspace(self)
             self.workspace.setLayout(QStackedLayout())
-            entity.AddEntity(entity.Entity('workspace', 'GUI', entity.AssignEntityID(), widget = Workspace))
+            # entity.AddEntity(entity.Entity('workspace', 'GUI', entity.AssignEntityID(), widget = Workspace))
+            Entity(self.workspace)
             self.latticeGlobal = LatticeGlobal(self)
-            entity.AddEntity(entity.Entity('latticeGlobal', 'GUI', entity.AssignEntityID(), widget = LatticeGlobal))
+            # entity.AddEntity(entity.Entity('latticeGlobal', 'GUI', entity.AssignEntityID(), widget = LatticeGlobal))
+            Entity(self.latticeGlobal)
             self.inspector = Inspector(self)
             self.inspector.AssignSettings(size = (350, None))
-            entity.AddEntity(entity.Entity('inspector', 'GUI', entity.AssignEntityID(), widget = Inspector))
+            # entity.AddEntity(entity.Entity('inspector', 'GUI', entity.AssignEntityID(), widget = Inspector))
+            Entity(self.inspector)
             self.settings = Settings(self)
-            entity.AddEntity(entity.Entity('settings', 'GUI', entity.AssignEntityID(), widget = Settings))
-        else: # yes
-            for e in entity.entities.values():
-                if e.type == 'GUI':
-                    if e.name in ['latticeCanvas', 'editor', 'inspector', 'controlPVs', 'objectivePVs']: # Check against a whitelist
-                        setattr(self, e.name, e.widget()) # Instantiate and make entities directly accessible from the main window.
+            # entity.AddEntity(entity.Entity('settings', 'GUI', entity.AssignEntityID(), widget = Settings))
+            Entity(self.settings)
+        # else: # yes
+        #     for e in shared.entities.values():
+        #         if e.type == 'GUI':
+        #             if e.name in ['latticeCanvas', 'editor', 'inspector', 'controlPVs', 'objectivePVs']: # Check against a whitelist
+        #                 setattr(self, e.name, e.widget()) # Instantiate and make entities directly accessible from the main window.
         shared.lightModeOn = True
         self.page.setStyleSheet(style.Dark01())
         # Lattice graphics views

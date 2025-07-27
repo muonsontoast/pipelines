@@ -9,7 +9,7 @@ from .blocks import kicker
 from .blocks import bpm
 from .blocks import orbitresponse
 from .blocks import view
-from . import entity
+from .utils import entity
 from . import editorpopup
 from .utils.transforms import MapDraggableRectToScene
 

@@ -1,8 +1,5 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsProxyWidget
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtCore import QTimer, Qt
-from PySide6.QtGui import QPixmap, QImage
-import os
-from .. import memoryutils
 from .. import shared
 
 class RunningCircle(QWidget):
@@ -14,47 +11,29 @@ class RunningCircle(QWidget):
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().addWidget(self.label)
         self.running = False
-        self.frames = []
-        self.numFrames = 119
-        self.frameSize = 30
-        self.setFixedSize(self.frameSize, self.frameSize)
-        color = 'black' if shared.lightModeOn else 'grey'
-
-        print('Loading running circle frames into memory')
-        # Load the frames into memory
-        for _ in range(self.numFrames):
-            path = os.path.join(shared.runningCircleFolder, f'running/{color}/{_}.png')
-            frame = QImage(path)
-            scaledFrame = frame.scaled(
-                self.frameSize, self.frameSize,
-                Qt.IgnoreAspectRatio,
-                Qt.SmoothTransformation
-            )
-            scaledFrame = QPixmap.fromImage(scaledFrame)
-            scaledFrame.setDevicePixelRatio(1.0)
-            self.frames.append(scaledFrame)
-        print(f'Finished loading frames ({memoryutils.GetFrameArraySize(self.frames):.2f} MB)')
-
+        self.setFixedSize(shared.runningCircleResolution, shared.runningCircleResolution)
         self.currentFrame = 0
-        self.label.setPixmap(self.frames[self.currentFrame])
         self.CreateTimer()
         self.label.setVisible(False)
 
     def Stop(self):
+        print('Stopping running circle')
         self.running = False
         self.label.setVisible(False)
         self.timer.stop()
     
     def Start(self, timeout = 15):
+        print('Starting running circle')
         # default refresh rate is 60 fps / 15 ms
         self.running = True
         self.label.setVisible(True)
         self.timer.start(timeout)
 
     def CreateTimer(self):
+        print('Creating timer for running circle')
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.UpdateFrame)
 
     def UpdateFrame(self):
-        self.currentFrame = (self.currentFrame + 1) % self.numFrames
-        self.label.setPixmap(self.frames[self.currentFrame])
+        self.currentFrame = (self.currentFrame + 1) % shared.runningCircleNumFrames
+        self.label.setPixmap(shared.runningCircleFrames[self.currentFrame])

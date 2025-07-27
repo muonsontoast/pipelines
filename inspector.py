@@ -11,7 +11,9 @@ class Inspector(QTabWidget):
     '''Inspector widget that holds contextual information on currently selected items in the app.'''
     def __init__(self, window):
         super().__init__()
+        print('setting shared.inspector')
         shared.inspector = self
+        print('has it been assigned?', shared.inspector is not None)
         self.parent = window
         self.setContentsMargins(0, 0, 0, 0)
         self.setMinimumWidth(415)

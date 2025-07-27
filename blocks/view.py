@@ -5,8 +5,8 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ..draggable import Draggable
-from ..ui.runningcircle import RunningCircle
 from .socket import Socket
+from ..ui.runningcircle import RunningCircle
 from .. import shared
 from .. import style
 
@@ -31,6 +31,7 @@ class View(Draggable):
         self.PVIn = None
         self.stream = None
         self.fontsize = fontsize
+        self.runningCircle = RunningCircle()
         self.Push()
 
     def Push(self):
@@ -50,22 +51,12 @@ class View(Draggable):
         header.setFixedHeight(40)
         header.setLayout(QHBoxLayout())
         header.layout().setContentsMargins(15, 0, 15, 0)
-        self.title = QLabel(f'{self.settings['name']} (Empty)')
+        self.title = QLabel(f'{self.settings['name']} (Disconnected)')
         header.layout().addWidget(self.title)
         # Running
-        self.runningCircle = RunningCircle()
-        self.runningCircle.CreateTimer()
         header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
         # Add header to layout
         self.widget.layout().addWidget(header)
-        # Output socket
-        # self.outputSocketHousing = QWidget()
-        # self.outputSocketHousing.setLayout(QHBoxLayout())
-        # self.outputSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
-        # self.outputSocketHousing.setFixedSize(50, 50)
-        # self.outputSocket = Socket(self, 'M', 50, 25, 'right', 'Output')
-        # self.outputSocketHousing.layout().addWidget(self.outputSocket)
-        # self.layout().addWidget(self.outputSocketHousing)
         # Figure
         self.plot = QWidget()
         self.plot.setLayout(QVBoxLayout())
@@ -120,7 +111,6 @@ class View(Draggable):
         self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
         print('Checking if data exists.')
         if 'data' in self.stream.keys():
-            self.title.setText('View (Holding Data)')
             if self.stream['plottype'] == 'imshow':
                 im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
                 divider = make_axes_locatable(self.axes)

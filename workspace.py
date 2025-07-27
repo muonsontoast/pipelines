@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QPoint
 from .monitor import Monitor
 from .controlpanel import ControlPanel
-from . import entity
+from .utils.entity import Entity
 from . import editor
 from . import style
 from . import shared
@@ -65,7 +65,8 @@ class Workspace(QTabWidget):
             idx += 1
         name = f'Editor ({idx})'
         editorPanel.AssignSettings(name = name)
-        entity.AddEntity(entity.Entity(f'editor{idx}', 'GUI', entity.AssignEntityID(), widget = editor.Editor))
+        # entity.AddEntity(entity.Entity(f'editor{idx}', 'GUI', entity.AssignEntityID(), widget = editor.Editor))
+        Entity(editorPanel)
         self.editors[idx] = editorPanel
         tabName = '\U0001F441\uFE0F ' + name if idx > 0 else '\U0001F441\uFE0F Editor'
         self.addTab(editorPanel, tabName)

@@ -1,15 +1,12 @@
-from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QGraphicsLineItem, QLabel, QMenu, QSpacerItem, QGridLayout, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout, QComboBox
-from PySide6.QtCore import Qt, QPointF, QPoint, QLineF, QTimer
-from PySide6.QtGui import QPen, QColor
+from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QLabel, QMenu, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout
+from PySide6.QtCore import Qt, QPoint
 from ..draggable import Draggable
 from .socket import Socket
-from ..ui.runningcircle import RunningCircle
 from .. import shared
 from .. import style
 from ..components.slider import SliderComponent
 from ..actions.orbitresponse import OrbitResponseAction
-
-import numpy as np
+from ..ui.runningcircle import RunningCircle
 
 '''
 Orbit Response Block handles orbit response measurements off(on)line. It has two F sockets, one for Correctors, one for BPMs. 
@@ -44,6 +41,7 @@ class OrbitResponse(Draggable):
         self.linksIn = dict()
         self.linksOut = dict()
         self.action = OrbitResponseAction()
+        self.runningCircle = RunningCircle()
         # Define orbit response streams
         # All streams contain a 'raw' entry for the de facto use case.
         self.streams = {
@@ -82,8 +80,6 @@ class OrbitResponse(Draggable):
         self.title = QLabel(f'{self.settings['name']} (Empty)')
         header.layout().addWidget(self.title)
         # Running
-        self.runningCircle = RunningCircle()
-        self.runningCircle.CreateTimer()
         header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
         # Add header to layout
         self.widget.layout().addWidget(header)
@@ -204,9 +200,10 @@ class OrbitResponse(Draggable):
     # blocks that are fed the output of a block holding data, will know which option to pick.
 
     def Start(self):
+        self.runningCircle.Start()
         print('Starting orbit response measurement')
         # re-enable this line ...
-        self.data = self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
+        # self.data = self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
         # Override the data for now -- for testing ...
         # self.data = np.random.randn(12, 5)
         if self.data is not None:

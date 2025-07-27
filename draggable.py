@@ -14,7 +14,7 @@ class Draggable(QWidget):
         self.canDrag = True
         self.dragging = False
         self.hoveringSocket = None
-        self.linksIn = dict()
+        self.linksIn = dict() # dict of QGraphicsLineItems.
         self.linksOut = dict()
         self.settings = dict()
         self.data = None # holds the data which is accessed by downstream blocks.
@@ -51,6 +51,8 @@ class Draggable(QWidget):
             self.startDragPos = event.position().toPoint()
             self.clock = time.time()
             self.timer = 0
+        print('links out:')
+        print(self.linksOut.keys())
         event.accept()
         # super().mousePressEvent(event)
 

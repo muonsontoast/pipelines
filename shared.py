@@ -1,9 +1,13 @@
+import os
+from pathlib import Path
 from .blocks import pv, orbitresponse, kicker, bpm, view
+from .ui.runningcircle import RunningCircle
 
 '''Globally relevant variables that are shared between all package scripts.'''
+cwd = os.path.join(str(Path.cwd().resolve()), 'app') # Get the current working directory.
 entities = [] # States that can be saved between sessions.
 appVersion = '0.0.1' # App version.
-windowTitle = 'PV Buddy' # App title.
+windowTitle = 'Pipelines' # App title.
 app = None # A reference to the running app.
 window = None # Reference to the main window instance.
 lightModeOn = True
@@ -27,10 +31,11 @@ latticePath = ''
 lattice = None # reference to the lattice
 elements = None # lattice element references
 names = None # lattice element names
-runningCircleFolder = 'C:/Users/shaun/OneDrive/Documents/Optimisation/BO/app/gfx/'
+runningCircleNumFrames = 119 
+runningCircleResolution = 35 # z x z pixels
+runningCircleFrames = [None for _ in range(runningCircleNumFrames)] # frames used by the circle indicating progress in blocks.
 UIMoveUpdateRate = 1000 # number of times to handle UI movement inside the editor per second.
 mousePosUponRelease = None # used to determine if the user released the mouse inside another socket.
- 
 # A dict of block types
 blockTypes = {
     'PV': pv.PV,
@@ -39,5 +44,3 @@ blockTypes = {
     'Orbit Response': orbitresponse.OrbitResponse,
     'View': view.View,
 }
-# Need to check whether the cursor is inside a socket. The best way is to keep a record here of all the sockets and their bounding rects.
-socketRects = dict()

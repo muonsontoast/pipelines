@@ -7,7 +7,7 @@ from .. import shared
 
 class Socket(QFrame):
     '''Accepts kwargs `borderTopLeftRadius`, `borderTopRightRadius`, `borderBottomRightRadius`, `borderBottomLeftRadius`, `contentOffset`'''
-    def __init__(self, parent, socketType, width, radius, alignment = 'left', name = '', acceptableTypes = list(), **kwargs):
+    def __init__(self, parent, socketType, width, radius, alignment = 'left', acceptableTypes = list(), **kwargs):
         '''`type` should be a string <M/F/MF>\n
         M = extend links\n
         F = receive links\n
@@ -32,7 +32,7 @@ class Socket(QFrame):
         self.socket = SocketInteractable(self, radius * 2, socketType, alignment, acceptableTypes = acceptableTypes)
         self.layout().addWidget(self.socket)
         self.width = width
-        self.name = name
+        # self.name = name
         self.UpdateColors()
 
     def mousePressEvent(self, event):

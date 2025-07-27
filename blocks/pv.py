@@ -6,7 +6,7 @@ from ..draggable import Draggable
 from ..indicator import Indicator
 from ..clickablewidget import ClickableWidget
 from .. import shared
-from .. import entity
+from ..utils import entity
 from ..components import slider
 from ..components import link
 from ..components import kickangle

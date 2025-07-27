@@ -56,7 +56,6 @@ class SocketInteractable(QFrame):
                 shared.PVLinkSource.linksOut['free'].setLine(QLineF(shared.PVLinkSource.GetSocketPos('output'), self.parent.parent.GetSocketPos(name)))
                 self.parent.parent.linksIn[shared.PVLinkSource.linksOut['free']] = name
                 shared.PVLinkSource.linksOut[f'{self.parent.name}'] = shared.PVLinkSource.linksOut.pop('free')
-                # Show the link (reshows free link after hidden by the pv upon mouse release)
                 shared.editors[0].scene.addItem(shared.PVLinkSource.linksOut[f'{self.parent.name}'])
                 blockType = self.parent.parent.__class__
                 if blockType == shared.blockTypes['Orbit Response']:
@@ -68,6 +67,7 @@ class SocketInteractable(QFrame):
                     print('This is a view block')
                     if shared.PVLinkSource.__class__ == shared.blockTypes['Orbit Response']:
                         print('Input block is an orbit response')
+                        self.parent.parent.title.setText('View (Connected)')
                         self.parent.parent.PVIn = shared.PVLinkSource
                         self.parent.parent.DrawCanvas()
                 shared.PVLinkSource = None
