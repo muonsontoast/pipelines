@@ -34,7 +34,7 @@ class MainWindow(Entity, QMainWindow):
         super().__init__(name = 'MainWindow', type = MainWindow)
         shared.window = self
         self.setWindowTitle(f'{shared.windowTitle} - Version {shared.appVersion}')
-        self.setWindowIcon(QIcon(f'{cwd}\\app\\PVBuddy.png'))
+        self.setWindowIcon(QIcon(f'{cwd}\\pipelines\\PVBuddy.png'))
         # Create a compressed folder for commonly referenced frames if it doesn't already exist (first time setup).
         compressedFolderPath = os.path.join(shared.cwd, 'gfx\\compressed')
         if not os.path.exists(compressedFolderPath):
@@ -75,7 +75,7 @@ class MainWindow(Entity, QMainWindow):
                 shared.runningCircleFrames[_] = QPixmap(os.path.join(defaultRunningCirclePath, f'{_}'))
             print(f'Finished loading compressed frames in {time.time() - t:.3f} seconds.')
         # Load lattice
-        shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), '..', 'Lattice', 'dls_ltb.mat')) # for now ...
+        shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), 'Lattice', 'dls_ltb.mat')) # for now ...
         if shared.elements is None:
             shared.lattice = latticeutils.LoadLattice(shared.latticePath)
             shared.elements = latticeutils.GetLatticeInfo(shared.lattice)

@@ -55,9 +55,10 @@ class OrbitResponseAction:
         lattice = deepcopy(shared.lattice)
         # wait time between BPM measurements.
         wait = .2
-        rawData = np.empty((numBPMs, numCorrectors, repeats))
+        rawData = np.empty((numBPMs, numCorrectors, repeats + 1))
         # target kicks
-        targets = np.arange(0, numSteps, 1)
+        offset = int(numSteps / 2) + 1
+        targets = (np.arange(0, numSteps, 1) - offset) * stepKick
         print('Setting correctors and measuring BPM responses.')
         # Define the sigma matrix and beam with n particles ------- will allow custom beam profiles in a future version.
         sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
@@ -67,20 +68,21 @@ class OrbitResponseAction:
             # No need to compensate for hysteresis in the offline model.
             # Check alignment
             idx = 1 if c.settings['alignment'] == 'Vertical' else 0
-            kickAngle = c.settings['components']['value']['value']
-            # Should errors be applied to the value? ---- this will be added in a future version.
-            lattice[c.settings['linkedElement'].Index].KickAngle[idx] = kickAngle
-            # Run the beam through the lattice and record positions on the BPMs
-            beamOut = lattice_pass(self.lattice, beam, nturns = 1, refpts = BPMIdxs) # has shape 6 x numParticles x numRefpts x nturns
-            # Calculate the beam centroid (since this is the only thing a BPM would return in the real machine).
-            # Repeats will be added soon ...
-            for _, b in enumerate(BPMs):
-                centre = np.mean(beamOut[0, :, _]) if b.settings['alignment'] == 'Horizontal' else np.mean(beamOut[2, :, _])
-                rawData[_, col, 0] = centre
-                # time.sleep(5) # will be removed, here for testing ...
-            # BPMs in the model are markers so we have the full phase space information but PVs will typically be separated into BPM:X, BPM:Y
-            # iteration end - reset the PV
-            lattice[c.settings['linkedElement'].Index].KickAngle[idx] = 0
+            for o in offset:
+                kickAngle = c.settings['components']['value']['default'] + o
+                # Should errors be applied to the value? ---- this will be added in a future version.
+                lattice[c.settings['linkedElement'].Index].KickAngle[idx] = kickAngle
+                # Run the beam through the lattice and record positions on the BPMs
+                beamOut = lattice_pass(self.lattice, beam, nturns = 1, refpts = BPMIdxs) # has shape 6 x numParticles x numRefpts x nturns
+                # Calculate the beam centroid (since this is the only thing a BPM would return in the real machine).
+                for _, b in enumerate(BPMs):
+                    for r in range(repeats + 1):
+                        centre = np.mean(beamOut[0, :, _]) if b.settings['alignment'] == 'Horizontal' else np.mean(beamOut[2, :, _])
+                        rawData[_, col, r] = centre
+                        # time.sleep(5) # will be removed, here for testing ...
+                # BPMs in the model are markers so we have the full phase space information but PVs will typically be separated into BPM:X, BPM:Y
+                # iteration end - reset the PV
+                lattice[c.settings['linkedElement'].Index].KickAngle[idx] = 0
         print('Finished orbit response measurement.')
-        return rawData
+        return rawData[:, :, 0]
 

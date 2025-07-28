@@ -35,11 +35,15 @@ class Editor(Entity, QGraphicsView):
         shared.editors.append(self)
         # self.popup = editorpopup.Popup(self, 975, 125, 250, 450)
 
+        self.AddBlock(kicker.Kicker, 'Welp', QPoint(1500, 1400))
+        self.AddBlock(kicker.Kicker, 'Welp', QPoint(1500, 1500))
         self.AddBlock(kicker.Kicker, 'Welp', QPoint(1500, 1600))
         self.AddBlock(orbitresponse.OrbitResponse, 'Orbit Response', QPoint(1850, 1475))
         self.AddBlock(view.View, 'View', QPoint(2550, 1175))
         self.AddBlock(view.View, 'View', QPoint(2550, 1675))
         self.AddBlock(bpm.BPM, 'BPM', QPoint(1500, 1700))
+        self.AddBlock(bpm.BPM, 'BPM', QPoint(1400, 1800))
+        self.AddBlock(bpm.BPM, 'BPM', QPoint(1500, 1900))
         self.centerOn(1400, 1400)
 
         # startPos tracks cursor position upon press in scene coords.
@@ -90,15 +94,15 @@ class Editor(Entity, QGraphicsView):
                     hovering = True
                     self.setDragMode(QGraphicsView.NoDrag)
                     break
-            # Have we clicked outside of any PVs, considering cursor tolerance?
-            if not hovering and delta.x() ** 2 + delta.y() ** 2 > shared.cursorTolerance ** 2:
-                super().mouseReleaseEvent(event)
-                return
             # Is a PV already selected?
             if shared.selectedPV:
                 PVRectInSceneCoords = MapDraggableRectToScene(shared.selectedPV)
                 if not PVRectInSceneCoords.contains(mousePos):
                     self.DeselectPV()
+            # Have we clicked outside of any PVs, considering cursor tolerance?
+            if not hovering and delta.x() ** 2 + delta.y() ** 2 > shared.cursorTolerance ** 2:
+                super().mouseReleaseEvent(event)
+                return
         super().mouseReleaseEvent(event) # the event needs to propagate beyond the editor to allow drag functionality.
         if self.canDrag:
             self.setDragMode(QGraphicsView.ScrollHandDrag)
@@ -113,7 +117,7 @@ class Editor(Entity, QGraphicsView):
         shared.selectedPV = None
         # shared.editorPopup.objectType.setText('')
         shared.inspector.mainWindowTitle.setText('')
-        entity.mainWindow.inspector.Push(deselecting = True)
+        shared.window.inspector.Push()
 
     def wheelEvent(self, event):
         if event is None:
