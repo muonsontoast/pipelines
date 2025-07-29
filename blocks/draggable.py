@@ -32,52 +32,6 @@ class Draggable(Entity, QWidget):
     def Push(self):
         self.ClearLayout()
 
-    # more attention needs to be paid here
-    # def PerformAction(self, func, *args):
-    #     print('Performing action:', func)
-    #     thread = QThread()
-    #     worker = Worker(func, *args)
-    #     worker.moveToThread(thread)
-    #     thread.started.connect(worker.start)
-    #     worker.finished.connect(lambda w = worker, t = thread: self.SaveData(w, t))
-    #     thread.start()
-
-    # def RunProcess(self, *args):
-    #     self.queue.put(self.action.RunOffline(*args))
-
-    # def CheckProcess(self):
-    #     if not self.queue.empty():
-    #         # kill the process
-    #         self.process.terminate()
-    #         self.process.join()
-    #         self.data = self.queue.get()
-    #         if hasattr(self, 'runningCircle'):
-    #             self.runningCircle.stop = True
-
-    # def PerformAction(self, *args):
-    #     self.queue = Queue()
-    #     self.process = Process(target = self.RunProcess, args = (*args,))
-    #     self.process.start()
-    #     # periodically check if the action has finished ...
-    #     self.checkTimer = QTimer()
-    #     self.checkTimer.timeout.connect(self.CheckProcess)
-    #     self.checkTimer.start(100)
-
-    # def SaveData(self, worker, thread):
-    #     print('worker finished and saving data')
-    #     self.data = worker.data
-    #     worker.deleteLater()
-    #     self.CleanUpThread(thread)
-
-    # def CleanUpThread(self, thread):
-    #     print('cleaning up thread!')
-    #     if hasattr(self, 'runningCircle'):
-    #         self.runningCircle.stop = True
-    #     if hasattr(self, 'title'):
-    #         self.title.setText(self.title.text().split(' (')[0] + ' (Holding Data)')
-    #     thread.quit()
-    #     thread.deleteLater()
-
     def GetSocketPos(self, name):
         try: 
             socket = getattr(self, f'{name}Socket')

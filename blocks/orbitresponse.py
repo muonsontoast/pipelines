@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QLabel, QMenu, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt, QPoint
+import numpy as np
 from .draggable import Draggable
 from .socket import Socket
 from .. import shared
@@ -30,14 +31,13 @@ class OrbitResponse(Draggable):
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
         self.settings['components'] = {
-            'current': dict(name = 'Current', value = .5, min = .05, max = 5, default = .5, units = 'mrad', type = SliderComponent),
-            'steps': dict(name = 'Steps', value = 3, min = 3, max = 9, default = 3, units = 'mrad', type = SliderComponent),
-            'repeats': dict(name = 'Repeats', value = 5, min = 1, max = 20, default = 5, units = '', type = SliderComponent)
+            'current': dict(name = 'Current', value = .5, min = .01, max = 5, default = .5, units = 'mrad', type = SliderComponent),
+            'steps': dict(name = 'Steps', value = 3, min = 3, max = 9, default = 3, units = 'mrad', valueType = int, type = SliderComponent),
+            'repeats': dict(name = 'Repeats', value = 5, min = 1, max = 20, default = 5, units = '', valueType = int, type = SliderComponent)
         }
         self.active = False
         self.hovering = False
         self.startPos = None
-        # These need to be dicts, key = link / line item, value = socket
         self.action = OrbitResponseAction()
         self.runningCircle = RunningCircle()
         # Define orbit response streams
@@ -50,9 +50,18 @@ class OrbitResponse(Draggable):
                 'yunits': '',
                 'plottype': 'imshow',
                 'cmap': 'viridis',
-                'cmapLabel': r'$\Delta~x$ / mm',
-                'data': self.data.mean(axis = 2) / 1e-3 # convert to mm
+                'cmapLabel': r'$\Delta~$mm / mrad',
+                'data': self.ORM
             },
+            'corrector': lambda **kwargs: {
+                'xlabel': f'Corrector Kick Angle',
+                'ylabel': f'Beam Center in BPM',
+                'xunits': 'mrad',
+                'yunits': 'mm',
+                'plottype': 'scatter',
+                # testing ...
+                'data': np.array([(np.arange(0, self.settings['components']['steps']['value'], 1) - int(self.settings['components']['steps']['value'] / 2)) * self.settings['components']['current']['value'], 1e3 * np.mean(self.data, axis = 3)[0][0]])
+            }
         }
         self.Push()
 
@@ -203,7 +212,15 @@ class OrbitResponse(Draggable):
         print('Starting orbit response measurement')
         self.runningCircle.Start()
         self.title.setText('Orbit Response (Running)')
-        PerformAction(self, self.online, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
+        PerformAction(
+            self,
+            self.online,
+            self.settings['components']['steps']['value'],
+            self.settings['components']['current']['value'],
+            self.settings['components']['repeats']['value'],
+            getRawData = False,
+            postProcessedData = 'ORM'
+            )
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()

@@ -50,7 +50,8 @@ class SocketInteractable(QFrame):
                     shared.PVLinkSource.indicator.setStyleSheet(style.indicatorStyle(4, color = "#E0A159", borderColor = "#E7902D"))
                 shared.PVLinkSource.linksOut['free'].setLine(QLineF(shared.PVLinkSource.GetSocketPos('output'), self.parent.parent.GetSocketPos(self.parent.name)))
                 if shared.PVLinkSource.ID in self.parent.parent.linksIn.keys():
-                    return
+                    # redraw canvas with new data if re-linked.
+                    shared.editors[0].scene.removeItem(shared.PVLinkSource.linksOut[self.parent.parent.ID])
                 self.parent.parent.linksIn[shared.PVLinkSource.ID] = dict(link = shared.PVLinkSource.linksOut['free'], socket = self.parent.name)
                 shared.PVLinkSource.linksOut[self.parent.parent.ID] = shared.PVLinkSource.linksOut.pop('free')
                 shared.editors[0].scene.addItem(shared.PVLinkSource.linksOut[self.parent.parent.ID])
@@ -63,7 +64,7 @@ class SocketInteractable(QFrame):
                     if shared.PVLinkSource.blockType == 'Orbit Response':
                         self.parent.parent.title.setText('View (Connected)')
                         self.parent.parent.PVIn = shared.PVLinkSource
-                        self.parent.parent.DrawCanvas()
+                        self.parent.parent.DrawCanvas(stream = 'corrector')
                 shared.PVLinkSource = None
 
     def leaveEvent(self, event):

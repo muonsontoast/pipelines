@@ -99,30 +99,60 @@ class View(Draggable):
             print('No PV input for view block. backing out.')
             return
         print('Clearing canvas')
-        self.ToggleSpines(True)
         self.ClearCanvas()
         print('Clearing ticks and tick labels')
         self.stream = self.PVIn.streams[stream](**kwargs)
-        print('Setting labels')
+        print('Checking if data exists.')
+        if not 'data' in self.stream.keys():
+            return
+        print('data available')
+        self.ToggleSpines(True)
+        self.axes.relim()
+        self.axes.autoscale_view()
         xunits = f' ({self.stream['xunits']})' if self.stream['xunits'] != '' else ''
         self.axes.set_xlabel(f'{self.stream['xlabel']}{xunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
         yunits = f' ({self.stream['yunits']})' if self.stream['yunits'] != '' else ''
         self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
-        print('Checking if data exists.')
-        if 'data' in self.stream.keys():
-            if self.stream['plottype'] == 'imshow':
-                im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
-                divider = make_axes_locatable(self.axes)
-                cax = divider.append_axes("right", size = "5%", pad = 0.075)
-                cb = plt.colorbar(im, cax = cax, ax = self.axes)
-                cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
-                cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
-                self.axes.relim()
-                self.axes.autoscale_view()
-                self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
-                self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
-        else:
-            print('No data found')
+        if self.stream['plottype'] == 'imshow':
+            im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
+            divider = make_axes_locatable(self.axes)
+            cax = divider.append_axes("right", size = "5%", pad = 0.075)
+            cb = plt.colorbar(im, cax = cax, ax = self.axes)
+            cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
+            cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
+        elif self.stream['plottype'] == 'plot':
+            shape = self.stream['data'].shape
+            dimension = len(shape)
+            if dimension == 1:
+                self.axes.hist(self.stream['data'], bins = kwargs.get('bins'), range = (kwargs.get('min', None), kwargs.get('max', None)))
+            elif dimension == 2:
+                '''Expects 2D data as 2 x n'''
+                self.axes.plot(self.stream['data'][0], self.stream['data'][1], color = kwargs.get('color', 'tab:blue'), marker = 'o', markersize = 8)
+        elif self.stream['plottype'] == 'scatter':
+            print('Generating a scatter plot')
+            shape = self.stream['data'].shape
+            dimension = len(shape)
+            if dimension == 1:
+                print('Dimension 1')
+                self.axes.hist(self.stream['data'], bins = kwargs.get('bins'), range = (kwargs.get('min', None), kwargs.get('max', None)))
+            elif dimension == 2:
+                '''Expects 2D data as 2 x n'''
+                print('Dimension 2')
+                print('shape:', self.stream['data'].shape)
+                print('data:', self.stream['data'])
+                print(self.stream['data'][0])
+                print(self.stream['data'][1])
+                self.axes.scatter(self.stream['data'][0], self.stream['data'][1], marker = 'o', s = 40)
+                self.axes.minorticks_on()
+                self.axes.grid(alpha = .35) if kwargs.get('grid', True) else None
+            # elif dimension == 3:
+            #     '''Rather than 3D points, we assume this to be a collection of lines.'''
+            #     for c in range(shape[0]):
+            #         self.axes.scatter(self.stream['data'][c])
+
+        print('Setting')
+        self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
+        self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
         self.axes.set_aspect('auto')
         self.figure.tight_layout()
         self.canvas.draw()
@@ -143,6 +173,7 @@ class View(Draggable):
 
     def ToggleSpines(self, override: bool = None):
         for spine in self.axes.spines.values():
+            spine.set_color('#c4c4c4')
             state = not spine.get_visible() if not override else override
             spine.set_visible(state)
 

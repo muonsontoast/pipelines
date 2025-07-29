@@ -112,12 +112,16 @@ class SliderComponent(QWidget):
     def UpdateSliderValue(self):
         v = self.ToAbsolute(self.slider.value())
         self.value.setText(f'{v:.{self.floatdp}f}')
-        self.pv.settings['components'][self.component]['value'] = v
+        if 'valueType' not in self.pv.settings['components'][self.component].keys():
+            self.pv.settings['components'][self.component]['valueType'] = float
+        self.pv.settings['components'][self.component]['value'] = self.pv.settings['components'][self.component]['valueType'](v)
 
     def SetSliderValue(self):
         self.value.clearFocus()
         self.value.setText(f'{float(self.value.text()):.{self.floatdp}f}')
-        self.pv.settings['components'][self.component]['value'] = float(self.value.text())
+        if 'valueType' not in self.pv.settings['components'][self.component].keys():
+            self.pv.settings['components'][self.component]['valueType'] = float
+        self.pv.settings['components'][self.component]['value'] = self.pv.settings['components'][self.component]['valueType'](self.value.text())
         if self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
             value = QLineEdit(f'{self.pv.settings['components'][self.component]['value']:.{self.floatdp}f}')
             value.setAlignment(Qt.AlignCenter)

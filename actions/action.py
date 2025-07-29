@@ -5,18 +5,18 @@ class Action:
     def __init__(self):
         super().__init__()
 
-    def Run(self, isOnline, *args):
+    def Run(self, isOnline, *args, **kwargs):
         '''`online` = <True/False> determine which method is run.'''
         if isOnline:
-            return self.RunOnline(*args)
-        return self.RunOffline(*args)
+            return self.RunOnline(*args, **kwargs)
+        return self.RunOffline(*args, **kwargs)
 
     # to be overriden by child class
-    def RunOnline(self, *args):
+    def RunOnline(self, *args, **kwargs):
         return -1
 
     # to be overriden by child class
-    def RunOffline(self, *args):
+    def RunOffline(self, *args, **kwargs):
         return -1
     
     # to be overriden by child class
