@@ -7,6 +7,7 @@ from .. import style
 from ..components.slider import SliderComponent
 from ..actions.orbitresponse import OrbitResponseAction
 from ..ui.runningcircle import RunningCircle
+from ..utils.multiprocessing import PerformAction
 
 '''
 Orbit Response Block handles orbit response measurements off(on)line. It has two F sockets, one for Correctors, one for BPMs. 
@@ -24,6 +25,7 @@ class OrbitResponse(Draggable):
         self.parent = parent
         self.correctors = list()
         self.BPMs = list()
+        self.blockType = 'Orbit Response'
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
@@ -49,7 +51,7 @@ class OrbitResponse(Draggable):
                 'plottype': 'imshow',
                 'cmap': 'viridis',
                 'cmapLabel': r'$\Delta~x$ / mm',
-                'data': self.data
+                'data': self.data.mean(axis = 2) / 1e-3 # convert to mm
             },
         }
         self.Push()
@@ -70,11 +72,11 @@ class OrbitResponse(Draggable):
         header.setStyleSheet(style.WidgetStyle(color = "#2867B5", borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
         header.setFixedHeight(40)
         header.setLayout(QHBoxLayout())
-        header.layout().setContentsMargins(15, 0, 15, 0)
+        header.layout().setContentsMargins(15, 0, 5, 0)
         self.title = QLabel(f'{self.settings['name']} (Empty)', alignment = Qt.AlignCenter)
         header.layout().addWidget(self.title)
         # Running
-        header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight | Qt.AlignVCenter)
+        header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
         # Add header to layout
         self.widget.layout().addWidget(header)
         # On/off-line
@@ -128,7 +130,7 @@ class OrbitResponse(Draggable):
         self.correctorSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.correctorSocketHousing.layout().setSpacing(0)
         self.correctorSocketHousing.setFixedSize(140, 50)
-        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'corrector', [shared.blockTypes['Kicker'], shared.blockTypes['PV']])
+        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'corrector', ['Kicker'])
         self.correctorSocketHousing.layout().addWidget(self.correctorSocket)
         correctorSocketTitle = QLabel('Correctors')
         correctorSocketTitle.setObjectName('correctorSocketTitle')
@@ -141,7 +143,7 @@ class OrbitResponse(Draggable):
         self.BPMSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.BPMSocketHousing.layout().setSpacing(0)
         self.BPMSocketHousing.setFixedSize(140, 50)
-        self.BPMSocket = Socket(self, 'F', 50, 25, 'left', 'BPM', acceptableTypes = [shared.blockTypes['BPM']])
+        self.BPMSocket = Socket(self, 'F', 50, 25, 'left', 'BPM', acceptableTypes = ['BPM'])
         self.BPMSocketHousing.layout().addWidget(self.BPMSocket)
         BPMSocketTitle = QLabel('BPMs')
         BPMSocketTitle.setObjectName('BPMSocketTitle')
@@ -194,14 +196,14 @@ class OrbitResponse(Draggable):
     # blocks that are fed the output of a block holding data, will know which option to pick.
 
     def Start(self):
-        self.runningCircle.Start()
+        self.action.correctors = self.correctors
+        self.action.BPMs = self.BPMs
+        if not self.action.CheckForValidInputs():
+            return
         print('Starting orbit response measurement')
-        # re-enable this line ...
-        self.data = self.action.RunOffline(self.correctors, self.BPMs, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
-        # Override the data for now -- for testing ...
-        # self.data = np.random.randn(12, 5)
-        if self.data is not None:
-            self.title.setText('Orbit Response (Holding Data)')
+        self.runningCircle.Start()
+        self.title.setText('Orbit Response (Running)')
+        PerformAction(self, self.online, self.settings['components']['steps']['value'], self.settings['components']['current']['value'], self.settings['components']['repeats']['value'])
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()

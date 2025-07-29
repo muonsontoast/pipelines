@@ -11,16 +11,18 @@ class RunningCircle(QWidget):
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().addWidget(self.label)
         self.running = False
-        self.setFixedSize(shared.runningCircleResolution, shared.runningCircleResolution)
+        self.stop = False
+        self.setFixedSize(shared.runningCircleResolution + 10, shared.runningCircleResolution + 10)
         self.currentFrame = 0
         self.CreateTimer()
-        self.label.setVisible(False)
+        self.label.setVisible(True)
 
     def Stop(self):
         print('Stopping running circle')
         self.running = False
         self.label.setVisible(False)
         self.timer.stop()
+        self.stop = False
     
     def Start(self, timeout = 15):
         print('Starting running circle')
@@ -35,5 +37,7 @@ class RunningCircle(QWidget):
         self.timer.timeout.connect(self.UpdateFrame)
 
     def UpdateFrame(self):
+        if self.stop:
+            self.Stop()
         self.currentFrame = (self.currentFrame + 1) % shared.runningCircleNumFrames
         self.label.setPixmap(shared.runningCircleFrames[self.currentFrame])

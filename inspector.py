@@ -92,7 +92,7 @@ class Inspector(QTabWidget, Entity):
         self.expandables = dict()
 
         # Add an alignment item at the top if one is needed by the component.
-        if pv.__class__ in [shared.blockTypes['Kicker'], shared.blockTypes['BPM']]:
+        if pv.blockType in ['Kicker', 'BPM']:
             self.items['alignment'] = QListWidgetItem()
             planeRow = QWidget()
             planeRow.setLayout(QHBoxLayout())

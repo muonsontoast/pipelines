@@ -41,7 +41,7 @@ class SocketInteractable(QFrame):
         self.parent.parent.canDrag = False
         self.parent.parent.hovering = False
         if shared.PVLinkSource is not None and shared.PVLinkSource != self.parent.parent and self.type in ['F', 'MF']:
-            if shared.PVLinkSource.__class__ not in self.acceptableTypes:
+            if shared.PVLinkSource.blockType not in self.acceptableTypes:
                 return
             # some name filtering
             shared.PVLinkSource.linkTarget = self.parent.parent
@@ -54,14 +54,13 @@ class SocketInteractable(QFrame):
                 self.parent.parent.linksIn[shared.PVLinkSource.ID] = dict(link = shared.PVLinkSource.linksOut['free'], socket = self.parent.name)
                 shared.PVLinkSource.linksOut[self.parent.parent.ID] = shared.PVLinkSource.linksOut.pop('free')
                 shared.editors[0].scene.addItem(shared.PVLinkSource.linksOut[self.parent.parent.ID])
-                blockType = self.parent.parent.__class__
-                if blockType == shared.blockTypes['Orbit Response']:
+                if self.parent.parent.blockType == 'Orbit Response':
                     if self.parent.name == 'corrector':
                         self.parent.parent.correctors.append(shared.PVLinkSource)
                     else:
                         self.parent.parent.BPMs.append(shared.PVLinkSource)
-                elif blockType == shared.blockTypes['View']:
-                    if shared.PVLinkSource.__class__ == shared.blockTypes['Orbit Response']:
+                elif self.parent.parent.blockType == 'View':
+                    if shared.PVLinkSource.blockType == 'Orbit Response':
                         self.parent.parent.title.setText('View (Connected)')
                         self.parent.parent.PVIn = shared.PVLinkSource
                         self.parent.parent.DrawCanvas()

@@ -25,6 +25,7 @@ class PV(Draggable):
             }
         )
         self.parent = parent
+        self.blockType = 'PV'
         self.hoveringSocket = False
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)

@@ -12,6 +12,7 @@ class BPM(PV):
         self.typeLabel = QLabel('')
         self.typeLabel.setAlignment(Qt.AlignLeft)
         super().__init__(parent, proxy, name = kwargs.pop('name', 'BPM'), type = kwargs.pop('type', BPM), size = kwargs.pop('size', (225, 50)), **kwargs)
+        self.blockType = 'BPM'
         self.settings['alignment'] = kwargs.get('alignment', 'Vertical')
         self.settings['components'].pop('value') # BPM is read-only.
         # Add labels to layout

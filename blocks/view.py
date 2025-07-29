@@ -20,6 +20,7 @@ class View(Draggable):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.parent = parent
+        self.blockType = 'View'
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
@@ -85,7 +86,7 @@ class View(Draggable):
         self.dataSocketHousing.setLayout(QHBoxLayout())
         self.dataSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.dataSocketHousing.setFixedSize(50, 50)
-        self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'data', acceptableTypes = [shared.blockTypes['Orbit Response'], shared.blockTypes['BPM']])
+        self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'data', acceptableTypes = ['Orbit Response', 'BPM'])
         self.dataSocketHousing.layout().addWidget(self.dataSocket)
 
         self.layout().addWidget(self.dataSocket)

@@ -1,10 +1,8 @@
 import os
 from pathlib import Path
-from .blocks import pv, orbitresponse, kicker, bpm, view
-from .ui.runningcircle import RunningCircle
 
 '''Globally relevant variables that are shared between all package scripts.'''
-cwd = os.path.join(str(Path.cwd().resolve()), 'app') # Get the current working directory.
+cwd = os.path.join(str(Path.cwd().resolve()), 'pipelines') # Get the current working directory.
 appVersion = '0.0.1' # App version.
 windowTitle = 'Pipelines' # App title.
 app = None # A reference to the running app.
@@ -35,11 +33,3 @@ runningCircleResolution = 30 # z x z pixels
 runningCircleFrames = [None for _ in range(runningCircleNumFrames)] # frames used by the circle indicating progress in blocks.
 UIMoveUpdateRate = 1000 # number of times to handle UI movement inside the editor per second.
 mousePosUponRelease = None # used to determine if the user released the mouse inside another socket.
-# A dict of block types
-blockTypes = {
-    'PV': pv.PV,
-    'Kicker': kicker.Kicker,
-    'BPM': bpm.BPM,
-    'Orbit Response': orbitresponse.OrbitResponse,
-    'View': view.View,
-}

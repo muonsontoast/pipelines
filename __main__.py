@@ -72,7 +72,7 @@ class MainWindow(Entity, QMainWindow):
             defaultRunningCirclePath = os.path.join(compressedFolderPath, 'running\\grey')
             t = time.time()
             for _ in range(shared.runningCircleNumFrames):
-                shared.runningCircleFrames[_] = QPixmap(os.path.join(defaultRunningCirclePath, f'{_}'))
+                shared.runningCircleFrames[_] = QPixmap(os.path.join(defaultRunningCirclePath, f'{_}.png'))
             print(f'Finished loading compressed frames in {time.time() - t:.3f} seconds.')
         # Load lattice
         shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), 'Lattice', 'dls_ltb.mat')) # for now ...
@@ -184,9 +184,6 @@ class MainWindow(Entity, QMainWindow):
         self.buttonHousing.layout().addWidget(self.toggleDarkModeButton)
         self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
         self.page.layout().addWidget(self.buttonHousing, 4, 8)
-        
-        for idx in shared.entities:
-            print(shared.entities[idx].settings)
         
         self.showMaximized() # This throws a known but harmless error in PySide 6.9.1, to be corrected in the next version.
     
