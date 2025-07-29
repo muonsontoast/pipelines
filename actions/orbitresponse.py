@@ -98,11 +98,13 @@ class OrbitResponseAction(Action):
                 self.lattice[c['index']].KickAngle[idx] = kickAngle
                 for row, b in enumerate(self.BPMs):
                     for r in range(repeats):
-                        beamOut = lattice_pass(self.lattice, beam, nturns = 1, refpts = BPMIdxs) # has shape 6 x numParticles x numRefpts x nturns
+                        beamOut = lattice_pass(self.lattice, deepcopy(beam), nturns = 1, refpts = BPMIdxs) # has shape 6 x numParticles x numRefpts x nturns
                         centre = np.mean(beamOut[0, :, row]) if b['alignment'] == 'Horizontal' else np.mean(beamOut[2, :, row])
                         rawData[row, col, _, r] = centre
                 # BPMs in the model are markers so we have the full phase space information but PVs will typically be separated into BPM:X, BPM:Y
                 self.lattice[c['index']].KickAngle[idx] = 0
+        print('Here is the raw data (number of repeats of the min (most -ve) corrector kick):')
+        print(rawData[0, 0, 0])
         if getRawData:
             return rawData
         return self.Fit(rawData, kicks, numCorrectors, numBPMs)
