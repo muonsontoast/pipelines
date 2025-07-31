@@ -17,7 +17,8 @@ class Draggable(Entity, QWidget):
         self.canDrag = True
         self.dragging = False
         self.hoveringSocket = None
-        self.linksIn = dict() # dict of QGraphicsLineItems.
+        self.FSocketNames = []
+        self.linksIn = dict()
         self.linksOut = dict()
         self.data = None # holds the data which is accessed by downstream blocks.
         self.streams = dict() # instructions on how to display different data streams, based on the data held in the block.
@@ -55,6 +56,7 @@ class Draggable(Entity, QWidget):
             self.startDragPos = event.position().toPoint()
             self.clock = time.time()
             self.timer = 0
+            shared.activeEditor.SetCacheMode()
         shared.activeEditor.mouseButtonPressed = event.button()
         event.accept()
 
@@ -62,9 +64,6 @@ class Draggable(Entity, QWidget):
         if self.clock == None:
             return
         self.timer = time.time() - self.clock
-        # if not self.menu.hidden and shared.PVs[self.menu.ID]['rect'].contains(self.startPos):
-        #     super().mouseReleaseEvent(event)
-        #     return
         # in general, draw less often than the mouseMoveEvent is triggered to improve performance.
         if self.timer > self.timeout:
             self.clock = time.time()
@@ -80,16 +79,12 @@ class Draggable(Entity, QWidget):
             shared.mousePosUponRelease = self.proxy.mapToScene(event.position().toPoint())
             self.dragging = False
             self.canDrag = True
-        # Have we only clicked on the PV?
         else:
             shared.selectedPV = self
             if not self.cursorMoved:
-            # if not self.active:
-            #     shared.selectedPV = self
-            #         shared.selectedPV.startPos = None
-            #         shared.selectedPV.cursorMoved = False
-            #         shared.selectedPV.ToggleStyling()
                 self.ToggleStyling()
+            else:
+                shared.activeEditor.SetCacheMode('None')
             
         self.startDragPos = None
         self.cursorMoved = False
@@ -111,19 +106,34 @@ class Draggable(Entity, QWidget):
             newPos = self.proxy.pos() + mousePosInSceneCoords - startDragPosInSceneCoords
             self.proxy.setPos(newPos)
             self.SetRect()
+            shared.activeEditor.scene.blockSignals(True)
+            # Batch update all incoming links.
+            for name in self.FSocketNames:
+                socketPos = self.GetSocketPos(name)
+                for v in self.linksIn.values():
+                    if v['socket'] == name:
+                        line = v['link'].line()
+                        line.setP2(socketPos)
+                        v['link'].setLine(line)
+            # Batch update all outgoing links.
+            socketPos = self.GetSocketPos('output')
+            for k in self.linksOut.keys():
+                line = shared.entities[k].linksIn[self.ID]['link'].line()
+                line.setP1(socketPos)
+                shared.entities[k].linksIn[self.ID]['link'].setLine(line)
             # Move endpoints of links coming in to the block.
-            for v in self.linksIn.values():
-                link, socket = v['link'], v['socket']
-                line = link.line()
-                line.setP2(self.GetSocketPos(socket))
-                link.setLine(line)
-            # Move origins of links extending out of the block.
-            for v in self.linksOut.values():
-                link = v['link']
-                line = v['link'].line()
-                line.setP1(outputSocketPos)
-                link.setLine(line)
-                link.setLine(line)
+            # for v in self.linksIn.values():
+            #     link, socket = v['link'], v['socket']
+            #     line = link.line()
+            #     line.setP2(self.GetSocketPos(socket))
+            #     link.setLine(line)
+            # # Move origins of links extending out of the block.
+            # for v in self.linksOut.values():
+            #     link = v['link']
+            #     line = v['link'].line()
+            #     line.setP1(outputSocketPos)
+            #     link.setLine(line)
+            shared.activeEditor.scene.blockSignals(False)
 
     def ToggleStyling(self, **kwargs):
         '''Supply an `active` bool to force the active state.'''

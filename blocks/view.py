@@ -88,6 +88,7 @@ class View(Draggable):
         self.dataSocketHousing.setFixedSize(50, 50)
         self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'data', acceptableTypes = ['Orbit Response', 'BPM'])
         self.dataSocketHousing.layout().addWidget(self.dataSocket)
+        self.FSocketNames.append('data')
 
         self.layout().addWidget(self.dataSocket)
         self.layout().addWidget(self.main)

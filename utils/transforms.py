@@ -1,4 +1,5 @@
 from PySide6.QtCore import QRectF
+from .. import shared
 
 def MapSocketRectToScene(widget):
     '''Nested widgets inside a proxy widget don\'t map correctly under `.mapToScene()`, so this method should be called instead.'''
@@ -16,3 +17,11 @@ def MapDraggableRectToScene(widget):
     bottomRightInSceneCoords = widget.proxy.mapToScene(bottomRight)
     widget.rectInSceneCoords = QRectF(topLeftInSceneCoords, bottomRightInSceneCoords)
     return widget.rectInSceneCoords
+
+def MapViewportRectToScene():
+    topLeft = shared.activeEditor.viewport().rect().topLeft()
+    topLeftInSceneCoords = shared.activeEditor.mapToScene(topLeft)
+    bottomRight = shared.activeEditor.viewport().rect().bottomRight()
+    bottomRightInSceneCoords = shared.activeEditor.mapToScene(bottomRight)
+    shared.activeEditor.rectInSceneCoords = QRectF(topLeftInSceneCoords, bottomRightInSceneCoords)
+    return shared.activeEditor.rectInSceneCoords

@@ -87,7 +87,6 @@ class EditorMenu(Draggable):
         elif event.key() == Qt.Key_Down:
             self.IncrementShortcutIndex()
         elif event.key() == Qt.Key_Return:
-            print('Enter key was pressed!')
             self.RunCommandFromSearch()
         event.accept()
 
@@ -108,7 +107,10 @@ class EditorMenu(Draggable):
         self.shortcuts.selectionModel().select(index, QItemSelectionModel.ClearAndSelect)
 
     def DecrementShortcutIndex(self):
-        self.currentShortcutIndex = (self.currentShortcutIndex - 1) % self.shortcuts.model().rowCount()
+        if self.currentShortcutIndex == QModelIndex():
+            self.currentShortcutIndex = self.shortcuts.model().rowCount() - 1
+        else:
+            self.currentShortcutIndex = (self.currentShortcutIndex - 1) % self.shortcuts.model().rowCount()
         self.shortcuts.setCurrentIndex(self.shortcuts.model().index(self.currentShortcutIndex, 0))
 
     def RunCommandFromSearch(self):

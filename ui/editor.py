@@ -1,8 +1,9 @@
-from PySide6.QtWidgets import QFrame, QLabel, QGraphicsScene, QGraphicsView
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtWidgets import QFrame, QLabel, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem
+from PySide6.QtCore import Qt, QPoint, QSize
 from PySide6.QtGui import QPainter
 from .editormenu import EditorMenu
 from ..utils.entity import Entity
+from ..blocks.socket import Socket
 from .. import shared
 
 class Editor(Entity, QGraphicsView):
@@ -40,6 +41,17 @@ class Editor(Entity, QGraphicsView):
         self.coordsTitle.setText(f'Editor center: ({editorPos.x():.0f}, {editorPos.y():.0f})')
         self.zoomTitle.setText(f'Zoom: {self.transform().m11() * 100:.0f}%')
 
+    def SetCacheMode(self, mode = 'Device'):
+        '''Restores the image cache of blocks in the scene.\n
+        `item` should be one of <Device/None>'''
+        if mode == 'Device':
+            for item in self.scene.items():
+                if not isinstance(item, QGraphicsLineItem):
+                    item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+        else:
+            for item in self.scene.items():
+                item.setCacheMode(QGraphicsItem.NoCache)
+
     def mousePressEvent(self, event):
         '''Another PV may already be selected so handle this here.'''
         if event is None:
@@ -61,6 +73,7 @@ class Editor(Entity, QGraphicsView):
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.canDrag = True
         self.mouseButtonPressed = event.button()
+        self.SetCacheMode()
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
@@ -96,6 +109,7 @@ class Editor(Entity, QGraphicsView):
             if delta.x() ** 2 + delta.y() ** 2 < shared.cursorTolerance ** 2: # cursor has been moved.
                 for p in shared.activePVs:
                     p.ToggleStyling(active = False)
+        self.SetCacheMode('None')
         super().mouseReleaseEvent(event) # the event needs to propagate beyond the editor to allow drag functionality.
         self.setDragMode(QGraphicsView.NoDrag)
 
@@ -114,8 +128,10 @@ class Editor(Entity, QGraphicsView):
         if (currentScale * zoomFactor > self.minScale) or (currentScale * zoomFactor < self.maxScale):
             event.accept()
             return
+        
         self.scale(zoomFactor, zoomFactor)
         self.zoomTitle.setText(f'Zoom: {self.transform().m11() * 100:.0f}%')
+        self.SetCacheMode('None')
         event.accept()
 
     def keyPressEvent(self, event):
@@ -125,16 +141,6 @@ class Editor(Entity, QGraphicsView):
                 event.accept()
                 return
         super().keyPressEvent(event)
-
-    # This is causing the PV to trigger its redraw twice upon mouse release - look into this to prevent it.
-    def DeselectPV(self):
-        '''Editor mouseReleaseEvent always triggers, so ignore it if the cursor is inside the PV rect.'''
-        shared.selectedPV.cursorMoved = False
-        shared.selectedPV.ToggleStyling(active = False)
-        shared.selectedPV.startPos = None
-        shared.selectedPV = None
-        shared.inspector.mainWindowTitle.setText('')
-        shared.window.inspector.Push()
 
     def AssignSettings(self, **kwargs):
         for k, v in kwargs.items():

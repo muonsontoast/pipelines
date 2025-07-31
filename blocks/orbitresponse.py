@@ -196,6 +196,7 @@ class OrbitResponse(Draggable):
         self.outputSocket = Socket(self, 'M', 50, 25, 'right', 'output')
         self.outputSocketHousing.layout().addWidget(self.outputSocket)
         self.layout().addWidget(self.outputSocketHousing)
+        self.FSocketNames.extend(['corrector', 'BPM'])
         # Update colors
         self.UpdateColors()
 

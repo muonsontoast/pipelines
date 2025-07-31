@@ -68,7 +68,7 @@ class PV(Draggable):
         self.title.setObjectName('title')
         self.title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.widget.layout().addWidget(self.title, 0, 1)
-        self.widget.layout().addWidget(QWidget(), 1, 1) # padding
+        self.widget.layout().addWidget(QWidget(), 1, 1)
         self.clickable.layout().addWidget(self.widget)
         self.outputSocket = Socket(self, 'M', size[1], size[1] / 2, 'right', 'output')
         self.layout().addWidget(self.clickable)
@@ -86,7 +86,6 @@ class PV(Draggable):
         if not hasCursorMoved:
             if not isActive:
                 shared.inspector.Push(self)
-                # shared.selectedPV = self
             else:
                 shared.inspector.mainWindowTitle.setText('')
                 shared.inspector.Push()
@@ -161,6 +160,7 @@ class PV(Draggable):
             self.widget.setStyleSheet(f'''
             QWidget#pvHousing {{
             background-color: #3e3e3e;
+            border: none;
             border-top-left-radius: 6px;
             border-top-right-radius: 0px;
             border-bottom-right-radius: 0px;

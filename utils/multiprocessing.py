@@ -20,8 +20,6 @@ def CheckProcess(entity, process: Process, queue: Queue, getRawData = True, post
         data, postData = queue.get()
         entity.data = data
         setattr(entity, postProcessedData, postData)
-        print('raw data shape', entity.data.shape)
-        print('ORM shape', entity.ORM.shape)
     entity.runningCircle.stop = True
     if hasattr(entity, 'title'):
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Holding Data)')
@@ -31,7 +29,6 @@ def PerformAction(entity, isOnline, *args, **kwargs):
     '''Set `getRawData` to False to perform post processing, supplying an attribute name `postProcessedData` for the post processed data to be stored at.'''
     kwargs['getRawData'] = kwargs.get('getRawData', True)
     postProcessedData = kwargs.pop('postProcessedData', '')
-    # kwargs['postProcessedData'] = kwargs.get('postProcessedData', '')
     queue = Queue()
     process = Process(
         target = RunProcess, 
