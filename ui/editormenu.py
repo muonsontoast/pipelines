@@ -86,7 +86,8 @@ class EditorMenu(Draggable):
             self.DecrementShortcutIndex()
         elif event.key() == Qt.Key_Down:
             self.IncrementShortcutIndex()
-        elif event.key() == Qt.Key_Enter:
+        elif event.key() == Qt.Key_Return:
+            print('Enter key was pressed!')
             self.RunCommandFromSearch()
         event.accept()
 
@@ -113,7 +114,6 @@ class EditorMenu(Draggable):
     def RunCommandFromSearch(self):
         text = self.shortcuts.model().index(self.currentShortcutIndex, 0).data()
         commandName = text.split(' (')[0]
-        print('command name is', commandName)
         args = []
         for arg in commands.commands[commandName]['args']:
             if arg == commands.GetMousePos:

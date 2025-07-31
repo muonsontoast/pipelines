@@ -119,7 +119,7 @@ class Editor(Entity, QGraphicsView):
         event.accept()
 
     def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right, Qt.Key_Enter):
+        if event.key() in (Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right, Qt.Key_Return):
             if not self.menu.hidden:
                 shared.app.sendEvent(self.menu, event)
                 event.accept()
