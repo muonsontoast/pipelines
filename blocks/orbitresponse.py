@@ -24,8 +24,8 @@ class OrbitResponse(Draggable):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.parent = parent
-        self.correctors = list()
-        self.BPMs = list()
+        self.correctors = dict()
+        self.BPMs = dict()
         self.blockType = 'Orbit Response'
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -139,7 +139,7 @@ class OrbitResponse(Draggable):
         self.correctorSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.correctorSocketHousing.layout().setSpacing(0)
         self.correctorSocketHousing.setFixedSize(140, 50)
-        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'corrector', ['Kicker'])
+        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'corrector', ['Corrector'])
         self.correctorSocketHousing.layout().addWidget(self.correctorSocket)
         correctorSocketTitle = QLabel('Correctors')
         correctorSocketTitle.setObjectName('correctorSocketTitle')
@@ -209,6 +209,8 @@ class OrbitResponse(Draggable):
         self.action.BPMs = self.BPMs
         if not self.action.CheckForValidInputs():
             return
+        onlineText = 'online' if self.online else 'offline'
+        shared.workspace.assistant.PushMessage(f'Running orbit response measurement ({onlineText}).')
         print('Starting orbit response measurement')
         self.runningCircle.Start()
         self.title.setText('Orbit Response (Running)')
@@ -282,6 +284,13 @@ class OrbitResponse(Draggable):
             self.BaseStyling()
             return
         self.SelectedStyling()
+
+    def RemoveLinkIn(self, ID):
+        if shared.entities[ID].name == 'BPM':
+            self.BPMs.pop(ID)
+        else:
+            self.correctors.pop(ID)
+        super().RemoveLinkIn(ID)
 
     def ToggleStyling(self):
         pass

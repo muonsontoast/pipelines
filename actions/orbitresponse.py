@@ -29,7 +29,7 @@ class OrbitResponseAction(Action):
                     'index': b.settings['linkedElement'].Index,
                     'alignment': b.settings['alignment'] 
                 }
-                for b in self.BPMs
+                for b in self.BPMs.values()
             ],
             'correctors': [
                 { 
@@ -37,7 +37,7 @@ class OrbitResponseAction(Action):
                     'alignment': c.settings['alignment'],
                     'default': c.settings['components']['value']['default']
                 }
-                for c in self.correctors
+                for c in self.correctors.values()
             ],
         }
 
@@ -53,18 +53,22 @@ class OrbitResponseAction(Action):
         # Have both correctors AND BPMs been suppled?
         if len(self.BPMs) == 0:
             print('No BPMs supplied! Backing out.')
+            shared.workspace.assistant.PushMessage('Orbit Response is missing BPMs', 'Error')
             return False
         if len(self.correctors) == 0:
             print('No Correctors supplied! Backing out.')
+            shared.workspace.assistant.PushMessage('Orbit Response is missing correctors', 'Error')
             return False
         # Check whether all PVs have been linked to lattice elements.
-        for c in self.correctors:
+        for c in self.correctors.values():
             if 'linkedElement' not in c.settings.keys():
                 print(f'{c.settings['name']} is missing a linked element! Backing out.')
+                shared.workspace.assistant.PushMessage('One or more correctors have not been linked to lattice elements. Setup a connection in the inspector.', 'Error')
                 return False
-        for _, b in enumerate(self.BPMs):
+        for b in self.BPMs.values():
             if 'linkedElement' not in b.settings.keys():
                 print(f'{b.settings['name']} is missing a linked element! Backing out.')
+                shared.workspace.assistant.PushMessage('One or more BPMs have not been linked to lattice elements. Setup a connection in the inspector.', 'Error')
                 return False
         print('All correctors and BPMs are linked to lattice elements.')
         return True

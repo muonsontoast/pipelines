@@ -24,8 +24,6 @@ class Socket(QFrame):
         self.hoveringSocket = False
         self.setMouseTracking(True) 
         # A dict of links to other blocks
-        # self.links = dict()
-        self.activeLink = None
         self.position = self.pos()
         self.radius = radius
         self.type = socketType
@@ -40,10 +38,10 @@ class Socket(QFrame):
             super().mousePressEvent(event)
             return
         print('creating a link')
-        self.parent.linksOut['free'] = QGraphicsLineItem()
-        self.parent.linksOut['free'].setZValue(-20)
-        self.parent.linksOut['free'].setPen(QPen(QColor('#c4c4c4'), 8))
-        shared.editors[0].scene.addItem(self.parent.linksOut['free'])
+        self.parent.linksOut['free'] = dict(link = QGraphicsLineItem(), socket = None)
+        self.parent.linksOut['free']['link'].setZValue(-20)
+        self.parent.linksOut['free']['link'].setPen(QPen(QColor('#c4c4c4'), 8))
+        shared.editors[0].scene.addItem(self.parent.linksOut['free']['link'])
         print('link added to scene')
         self.parent.dragging = True
         self.parent.canDrag = False
@@ -54,12 +52,15 @@ class Socket(QFrame):
     def mouseMoveEvent(self, event):
         socketPos = self.parent.GetSocketPos(self.name)
         if self.parent.dragging:
-            self.parent.linksOut['free'].setLine(QLineF(socketPos, self.parent.proxy.mapToScene(self.mapTo(self.parent, event.position().toPoint()))))
+            self.parent.linksOut['free']['link'].setLine(QLineF(socketPos, self.parent.proxy.mapToScene(self.mapTo(self.parent, event.position().toPoint()))))
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         # hide the free link by default.
-        shared.editors[0].scene.removeItem(self.parent.linksOut['free'])
+        if not 'free' in self.parent.linksOut.keys():
+            super().mouseReleaseEvent(event)
+            return
+        shared.editors[0].scene.removeItem(self.parent.linksOut['free']['link'])
         super().mouseReleaseEvent(event)
 
     def UpdateColors(self):

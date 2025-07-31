@@ -28,3 +28,22 @@ class BPM(PV):
             self.typeLabel.setStyleSheet(style.LabelStyle(fontColor = "#1e1e1e", textAlign = 'left', padding = 0))
         else:
             self.typeLabel.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4", textAlign = 'left', padding = 0))
+
+    # def UpdateColors(self):
+    #     # if shared.lightModeOn:
+    #     #     self.typeLabel.setStyleSheet(style.LabelStyle(fontColor = "#1e1e1e", textAlign = 'left', padding = 0))
+    #     # else:
+    #     #     self.typeLabel.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4", textAlign = 'left', padding = 0))
+    #     pass
+
+    # def BaseStyling(self):
+    #     if shared.lightModeOn:
+    #         return
+    #     self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 4))
+    #     self.typeLabel.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4", textAlign = 'left', padding = 0))
+
+    # def SelectedStyling(self):
+    #     if shared.lightModeOn:
+    #         return
+    #     self.widget.setStyleSheet(style.WidgetStyle(color = '#3e3e3e', borderRadius = 4))
+    #     self.typeLabel.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4", textAlign = 'left', padding = 0))

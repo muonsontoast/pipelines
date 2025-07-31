@@ -1,9 +1,8 @@
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt, QLineF, QPointF, QTimer
+from PySide6.QtCore import Qt, QLineF, QPointF
 import time
-from multiprocessing import Process, Queue
 from ..utils.entity import Entity
-from ..utils.worker import Worker
+from ..utils.transforms import MapDraggableRectToScene
 from .. import shared
 
 class Draggable(Entity, QWidget):
@@ -27,7 +26,8 @@ class Draggable(Entity, QWidget):
         self.action = None
         self.timeout = 1 / shared.UIMoveUpdateRate # seconds between move draws.
         self.setFixedSize(*kwargs.get('size', (500, 440)))
-        shared.PVs.append(self)
+        if kwargs.pop('addToShared', True):
+            shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))
 
     def Push(self):
         self.ClearLayout()
@@ -55,12 +55,16 @@ class Draggable(Entity, QWidget):
             self.startDragPos = event.position().toPoint()
             self.clock = time.time()
             self.timer = 0
+        shared.activeEditor.mouseButtonPressed = event.button()
         event.accept()
 
     def mouseMoveEvent(self, event):
         if self.clock == None:
             return
         self.timer = time.time() - self.clock
+        # if not self.menu.hidden and shared.PVs[self.menu.ID]['rect'].contains(self.startPos):
+        #     super().mouseReleaseEvent(event)
+        #     return
         # in general, draw less often than the mouseMoveEvent is triggered to improve performance.
         if self.timer > self.timeout:
             self.clock = time.time()
@@ -77,19 +81,19 @@ class Draggable(Entity, QWidget):
             self.dragging = False
             self.canDrag = True
         # Have we only clicked on the PV?
-        elif not self.cursorMoved:
-            if shared.selectedPV:
-                if shared.selectedPV != self:
-                    shared.selectedPV.startPos = None
-                    shared.selectedPV.cursorMoved = False
-                    shared.selectedPV.ToggleStyling()
-            if not self.active:
-                shared.selectedPV = self
-            self.ToggleStyling()
+        else:
+            shared.selectedPV = self
+            if not self.cursorMoved:
+            # if not self.active:
+            #     shared.selectedPV = self
+            #         shared.selectedPV.startPos = None
+            #         shared.selectedPV.cursorMoved = False
+            #         shared.selectedPV.ToggleStyling()
+                self.ToggleStyling()
             
         self.startDragPos = None
         self.cursorMoved = False
-        super().mouseReleaseEvent(event)
+        event.accept()
 
     def HandleMouseMove(self, mousePos, buttons):
         mousePosInSceneCoords = self.proxy.mapToScene(mousePos)
@@ -97,7 +101,7 @@ class Draggable(Entity, QWidget):
         if not self.canDrag:
             # Move the end point of the free link coming out the block.
             if self.dragging:
-                self.linksOut['free'].setLine(QLineF(outputSocketPos, mousePosInSceneCoords))
+                self.linksOut['free']['link'].setLine(QLineF(outputSocketPos, mousePosInSceneCoords))
         elif buttons & Qt.LeftButton and self.startDragPos:
             delta = mousePosInSceneCoords - self.startDragPos
             if (delta.x() ** 2 + delta.y() ** 2) < shared.cursorTolerance ** 2:
@@ -106,6 +110,7 @@ class Draggable(Entity, QWidget):
             startDragPosInSceneCoords = self.proxy.mapToScene(self.startDragPos)
             newPos = self.proxy.pos() + mousePosInSceneCoords - startDragPosInSceneCoords
             self.proxy.setPos(newPos)
+            self.SetRect()
             # Move endpoints of links coming in to the block.
             for v in self.linksIn.values():
                 link, socket = v['link'], v['socket']
@@ -113,14 +118,39 @@ class Draggable(Entity, QWidget):
                 line.setP2(self.GetSocketPos(socket))
                 link.setLine(line)
             # Move origins of links extending out of the block.
-            for k, v in self.linksOut.items():
-                line = v.line()
+            for v in self.linksOut.values():
+                link = v['link']
+                line = v['link'].line()
                 line.setP1(outputSocketPos)
-                self.linksOut[k].setLine(line)
+                link.setLine(line)
+                link.setLine(line)
 
-    def ToggleStyling(self):
+    def ToggleStyling(self, **kwargs):
+        '''Supply an `active` bool to force the active state.'''
+        active = kwargs.get('active', None) # this is a target, rather than current state, so opposite logic to self.active
+        if active is not None:
+            if not active:
+                if shared.selectedPV == self:
+                    shared.selectedPV = None
+                if self in shared.activePVs:
+                    shared.activePVs.remove(self)
+                self.BaseStyling()
+                self.active = False
+                shared.inspector.mainWindowTitle.setText('')
+                shared.inspector.Push()
+            else:
+                shared.selectedPV = self
+                if self not in shared.activePVs:
+                    shared.activePVs.append(self)
+                self.SelectedStyling()
+                self.active = True
+            return
         if self.active:
-            shared.activePVs.append(self)
+            shared.inspector.mainWindowTitle.setText('')
+            shared.inspector.Push()
+            if shared.selectedPV == self:
+                shared.selectedPV = None
+            shared.activePVs.remove(self)
             self.BaseStyling()
         else:
             shared.activePVs.append(self)
@@ -132,3 +162,18 @@ class Draggable(Entity, QWidget):
 
     def SelectedStyling(self):
         pass
+
+    def UpdateColors(self):
+        pass
+
+    def SetRect(self):
+        shared.PVs[self.ID]['rect'] = MapDraggableRectToScene(self)
+
+    # this can be overridden to trigger logic that should run when removing incoming links to a block.
+    def RemoveLinkIn(self, ID):
+        shared.editors[0].scene.removeItem(self.linksIn[ID]['link'])
+        self.linksIn.pop(ID)
+
+    # this can be overridden to trigger logic that should run when removing outgoing links from a block.
+    def RemoveLinkOut(self, ID):
+        self.linksOut.pop(ID)

@@ -1,12 +1,8 @@
-from PySide6.QtWidgets import (
-    QWidget, QLineEdit, QCompleter, QLabel,
-    QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
-)
+from PySide6.QtWidgets import QWidget, QLineEdit, QCompleter, QLabel, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 from PySide6.QtCore import Qt, QStringListModel
 from .. import shared
 from .. import style
 from ..lattice import latticeutils
-from ..actions import orbitresponse
 
 class LinkComponent(QWidget):
     def __init__(self, pv, component):

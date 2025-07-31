@@ -12,6 +12,8 @@ class Entity:
         self.settings = dict(name = self.name)
         for k, v in kwargs.items(): # Assign entity-specific attributes.
             self.settings[k] = v
+        if 'size' in kwargs.keys():
+            self.setFixedSize(*kwargs.get('size'))
         self.Register() # register this entity inside the shared.py script.
 
     def Register(self):

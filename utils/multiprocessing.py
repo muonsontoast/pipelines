@@ -1,5 +1,6 @@
 from multiprocessing import Queue, Process
 import threading
+from .. import shared
 
 def RunProcess(action, isOnline, queue, *args, **kwargs):
     '''Accepts an entity `ID`, and other `args` to pass to the Run() method of the entity's action.'''
@@ -24,6 +25,7 @@ def CheckProcess(entity, process: Process, queue: Queue, getRawData = True, post
     entity.runningCircle.stop = True
     if hasattr(entity, 'title'):
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Holding Data)')
+    shared.workspace.assistant.PushMessage('Finished orbit response measurement.')
 
 def PerformAction(entity, isOnline, *args, **kwargs):
     '''Set `getRawData` to False to perform post processing, supplying an attribute name `postProcessedData` for the post processed data to be stored at.'''

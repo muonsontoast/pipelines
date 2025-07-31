@@ -429,6 +429,39 @@ def ListWidget(**kwargs):
         color: inherit;
     }}'''
 
+def ListView(**kwargs):
+    '''Accepts kwargs which should be set to #ABCDEF color strings.\n
+    `color`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`, `spacing`'''
+    return f'''
+    QListView {{
+    background-color: {kwargs.get('color')};
+    color: {kwargs.get('fontColor', fontColor)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
+    font-family: {kwargs.get('fontFamily', fontFamily)};
+    font-weight: bold;
+    border: none;
+    }}
+    QListView::item {{
+    background-color: {kwargs.get('color')};
+    padding-top: {kwargs.get('spacing', 0)}px;
+    padding-bottom: {kwargs.get('spacing', 0)}px;
+    }}
+    QListView::item:hover {{
+    background-color: {kwargs.get('hoverColor')};
+    padding-top: {kwargs.get('spacing', 0)}px;
+    padding-bottom: {kwargs.get('spacing', 0)}px;
+    }}
+    QListView::item:selected {{
+    background-color: {kwargs.get('hoverColor')};
+    padding-top: {kwargs.get('spacing', 0)}px;
+    padding-bottom: {kwargs.get('spacing', 0)}px;
+    color: {kwargs.get('fontColor', fontColor)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
+    font-family: {kwargs.get('fontFamily', fontFamily)};
+    font-weight: bold;
+    border: none;
+    }}'''
+
 def ProgressBarStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
     `color`, `borderColor`, `fontColor`, `fontSize`, `fontFamily`'''
@@ -634,8 +667,8 @@ def Light01():
 
 def Dark01():
     shared.lightModeOn = not shared.lightModeOn
-    for p in shared.PVs:
-        p.UpdateColors() # Apply a color update without toggling the selection state of the PV.
+    for p in shared.PVs.values():
+        p['pv'].UpdateColors() # Apply a color update without toggling the selection state of the PV.
     for e in shared.expandables.values():
         e.UpdateColors() # Apply a color update to the expandable widgets in the inspector if a PV is currently selected.
         if e.widget is not None:

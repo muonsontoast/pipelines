@@ -70,7 +70,6 @@ class PV(Draggable):
         self.widget.layout().addWidget(self.title, 0, 1)
         self.widget.layout().addWidget(QWidget(), 1, 1) # padding
         self.clickable.layout().addWidget(self.widget)
-        self.linksOut['free'] = QGraphicsLineItem()
         self.outputSocket = Socket(self, 'M', size[1], size[1] / 2, 'right', 'output')
         self.layout().addWidget(self.clickable)
         self.layout().addWidget(self.outputSocket)
@@ -86,14 +85,11 @@ class PV(Draggable):
             return
         if not hasCursorMoved:
             if not isActive:
-                # entity.mainWindow.inspector.Push(self)
-                shared.window.inspector.Push(self)
-                shared.selectedPV = self
-                # shared.editorPopup.Push(self.settings)
+                shared.inspector.Push(self)
+                # shared.selectedPV = self
             else:
                 shared.inspector.mainWindowTitle.setText('')
-                shared.window.inspector.Push()
-                # entity.mainWindow.inspector.Push()
+                shared.inspector.Push()
 
     def UpdateColors(self):
         if not self.active:
@@ -125,7 +121,7 @@ class PV(Draggable):
         else:
             self.widget.setStyleSheet(f'''
             QWidget#pvHousing {{
-            background-color: #2e2e2e;
+            background-color: #343434;
             border: none;
             border-top-left-radius: 6px;
             border-top-right-radius: 0px;

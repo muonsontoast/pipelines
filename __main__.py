@@ -15,7 +15,7 @@ import os
 import time
 from pathlib import Path
 from .inspector import Inspector
-from .workspace import Workspace
+from .ui.workspace import Workspace
 from .lattice.latticeglobal import LatticeGlobal
 from .font import SetFontToBold
 from .utils.entity import Entity
@@ -23,6 +23,7 @@ from . import style
 from . import shared
 from .lattice import latticeutils
 from .utils import memory
+from .utils import commands
 
 plt.rcParams['font.size'] = 10 # Define the font size for plots.
 
@@ -82,8 +83,9 @@ class MainWindow(Entity, QMainWindow):
             shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
         self.lightModeOn = False
         shared.mainWindow = self
-        # Allow crtl+W shortcut for exit
-        QShortcut(QKeySequence('Ctrl+W'), self).activated.connect(self.close)
+        # # Allow crtl+W shortcut for exit
+        # QShortcut(QKeySequence('Ctrl+W'), self).activated.connect(self.close)
+        
         # Create a master widget to contain everything.
         self.master = QWidget()
         self.master.setLayout(QStackedLayout())
@@ -131,13 +133,11 @@ class MainWindow(Entity, QMainWindow):
             self.inspector = Inspector(self)
             self.inspector.AssignSettings(size = (350, None))
         shared.lightModeOn = True
+        # connect key shortcuts to their functions.
+        commands.ConnectShortcuts()
         self.page.setStyleSheet(style.Dark01())
-        # Lattice graphics views
-        # self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
-        # print('lattice global width is ', self.latticeGlobal.width())
         self.page.layout().addWidget(QFrame(), 1, 7, 1, 2)
         self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
-        # self.page.layout().addWidget(self.latticeCanvas, 1, 1, 1, 8)
         self.page.layout().addWidget(self.workspace, 2, 1, 2, 6)
         self.page.layout().addWidget(self.inspector, 2, 7, 1, 2)
         self.page.layout().addWidget(QWidget(), 3, 7, 1, 2)
