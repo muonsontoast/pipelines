@@ -17,8 +17,9 @@ class PV(Draggable):
         super().__init__(
             proxy,
             name = kwargs.pop('name', 'PV'),
-            type = kwargs.pop('type', PV),
-            size = kwargs.pop('size', (200, 50)),
+            # PV is inheritable, so consider overrides.
+            type = kwargs.pop('type', 'PV'),
+            size = kwargs.pop('size', [200, 50]),
             components = {
                 'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
                 'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
@@ -39,13 +40,6 @@ class PV(Draggable):
         self.linkTarget = None
         self.indicator = None
         self.Push()
-    
-    def AssignSettings(self, **kwargs):
-        for k, v in kwargs.items():
-            self.settings[k] = v
-
-    def GetSettings(self):
-        return self.settings
 
     def Push(self):
         self.ClearLayout()
@@ -58,19 +52,15 @@ class PV(Draggable):
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.setLayout(QGridLayout())
         self.widget.layout().setContentsMargins(10, 5, 5, 5)
-        # Set the size
-        size = self.settings.get('size', (200, 50))
-        self.setFixedSize(*size)
         self.indicator = Indicator(self, 4)
         self.widget.layout().addWidget(self.indicator, 0, 0, alignment = Qt.AlignLeft)
-        name = f'Control PV {self.settings['name'][9:]}' if self.settings['name'][:9] == 'controlPV' else self.settings['name']
-        self.title = QLabel(name)
+        self.title = QLabel(self.name)
         self.title.setObjectName('title')
         self.title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.widget.layout().addWidget(self.title, 0, 1)
         self.widget.layout().addWidget(QWidget(), 1, 1)
         self.clickable.layout().addWidget(self.widget)
-        self.outputSocket = Socket(self, 'M', size[1], size[1] / 2, 'right', 'output')
+        self.outputSocket = Socket(self, 'M', self.settings['size'][1], self.settings['size'][1] / 2, 'right', 'output')
         self.layout().addWidget(self.clickable)
         self.layout().addWidget(self.outputSocket)
         self.UpdateColors()

@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from matplotlib.colors import TwoSlopeNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from .draggable import Draggable
 from .socket import Socket
@@ -15,7 +16,7 @@ plt.rcParams['text.usetex'] = True
 class View(Draggable):
     '''Displays the data of arbitrary blocks.'''
     def __init__(self, parent, proxy: QGraphicsProxyWidget, fontsize = 12, **kwargs):
-        super().__init__(proxy, name = kwargs.pop('name', 'View'), type = kwargs.pop('type', View), size = kwargs.pop('size', (600, 500)), **kwargs)
+        super().__init__(proxy, name = kwargs.pop('name', 'View'), type = 'View', size = kwargs.pop('size', [600, 500]), **kwargs)
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
@@ -115,7 +116,11 @@ class View(Draggable):
         yunits = f' ({self.stream['yunits']})' if self.stream['yunits'] != '' else ''
         self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
         if self.stream['plottype'] == 'imshow':
-            im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
+            if 'norm' in self.stream.keys():
+                print('normed!')
+                im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'], norm = TwoSlopeNorm(vcenter = self.stream['vcenter']))
+            else:
+                im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
             divider = make_axes_locatable(self.axes)
             cax = divider.append_axes("right", size = "5%", pad = 0.075)
             cb = plt.colorbar(im, cax = cax, ax = self.axes)
@@ -151,7 +156,6 @@ class View(Draggable):
             #     for c in range(shape[0]):
             #         self.axes.scatter(self.stream['data'][c])
 
-        print('Setting')
         self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
         self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
         self.axes.set_aspect('auto')

@@ -1,4 +1,3 @@
-import os, yaml
 from .. import shared
 
 class Entity:
@@ -8,17 +7,24 @@ class Entity:
         Accepts `name` and `type` overrides.'''
         super().__init__()
         self.name = kwargs.get('name', 'Entity')
-        self.type = kwargs.get('type', Entity)
-        self.settings = dict(name = self.name)
+        self.type = kwargs.get('type', 'Entity')
+        self.settings = dict(name = self.name, type = self.type)
         for k, v in kwargs.items(): # Assign entity-specific attributes.
+            if k == 'overrideID':
+                continue
             self.settings[k] = v
-        if 'size' in kwargs.keys():
+        # Some special widgets like the inspector are exempt as they should have expanding size policies.
+        if self.type not in ['Inspector'] and 'size' in kwargs.keys():
+            # if 
+            print(f'setting {self.name} size to {kwargs.get('size')}')
             self.setFixedSize(*kwargs.get('size'))
-        self.Register() # register this entity inside the shared.py script.
+        self.Register(kwargs.get('overrideID')) # register this entity inside the shared.py script.
 
-    def Register(self):
+    def Register(self, overrideID = None):
         '''Registers this object as an entity inside the shared entity list.'''
-        self.ID = AssignEntityID()  # unique global identifier
+        self.ID = overrideID
+        if not overrideID:
+            self.ID = AssignEntityID()  # unique global identifier
         print('Registering', self.name, 'with ID:', self.ID)
         shared.entities[self.ID] = self
 
@@ -43,19 +49,3 @@ def AssignEntityID():
         else:
             break
     return ID
-
-# def LoadEntities():
-#     '''Load the global dataset of entities.'''
-#     settingsExist = os.path.exists(cwd + '\\settings.yaml')
-
-#     if settingsExist:
-#         with open('settings.yaml', 'r') as f:
-#             settings = yaml.safe_load(f)
-#         return settings
-#     else:
-#         return dict()
-
-# def SaveEntities():
-#     '''Save the global dataset of entities.'''
-#     with open('settings.yaml', 'w') as f:
-#         yaml.dump(shared.entities, f)

@@ -6,7 +6,7 @@ from .socket import Socket
 from .. import shared
 from .. import style
 from ..components.slider import SliderComponent
-from ..actions.orbitresponse import OrbitResponseAction
+from ..actions.offline.orbitresponse import OrbitResponseAction
 from ..ui.runningcircle import RunningCircle
 from ..utils.multiprocessing import PerformAction
 
@@ -19,14 +19,15 @@ to save the data, or for further processing in a pipeline.
 
 class OrbitResponse(Draggable):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
-        super().__init__(proxy, name = kwargs.pop('name', 'Orbit Response'), type = kwargs.pop('type', OrbitResponse), size = kwargs.pop('size', (550, 440)), **kwargs)
+        super().__init__(proxy, name = kwargs.pop('name', 'Orbit Response'), type = 'Orbit Response', size = kwargs.pop('size', [550, 440]), **kwargs)
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.parent = parent
         self.correctors = dict()
         self.BPMs = dict()
-        self.blockType = 'Orbit Response'
+
+        self.setStyleSheet('background: none')
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
@@ -190,6 +191,7 @@ class OrbitResponse(Draggable):
         self.layout().addWidget(self.main)
         # Output socket
         self.outputSocketHousing = QWidget()
+        self.outputSocketHousing.setObjectName('outputSocketHousing')
         self.outputSocketHousing.setLayout(QHBoxLayout())
         self.outputSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.outputSocketHousing.setFixedSize(50, 50)
@@ -208,22 +210,25 @@ class OrbitResponse(Draggable):
     def Start(self):
         self.action.correctors = self.correctors
         self.action.BPMs = self.BPMs
-        if not self.action.CheckForValidInputs():
-            return
-        onlineText = 'online' if self.online else 'offline'
-        shared.workspace.assistant.PushMessage(f'Running orbit response measurement ({onlineText}).')
-        print('Starting orbit response measurement')
-        self.runningCircle.Start()
-        self.title.setText('Orbit Response (Running)')
-        PerformAction(
-            self,
-            self.online,
-            self.settings['components']['steps']['value'],
-            self.settings['components']['current']['value'],
-            self.settings['components']['repeats']['value'],
-            getRawData = False,
-            postProcessedData = 'ORM'
+        if not self.online:
+            if not self.action.CheckForValidInputs():
+                return
+            onlineText = 'online' if self.online else 'offline'
+            shared.workspace.assistant.PushMessage(f'Running orbit response measurement ({onlineText}).')
+            print('Starting orbit response measurement')
+            self.runningCircle.Start()
+            self.title.setText('Orbit Response (Running)')
+            PerformAction(
+                self,
+                self.online,
+                self.settings['components']['steps']['value'],
+                self.settings['components']['current']['value'],
+                self.settings['components']['repeats']['value'],
+                getRawData = False,
+                postProcessedData = 'ORM'
             )
+        else:
+            pass
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()
@@ -286,8 +291,15 @@ class OrbitResponse(Draggable):
             return
         self.SelectedStyling()
 
+    def AddLinkIn(self, ID, socket):
+        if shared.entities[ID].type == 'BPM':
+            self.BPMs[ID] = shared.entities[ID]
+        else:
+            self.correctors[ID] = shared.entities[ID]
+        super().AddLinkIn(ID, socket)
+
     def RemoveLinkIn(self, ID):
-        if shared.entities[ID].name == 'BPM':
+        if shared.entities[ID].type == 'BPM':
             self.BPMs.pop(ID)
         else:
             self.correctors.pop(ID)

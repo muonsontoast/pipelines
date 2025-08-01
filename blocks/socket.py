@@ -41,7 +41,7 @@ class Socket(QFrame):
         self.parent.linksOut['free'] = dict(link = QGraphicsLineItem(), socket = None)
         self.parent.linksOut['free']['link'].setZValue(-20)
         self.parent.linksOut['free']['link'].setPen(QPen(QColor('#c4c4c4'), 8))
-        shared.editors[0].scene.addItem(self.parent.linksOut['free']['link'])
+        shared.activeEditor.scene.addItem(self.parent.linksOut['free']['link'])
         print('link added to scene')
         self.parent.dragging = True
         self.parent.canDrag = False

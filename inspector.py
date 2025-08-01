@@ -8,17 +8,17 @@ from .utils.entity import Entity
 from . import shared
 from . import style
 
-class Inspector(QTabWidget, Entity):
+class Inspector(Entity, QTabWidget):
     '''Inspector widget that holds contextual information on currently selected items in the app.'''
-    def __init__(self, parent):
-        super().__init__(name = 'Inspector', type = Inspector)
+    def __init__(self, parent, **kwargs):
+        # -1 size corresponds to an expanding size policy.
+        size = kwargs.pop('size', [415, -1])
+        super().__init__(name = 'Inspector', type = 'Inspector', size = size)
         print('setting shared.inspector')
         shared.inspector = self
         self.parent = parent
-        self.setContentsMargins(0, 0, 0, 0)
-        self.setMinimumWidth(415)
-        self.settings = dict()
-        self.SetSizePolicy()
+        self.setMinimumWidth(size[0])
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.mainWindow = QWidget()
         self.mainWindow.setLayout(QVBoxLayout())
         self.mainWindow.layout().setContentsMargins(0, 15, 0, 0)
@@ -43,35 +43,10 @@ class Inspector(QTabWidget, Entity):
         self.optimiser = QListWidget()
         # Add tabs
         self.addTab(self.mainWindow, 'Inspector')
-        self.addTab(self.scan, 'Scan')
-        self.addTab(self.optimiser, 'Optimiser')
+        # self.addTab(self.scan, 'Scan')
+        # self.addTab(self.optimiser, 'Optimiser')
         self.Push()
 
-    def AssignSettings(self, **kwargs):
-        for k, v in kwargs.items():
-            self.settings[k] = v
-
-    def GetSettings(self):
-        return self.settings
-    
-    def SetSizePolicy(self):
-        # Set the size
-        size = self.settings.get('size', (None, None))
-        sizePolicy = [None, None]
-        # Set horizontal
-        if size[0] is None:
-            sizePolicy[0] = QSizePolicy.Expanding
-        else:
-            self.setFixedWidth(size[0])
-            sizePolicy[0] = QSizePolicy.Preferred
-        # Set vertical
-        if size[1] is None:
-            sizePolicy[1] = QSizePolicy.Expanding
-        else:
-            self.setFixedHeight(size[1])
-            sizePolicy[1] = QSizePolicy.Preferred
-        self.setSizePolicy(*sizePolicy)
-    
     def Push(self, pv = None, component = None, deselecting = False):
         if not deselecting:
             self.main.setUpdatesEnabled(False) # prevents flashing when redrawing the inspector
@@ -128,6 +103,7 @@ class Inspector(QTabWidget, Entity):
         shared.expandables = self.expandables
         if not deselecting:
             self.main.setUpdatesEnabled(True)
+        self.UpdateColors()
 
     def SwapPlane(self, pv):
         if pv.settings['alignment'] == 'Horizontal':
@@ -139,3 +115,6 @@ class Inspector(QTabWidget, Entity):
         pv.UpdateColors()
         for e in self.expandables.values():
             e.widget.UpdateColors()
+
+    def UpdateColors(self):
+        pass

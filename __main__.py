@@ -4,9 +4,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QFrame, QHBoxLayout, QGridLayout,
     QLabel, QPushButton, QProgressBar, QStackedLayout, QStyleFactory,
 )
-from PySide6.QtGui import (
-    QIcon, QShortcut, QKeySequence, QPixmap
-)
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtCore import Qt
 import matplotlib.pyplot as plt
 import signal
@@ -17,13 +15,14 @@ from pathlib import Path
 from .inspector import Inspector
 from .ui.workspace import Workspace
 from .lattice.latticeglobal import LatticeGlobal
+from .lattice import latticeutils
 from .font import SetFontToBold
 from .utils.entity import Entity
+from .utils import memory
+from .utils.commands import ConnectShortcuts, Save
+from .utils.load import Load
 from . import style
 from . import shared
-from .lattice import latticeutils
-from .utils import memory
-from .utils import commands
 
 plt.rcParams['font.size'] = 10 # Define the font size for plots.
 
@@ -32,10 +31,12 @@ signal.signal(signal.SIGINT, signal.SIG_DFL) # Allow Ctrl+C interrupt from termi
 
 class MainWindow(Entity, QMainWindow):
     def __init__(self):
-        super().__init__(name = 'MainWindow', type = MainWindow)
+        super().__init__(name = 'MainWindow', type = 'MainWindow')
+        settingsPath = os.path.join(shared.cwd, 'config\\settings.yaml')
         shared.window = self
-        self.setWindowTitle(f'{shared.windowTitle} - Version {shared.appVersion}')
-        self.setWindowIcon(QIcon(f'{cwd}\\pipelines\\PVBuddy.png'))
+        self.setWindowTitle(f'{shared.windowTitle} - Early Prototype')
+        self.setWindowIcon(QIcon(f'{cwd}\\pipelines\\\\gfx\\icon.png'))
+        self.quitShortcutPressed = False
         # Create a compressed folder for commonly referenced frames if it doesn't already exist (first time setup).
         compressedFolderPath = os.path.join(shared.cwd, 'gfx\\compressed')
         if not os.path.exists(compressedFolderPath):
@@ -131,16 +132,15 @@ class MainWindow(Entity, QMainWindow):
             self.workspace = Workspace(self)
             self.latticeGlobal = LatticeGlobal(self)
             self.inspector = Inspector(self)
-            self.inspector.AssignSettings(size = (350, None))
         shared.lightModeOn = True
         # connect key shortcuts to their functions.
-        commands.ConnectShortcuts()
+        ConnectShortcuts()
         self.page.setStyleSheet(style.Dark01())
         self.page.layout().addWidget(QFrame(), 1, 7, 1, 2)
         self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
         self.page.layout().addWidget(self.workspace, 2, 1, 2, 6)
-        self.page.layout().addWidget(self.inspector, 2, 7, 1, 2)
-        self.page.layout().addWidget(QWidget(), 3, 7, 1, 2)
+        self.page.layout().addWidget(self.inspector, 2, 7, 2, 2)
+        # self.page.layout().addWidget(QWidget(), 3, 7, 1, 2)
         screenPad = 0
         # Small amount of padding at the left of the screen.
         leftPad = QWidget()
@@ -184,6 +184,11 @@ class MainWindow(Entity, QMainWindow):
         self.buttonHousing.layout().addWidget(self.toggleDarkModeButton)
         self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
         self.page.layout().addWidget(self.buttonHousing, 4, 8)
+        shared.app.processEvents()
+
+        # Load in settings if they exist and apply to existing entities, and create new ones if they don't already exist.
+        print('Loading settings from:', settingsPath)
+        Load(settingsPath)
         
         self.showMaximized() # This throws a known but harmless error in PySide 6.9.1, to be corrected in the next version.
     
@@ -197,6 +202,8 @@ class MainWindow(Entity, QMainWindow):
         shared.app.processEvents()
 
     def closeEvent(self, event):
+        if not self.quitShortcutPressed:
+            Save()
         event.accept()
 
 def GetMainWindow():

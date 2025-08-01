@@ -21,7 +21,6 @@ class RunningCircle(QWidget):
         print('Stopping running circle')
         self.running = False
         self.label.setVisible(False)
-        self.timer.stop()
         self.stop = False
     
     def Start(self, timeout = 15):

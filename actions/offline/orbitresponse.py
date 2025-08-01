@@ -2,9 +2,9 @@ import at
 from at import lattice_pass
 import numpy as np
 from copy import deepcopy
-from .action import Action
-from .. import simulator
-from .. import shared
+from ..action import Action
+from ... import simulator
+from ... import shared
 
 class OrbitResponseAction(Action):
     '''Perform, manipulate and save orbit response measurements.'''
@@ -46,7 +46,7 @@ class OrbitResponseAction(Action):
         self.lattice = state['lattice']
         self.BPMs = state['BPMs']
         self.correctors = state['correctors']
-        from .. import simulator
+        from ... import simulator
         self.simulator = simulator.Simulator()    
 
     def CheckForValidInputs(self) -> bool:
@@ -82,15 +82,12 @@ class OrbitResponseAction(Action):
         BPMIdxs = np.empty(numBPMs, dtype = np.uint32) # refpts needs to be uint32 ndarray for atpass to work.
         for _, b in enumerate(self.BPMs):
             BPMIdxs[_] = np.uint32(b['index'])
-        # Follow the format of varying correctors, and then measuring response from the BPMs.
-        # If non-zero error components are present, they will be applied to the correctors and/or BPMs.
         # wait time between BPM measurements.
         wait = .2
         rawData = np.empty((numBPMs, numCorrectors, numSteps, repeats))
         # target kicks
         offset = int(numSteps / 2)
         kicks = (np.arange(0, numSteps, 1) - offset) * stepKick * 1e-3 # convert to mrad
-        print('THE KICKS ARE', kicks)
         # Define the sigma matrix and beam with n particles ------- will allow custom beam profiles in a future version.
         sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
         beam = at.beam(numParticles, sigmaMat)
@@ -107,24 +104,17 @@ class OrbitResponseAction(Action):
                         rawData[row, col, _, r] = centre
                 # BPMs in the model are markers so we have the full phase space information but PVs will typically be separated into BPM:X, BPM:Y
                 self.lattice[c['index']].KickAngle[idx] = 0
-        print('Here is the raw data (number of repeats of the min (most -ve) corrector kick):')
-        print(rawData[0, 0, 0])
         if getRawData:
             return rawData
         return self.Fit(rawData, kicks, numCorrectors, numBPMs)
 
     def Fit(self, rawData, kicks, numCorrectors, numBPMs):
         '''Generates an Orbit Response Matrix using polyfit.'''
-        print('# correctors:', numCorrectors)
-        print('# BPMs:', numBPMs)
         data = rawData.mean(axis = 3)
         ORM = np.empty((numBPMs, numCorrectors))
-        print('ORM shape', ORM.shape)
         for col in range(numCorrectors):
             for row in range(numBPMs):
-                print(f'row, col: ({row}, {col})')
                 y = data[row, col, :]
-                print('y is', y)
                 m, C = np.polyfit(kicks, y, deg = 1, cov = True)
                 ORM[row, col] = m[0]
         return rawData, ORM

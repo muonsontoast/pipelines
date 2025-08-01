@@ -6,13 +6,12 @@ from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QFont
 from ..utils.entity import Entity
 from .. import shared
 
-class LatticeGlobal(QWidget, Entity):
+class LatticeGlobal(Entity, QWidget):
     # Lattice should fit into size 1250 width x 50 height
     # (0, 0) is at the top left of the graphics view
     def __init__(self, parent):
-        super().__init__(name = 'Global Lattice', type = LatticeGlobal)
+        super().__init__(name = 'Global Lattice', type = 'Global Lattice', sceneWidth = 1200, sceneHeight = 145)
         self.parent = parent
-        self.settings = dict()
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         # Define width and height of scene

@@ -1,13 +1,15 @@
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QGraphicsLineItem
+from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QLineF, QPointF
 import time
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
+from .. import style
 from .. import shared
 
 class Draggable(Entity, QWidget):
     def __init__(self, proxy, **kwargs):
-        super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', Draggable), **kwargs)
+        super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), **kwargs)
         self.proxy = proxy
         self.blockType = 'Draggable'
         self.active = False
@@ -20,13 +22,15 @@ class Draggable(Entity, QWidget):
         self.FSocketNames = []
         self.linksIn = dict()
         self.linksOut = dict()
+        self.settings['linksIn'] = dict()
+        self.settings['linksOut'] = dict()
         self.data = None # holds the data which is accessed by downstream blocks.
         self.streams = dict() # instructions on how to display different data streams, based on the data held in the block.
         self.timer = None # cumulative time since last clock update.
         self.clock = None
         self.action = None
         self.timeout = 1 / shared.UIMoveUpdateRate # seconds between move draws.
-        self.setFixedSize(*kwargs.get('size', (500, 440)))
+        # self.setFixedSize(*kwargs.get('size', [500, 440]))
         if kwargs.pop('addToShared', True):
             shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))
 
@@ -84,8 +88,9 @@ class Draggable(Entity, QWidget):
             if not self.cursorMoved:
                 self.ToggleStyling()
             else:
+                finalPos = self.proxy.pos()
+                self.settings['position'] = [finalPos.x(), finalPos.y()]
                 shared.activeEditor.SetCacheMode('None')
-            
         self.startDragPos = None
         self.cursorMoved = False
         event.accept()
@@ -118,21 +123,12 @@ class Draggable(Entity, QWidget):
             # Batch update all outgoing links.
             socketPos = self.GetSocketPos('output')
             for k in self.linksOut.keys():
+                if k == 'free':
+                    continue
                 line = shared.entities[k].linksIn[self.ID]['link'].line()
                 line.setP1(socketPos)
                 shared.entities[k].linksIn[self.ID]['link'].setLine(line)
-            # Move endpoints of links coming in to the block.
-            # for v in self.linksIn.values():
-            #     link, socket = v['link'], v['socket']
-            #     line = link.line()
-            #     line.setP2(self.GetSocketPos(socket))
-            #     link.setLine(line)
-            # # Move origins of links extending out of the block.
-            # for v in self.linksOut.values():
-            #     link = v['link']
-            #     line = v['link'].line()
-            #     line.setP1(outputSocketPos)
-            #     link.setLine(line)
+            self.proxy.update()
             shared.activeEditor.scene.blockSignals(False)
 
     def ToggleStyling(self, **kwargs):
@@ -179,11 +175,35 @@ class Draggable(Entity, QWidget):
     def SetRect(self):
         shared.PVs[self.ID]['rect'] = MapDraggableRectToScene(self)
 
+    def AddLinkIn(self, ID, socket):
+        '''`socket` the source is connected to and the `ID` of its parent.'''
+        self.linksIn[ID] = dict(link = QGraphicsLineItem(), socket = socket)
+        self.settings['linksIn'][ID] = socket
+        link = self.linksIn[ID]['link'].line()
+        link.setP1(shared.entities[ID].GetSocketPos('output'))
+        link.setP2(self.GetSocketPos(socket))
+        self.linksIn[ID]['link'].setLine(link)
+        self.linksIn[ID]['link'].setZValue(-20)
+        self.linksIn[ID]['link'].setPen(QPen(QColor('#c4c4c4'), 8))
+        shared.activeEditor.scene.addItem(self.linksIn[ID]['link'])
+
     # this can be overridden to trigger logic that should run when removing incoming links to a block.
     def RemoveLinkIn(self, ID):
         shared.editors[0].scene.removeItem(self.linksIn[ID]['link'])
         self.linksIn.pop(ID)
+        self.settings['linksIn'].pop(ID)
+
+    def AddLinkOut(self, ID, socket):
+        '''`socket` this is linked to and the `ID` of its parent.'''
+        self.linksOut[ID] = socket
+        self.settings['linksOut'][ID] = socket
+        if hasattr(self, 'indicator'):
+            self.indicator.setStyleSheet(style.indicatorStyle(4, color = "#E0A159", borderColor = "#E7902D"))
 
     # this can be overridden to trigger logic that should run when removing outgoing links from a block.
     def RemoveLinkOut(self, ID):
         self.linksOut.pop(ID)
+        self.settings['linksOut'].pop(ID)
+        if hasattr(self, 'indicator'):
+            if len(self.linksOut.values()) == 0:
+                self.indicator.setStyleSheet(style.indicatorStyle(4))

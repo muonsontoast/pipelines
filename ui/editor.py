@@ -9,15 +9,15 @@ from .. import shared
 class Editor(Entity, QGraphicsView):
     def __init__(self, window, minScale = 3, maxScale = .2):
         '''Scale gets larger the more you zoom in, so `minScale` is max zoom in (> 1) and `maxScale` is max zoom out (< 1)'''
-        super().__init__(name = 'Editor', type = Editor)
+        super().__init__(name = 'Editor', type = 'Editor', zoom = 1)
         self.parent = window
-        self.settings = dict()
         self.minScale = minScale
         self.maxScale = maxScale
         self.canDrag = False
+        shared.app.setAttribute(Qt.AA_UseDesktopOpenGL)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        self.setViewportUpdateMode(QGraphicsView.MinimalViewportUpdate)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -37,9 +37,12 @@ class Editor(Entity, QGraphicsView):
         self.coordsTitle = QLabel()
         self.zoomTitle = QLabel()
 
-        editorPos = self.mapToScene(self.viewport().rect().center())
-        self.coordsTitle.setText(f'Editor center: ({editorPos.x():.0f}, {editorPos.y():.0f})')
+        self.positionInSceneCoords = self.mapToScene(self.viewport().rect().center())
+        self.coordsTitle.setText(f'Editor center: ({self.positionInSceneCoords.x():.0f}, {self.positionInSceneCoords.y():.0f})')
         self.zoomTitle.setText(f'Zoom: {self.transform().m11() * 100:.0f}%')
+
+    def drawBackground(self, painter, rect):
+        pass
 
     def SetCacheMode(self, mode = 'Device'):
         '''Restores the image cache of blocks in the scene.\n
@@ -51,6 +54,7 @@ class Editor(Entity, QGraphicsView):
         else:
             for item in self.scene.items():
                 item.setCacheMode(QGraphicsItem.NoCache)
+                item.update()
 
     def mousePressEvent(self, event):
         '''Another PV may already be selected so handle this here.'''
@@ -79,8 +83,8 @@ class Editor(Entity, QGraphicsView):
     def mouseMoveEvent(self, event):
         self.currentPos = self.mapToScene(event.position().toPoint())
         if self.mouseButtonPressed == Qt.LeftButton:
-            editorPos = self.mapToScene(self.viewport().rect().center())
-            self.coordsTitle.setText(f'Editor centre: ({editorPos.x():.0f}, {editorPos.y():.0f})')
+            self.positionInSceneCoords = self.mapToScene(self.viewport().rect().center())
+            self.coordsTitle.setText(f'Editor centre: ({self.positionInSceneCoords.x():.0f}, {self.positionInSceneCoords.y():.0f})')
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -130,7 +134,9 @@ class Editor(Entity, QGraphicsView):
             return
         
         self.scale(zoomFactor, zoomFactor)
-        self.zoomTitle.setText(f'Zoom: {self.transform().m11() * 100:.0f}%')
+        zoom = self.transform().m11()
+        self.zoomTitle.setText(f'Zoom: {zoom * 100:.0f}%')
+        self.settings['zoom'] = zoom
         self.SetCacheMode('None')
         event.accept()
 
@@ -141,10 +147,3 @@ class Editor(Entity, QGraphicsView):
                 event.accept()
                 return
         super().keyPressEvent(event)
-
-    def AssignSettings(self, **kwargs):
-        for k, v in kwargs.items():
-            self.settings[k] = v
-
-    def GetSettings(self):
-        return self.settings

@@ -10,17 +10,17 @@ class Corrector(PV):
         '''`alignment` = <Horizontal/Vertical>\n
         `size` = ( x , y )'''
         # Type and Alignment
-        self.typeLabel = QLabel('')
+        self.typeLabel = QLabel()
         self.typeLabel.setAlignment(Qt.AlignLeft)
         # invoke parent pv constructor
-        super().__init__(parent, proxy, size = kwargs.pop('size', (225, 50)), name = 'Corrector', type = Corrector)
+        super().__init__(parent, proxy, name = kwargs.pop('name', 'Corrector'), type = 'Corrector', size = kwargs.pop('size', [225, 50]))
         self.blockType = 'Corrector'
         self.settings['alignment'] = kwargs.get('alignment', 'Vertical')
         self.settings['components']['value'] = dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = kickangle.KickAngleComponent)
         # Add labels to layout
         self.widget.layout().addWidget(self.typeLabel, 1, 1, alignment = Qt.AlignLeft)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Preferred, QSizePolicy.Expanding))
-        self.typeLabel.setText(f'~ Corrector ({self.settings['alignment']})')
+        self.typeLabel.setText(f'{self.type} ({self.settings['alignment']})')
         # Apply colors
         self.UpdateColors()
 

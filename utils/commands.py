@@ -2,21 +2,25 @@
 
 from PySide6.QtWidgets import QGraphicsProxyWidget
 from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtCore import QPoint
+from PySide6.QtCore import QPoint, QTimer
 from ..blocks.pv import PV
 from ..blocks.corrector import Corrector
 from ..blocks.bpm import BPM
 from ..blocks.orbitresponse import OrbitResponse
 from ..blocks.view import View
+from .save import Save
 from .. import shared
 
 editor = None
+autosave = True
 
-pv = PV
-corrector = Corrector
-bpm = BPM
-orbitResponse = OrbitResponse
-view = View
+blockTypes = {
+    'PV': PV,
+    'Corrector': Corrector,
+    'BPM': BPM,
+    'Orbit Response': OrbitResponse,
+    'View': View,
+}
 
 def Undo():
     pass
@@ -30,41 +34,40 @@ def BoxSelect(): # make an area selection
     pass
 def Snip(): # cut links
     pass
-def AddBlock(blockType, name: str, pos: QPoint, size: tuple = ()):
+def AddBlock(blockType, name: str, pos: QPoint, overrideID = None):
     '''Returns a proxy along with its widget.'''
     proxy = QGraphicsProxyWidget()
-    if size == ():
-        w = blockType(editor, proxy, name = name)
-    else:
-        w = blockType(editor, proxy, name = name, size = size)
+    w = blockType(editor, proxy, name = name, overrideID = overrideID)
+    print(f'Added {w.name} with ID: {w.ID}')
     proxy.setWidget(w)
     proxy.setPos(pos)
     editor.scene.addItem(proxy)
     w.SetRect()
-    pos = shared.PVs[w.ID]['rect'].center()
+    w.settings['position'] = [pos.x(), pos.y()]
+    rectCenter = shared.PVs[w.ID]['rect'].center()
     prefix = 'an' if w.name in ['Orbit Response'] else 'a'
-    shared.workspace.assistant.PushMessage(f'Created {prefix} {w.name} at ({pos.x():.0f}, {pos.y():.0f})')
+    shared.workspace.assistant.PushMessage(f'Created {prefix} {w.name} at ({rectCenter.x():.0f}, {rectCenter.y():.0f})')
     return proxy, w
 
 def AddPV(pos: QPoint):
-    proxy, widget = AddBlock(pv, 'PV', pos)
+    proxy, widget = AddBlock(blockTypes['PV'], 'PV', pos)
 
 def AddCorrector(pos: QPoint):
-    proxy, widget = AddBlock(corrector, 'Corrector', pos)
+    proxy, widget = AddBlock(blockTypes['Corrector'], 'Corrector', pos)
     
 def AddBPM(pos: QPoint):
-    proxy, widget = AddBlock(bpm, 'BPM', pos)
+    proxy, widget = AddBlock(blockTypes['BPM'], 'BPM', pos)
 
 def AddOrbitResponse(pos: QPoint):
-    proxy, widget = AddBlock(orbitResponse, 'Orbit Response', pos)
+    proxy, widget = AddBlock(blockTypes['Orbit Response'], 'Orbit Response', pos)
 
 def AddView(pos: QPoint):
-    proxy, widget = AddBlock(view, 'View', pos)
+    proxy, widget = AddBlock(blockTypes['View'], 'View', pos)
 
 def Delete():
     if not shared.selectedPV:
         return
-    print('Deleting draggable block.')
+    print(f'Deleting draggable block ({shared.selectedPV}).')
     editor.scene.removeItem(shared.selectedPV.proxy)
     for ID in shared.selectedPV.linksIn.keys():
         shared.activeEditor.scene.removeItem(shared.selectedPV.linksIn[ID]['link'])
@@ -73,15 +76,24 @@ def Delete():
         if ID == 'free':
             continue
         shared.entities[ID].RemoveLinkIn(shared.selectedPV.ID)
+    shared.entities.pop(shared.selectedPV.ID)
     shared.PVs.pop(shared.selectedPV.ID)
     shared.workspace.assistant.PushMessage(f'Deleted {shared.selectedPV.name} and removed its connections (if any).')
+    if shared.selectedPV.type in ['Corrector', 'BPM', 'PV']:
+        shared.activePVs.remove(shared.selectedPV)
     shared.selectedPV.deleteLater()
     shared.selectedPV = None
     shared.inspector.mainWindowTitle.setText('')
     shared.window.inspector.Push()
     editor.scene.update()
 
+def SaveSettings():
+    Save()
+
 def Quit():
+    if autosave:
+        Save()
+        shared.window.quitShortcutPressed = True
     shared.window.close()
 
 def ShowMenu(pos: QPoint):
@@ -97,7 +109,8 @@ commands = {
     'Redo': dict(shortcut = ['Ctrl+Shift+Z', 'Ctrl+Y'], func = Redo, args = []),
     'Copy': dict(shortcut = ['Ctrl+C'], func = Copy, args = []),
     'Paste': dict(shortcut = ['Ctrl+V'], func = Paste, args = []),
-    'Box Select': dict(shortcut = ['Shift+B'], func = BoxSelect, args = []),
+    'Save': dict(shortcut = ['Ctrl+S'], func = SaveSettings, args = []),
+    'Area Select': dict(shortcut = ['Shift+A'], func = BoxSelect, args = []),
     'Snip': dict(shortcut = ['Shift+C'], func = Snip, args = []),
     'Add PV': dict(shortcut = ['Ctrl+Shift+P'], func = AddPV, args = [GetMousePos]),
     'Add Corrector': dict(shortcut = ['Ctrl+Shift+C'], func = AddCorrector, args = [GetMousePos]),

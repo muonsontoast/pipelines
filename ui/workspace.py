@@ -9,7 +9,7 @@ from .. import shared
 class Workspace(Entity, QTabWidget):
     '''Main editor window for user interaction.'''
     def __init__(self, parent):
-        super().__init__(name = 'Workspace', type = Workspace)
+        super().__init__(name = 'Workspace', type = 'Workspace')
         self.parent = parent
         self.setLayout(QStackedLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
