@@ -19,7 +19,7 @@ from .lattice import latticeutils
 from .font import SetFontToBold
 from .utils.entity import Entity
 from .utils import memory
-from .utils.commands import ConnectShortcuts, Save
+from .utils.commands import ConnectShortcuts, Save, StopAllActions
 from .utils.load import Load
 from . import style
 from . import shared
@@ -202,6 +202,7 @@ class MainWindow(Entity, QMainWindow):
         shared.app.processEvents()
 
     def closeEvent(self, event):
+        StopAllActions()
         if not self.quitShortcutPressed:
             Save()
         event.accept()

@@ -30,6 +30,7 @@ class Draggable(Entity, QWidget):
         self.clock = None
         self.action = None
         self.timeout = 1 / shared.UIMoveUpdateRate # seconds between move draws.
+        self.canRun = False # indicates that a block can run an action.
         # self.setFixedSize(*kwargs.get('size', [500, 440]))
         if kwargs.pop('addToShared', True):
             shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))

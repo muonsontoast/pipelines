@@ -1,7 +1,9 @@
 import at
 from at import lattice_pass
 import numpy as np
+import time
 from copy import deepcopy
+from PySide6.QtCore import QTimer
 from ..action import Action
 from ... import simulator
 from ... import shared
@@ -73,7 +75,7 @@ class OrbitResponseAction(Action):
         print('All correctors and BPMs are linked to lattice elements.')
         return True
 
-    def RunOffline(self, numSteps, stepKick, repeats, numParticles = 10000, getRawData = True):
+    def Run(self, pause, stop, numSteps, stepKick, repeats, numParticles = 10000, getRawData = True):
         '''Calculates the orbit response of the model using PyAT simulations.\n
         Accepts `correctors` (list of PVs) and `BPMs` (list of BPMs).'''
         # Have both correctors AND BPMs been suppled?
@@ -82,6 +84,7 @@ class OrbitResponseAction(Action):
         BPMIdxs = np.empty(numBPMs, dtype = np.uint32) # refpts needs to be uint32 ndarray for atpass to work.
         for _, b in enumerate(self.BPMs):
             BPMIdxs[_] = np.uint32(b['index'])
+        BPMIdxs = np.sort(BPMIdxs) # PyAT will throw an error if refpts isn't sorted in ascending order.
         # wait time between BPM measurements.
         wait = .2
         rawData = np.empty((numBPMs, numCorrectors, numSteps, repeats))
@@ -91,6 +94,8 @@ class OrbitResponseAction(Action):
         # Define the sigma matrix and beam with n particles ------- will allow custom beam profiles in a future version.
         sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
         beam = at.beam(numParticles, sigmaMat)
+        totalSteps = numBPMs * numCorrectors * len(kicks) * repeats
+        counter = 1
         for col, c in enumerate(self.correctors):
             idx = 1 if c['alignment'] == 'Vertical' else 0
             for _, k in enumerate(kicks):
@@ -99,9 +104,21 @@ class OrbitResponseAction(Action):
                 self.lattice[c['index']].KickAngle[idx] = kickAngle
                 for row, b in enumerate(self.BPMs):
                     for r in range(repeats):
+                        if stop.is_set():
+                            if getRawData:
+                                return None
+                            return None, None
                         beamOut = lattice_pass(self.lattice, deepcopy(beam), nturns = 1, refpts = BPMIdxs) # has shape 6 x numParticles x numRefpts x nturns
                         centre = np.mean(beamOut[0, :, row]) if b['alignment'] == 'Horizontal' else np.mean(beamOut[2, :, row])
                         rawData[row, col, _, r] = centre
+                        print(f'On step {counter} / {totalSteps}')
+                        while pause.is_set():
+                            if stop.is_set():
+                                if getRawData:
+                                    return None
+                                return None, None
+                            time.sleep(.1)
+                        counter += 1
                 # BPMs in the model are markers so we have the full phase space information but PVs will typically be separated into BPM:X, BPM:Y
                 self.lattice[c['index']].KickAngle[idx] = 0
         if getRawData:

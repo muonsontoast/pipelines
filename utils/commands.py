@@ -2,12 +2,13 @@
 
 from PySide6.QtWidgets import QGraphicsProxyWidget
 from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtCore import QPoint, QTimer
+from PySide6.QtCore import QPoint
 from ..blocks.pv import PV
 from ..blocks.corrector import Corrector
 from ..blocks.bpm import BPM
 from ..blocks.orbitresponse import OrbitResponse
 from ..blocks.view import View
+from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
 from .. import shared
 
@@ -34,6 +35,36 @@ def BoxSelect(): # make an area selection
     pass
 def Snip(): # cut links
     pass
+
+def StopAllActions():
+    StopActions()
+
+_toggleState = False
+
+def ToggleAllActions():
+    # check which blocks can run and have well-defined inputs.
+    global _toggleState
+    if not runningActions:
+        _toggleState = False
+    _toggleState = not _toggleState
+
+    stateText = 'running' if _toggleState else 'paused'
+    if _toggleState:
+        for r in shared.runnableBlocks.values():
+            r.Start()
+    else:
+        for r in shared.runnableBlocks.values():
+            TogglePause(r)
+    shared.workspace.assistant.PushMessage(f'All valid actions are {stateText}.')
+
+def PauseAllActions():
+    for r in shared.runnableBlocks.values():
+        TogglePause(r, True)
+
+def ReusmeAllActions():
+    for r in shared.runnableBlocks.values():
+        TogglePause(r, False)
+
 def AddBlock(blockType, name: str, pos: QPoint, overrideID = None):
     '''Returns a proxy along with its widget.'''
     proxy = QGraphicsProxyWidget()
@@ -117,6 +148,8 @@ commands = {
     'Add BPM': dict(shortcut = ['Ctrl+Shift+B'], func = AddBPM, args = [GetMousePos]),
     'Add Orbit Response': dict(shortcut = ['Ctrl+Shift+O'], func = AddOrbitResponse, args = [GetMousePos]),
     'Add View': dict(shortcut = ['Ctrl+Shift+V'], func = AddView, args = [GetMousePos]),
+    'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
+    'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),
     'Quit': dict(shortcut = ['Ctrl+W'], func = Quit, args = []),
     'Show Menu': dict(shortcut = ['Ctrl+M'], func = ShowMenu, args = [GetMousePos]),

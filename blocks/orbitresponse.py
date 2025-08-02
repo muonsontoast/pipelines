@@ -8,7 +8,7 @@ from .. import style
 from ..components.slider import SliderComponent
 from ..actions.offline.orbitresponse import OrbitResponseAction
 from ..ui.runningcircle import RunningCircle
-from ..utils.multiprocessing import PerformAction
+from ..utils.multiprocessing import PerformAction, TogglePause, StopAction
 
 '''
 Orbit Response Block handles orbit response measurements off(on)line. It has two F sockets, one for Correctors, one for BPMs. 
@@ -39,7 +39,7 @@ class OrbitResponse(Draggable):
         self.active = False
         self.hovering = False
         self.startPos = None
-        self.action = OrbitResponseAction()
+        self.offlineAction = OrbitResponseAction()
         self.runningCircle = RunningCircle()
         # Define orbit response streams
         # All streams contain a 'raw' entry for the de facto use case.
@@ -64,6 +64,7 @@ class OrbitResponse(Draggable):
                 'data': np.array([(np.arange(0, self.settings['components']['steps']['value'], 1) - int(self.settings['components']['steps']['value'] / 2)) * self.settings['components']['current']['value'], 1e3 * np.mean(self.data, axis = 3)[0][0]])
             }
         }
+        shared.runnableBlocks[self.ID] = self
         self.Push()
 
     def Push(self):
@@ -177,9 +178,11 @@ class OrbitResponse(Draggable):
         self.pause = QPushButton('Pause')
         self.pause.setFixedHeight(buttonsHeight)
         self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
+        self.pause.clicked.connect(self.Pause)
         self.stop = QPushButton('Stop')
         self.stop.setFixedHeight(buttonsHeight)
         self.stop.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
+        self.stop.clicked.connect(self.Stop)
         self.clear = QPushButton('Clear')
         self.clear.setFixedHeight(buttonsHeight)
         self.clear.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
@@ -208,27 +211,32 @@ class OrbitResponse(Draggable):
     # blocks that are fed the output of a block holding data, will know which option to pick.
 
     def Start(self):
-        self.action.correctors = self.correctors
-        self.action.BPMs = self.BPMs
+        global toggleState
         if not self.online:
-            if not self.action.CheckForValidInputs():
+            self.offlineAction.correctors = self.correctors
+            self.offlineAction.BPMs = self.BPMs
+            if not self.offlineAction.CheckForValidInputs():
                 return
             onlineText = 'online' if self.online else 'offline'
             shared.workspace.assistant.PushMessage(f'Running orbit response measurement ({onlineText}).')
-            print('Starting orbit response measurement')
-            self.runningCircle.Start()
-            self.title.setText('Orbit Response (Running)')
-            PerformAction(
+            if not PerformAction(
                 self,
-                self.online,
                 self.settings['components']['steps']['value'],
                 self.settings['components']['current']['value'],
                 self.settings['components']['repeats']['value'],
                 getRawData = False,
                 postProcessedData = 'ORM'
-            )
+            ):
+                shared.workspace.assistant.PushMessage('Orbit response measurement already running.', 'Error')
         else:
             pass
+
+    def Pause(self):
+        TogglePause(self, True)
+        shared.workspace.assistant.PushMessage(f'{self.name} action is paused.')
+
+    def Stop(self):
+        StopAction(self)
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()
@@ -296,6 +304,9 @@ class OrbitResponse(Draggable):
             self.BPMs[ID] = shared.entities[ID]
         else:
             self.correctors[ID] = shared.entities[ID]
+        # update canRun flag
+        if self.correctors and self.BPMs:
+            self.canRun = True
         super().AddLinkIn(ID, socket)
 
     def RemoveLinkIn(self, ID):
