@@ -1,5 +1,6 @@
 from multiprocessing import Queue, Process, Event
-from multiprocessing.shared_memory import SharedMemory
+import multiprocessing as mp
+mp.set_start_method('spawn', force = True) # force linux machines to call __getstate__ and __setstate__ methods attached to actions.
 import threading
 import numpy as np
 from .entity import Entity

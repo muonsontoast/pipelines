@@ -14,7 +14,6 @@ def LinkBlocks():
     global settings
     for ID, v in settings.items():
         if v['type'] in blockTypes.keys():
-            # linksIn
             for sourceID, socket in v['linksIn'].items():
                 shared.entities[ID].AddLinkIn(sourceID, socket)
             for targetID, socket in v['linksOut'].items():

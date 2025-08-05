@@ -18,6 +18,8 @@ class OrbitResponseAction(Action):
         self.BPMs = None
 
     def __getstate__(self):
+        print('In getter, BPMs are:')
+        print(self.BPMs)
         return {
             'lattice': self.lattice,
             'BPMs': [
@@ -82,7 +84,10 @@ class OrbitResponseAction(Action):
         numBPMs = len(self.BPMs)
         numCorrectors = len(self.correctors)
         BPMIdxs = np.empty(numBPMs, dtype = np.uint32) # refpts needs to be uint32 ndarray for atpass to work.
+        print('BPMs:')
+        print(self.BPMs)
         for _, b in enumerate(self.BPMs):
+            print('index is', b)
             BPMIdxs[_] = np.uint32(b['index'])
         BPMIdxs = np.sort(BPMIdxs) # PyAT will throw an error if refpts isn't sorted in ascending order.
         # target kicks
