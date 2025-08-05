@@ -3,7 +3,8 @@ from PySide6.QtCore import Qt
 import numpy as np
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
-from ...actions.offline.singletaskgp import SingleTaskGPAction
+from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
+from ...actions.online.singletaskgp import SingleTaskGPAction as OnlineAction
 from ... import style
 from ... import shared
 from ...utils.multiprocessing import PerformAction, TogglePause, StopAction
@@ -12,7 +13,8 @@ class SingleTaskGP(Draggable):
     def __init__(self, parent, proxy, **kwargs):
         super().__init__(proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 500]), **kwargs)
         self.runningCircle = RunningCircle()
-        self.offlineAction = SingleTaskGPAction()
+        self.offlineAction = OfflineAction()
+        self.onlineAction = OnlineAction()
         # Header
         self.header = QWidget()
         self.header.setFixedHeight(40)
@@ -42,7 +44,7 @@ class SingleTaskGP(Draggable):
                 'xlabel': 'Step',
                 'xlim': [0, len(self.data) - 1],
                 'ylabel': f'{kwargs.get('ylabel', 'Objective')}',
-                'ylim': [-1, 1],
+                'ylim': [-5, 5],
                 'xunits': '',
                 'yunits': '',
                 'plottype': 'plot',
@@ -54,6 +56,13 @@ class SingleTaskGP(Draggable):
         self.Push()
         self.ToggleStyling(active = False)
         print(f'{self.name}\'s data looks like this on creation:', self.data)
+
+    def Pause(self):
+        TogglePause(self, True)
+        shared.workspace.assistant.PushMessage(f'{self.name} action is paused.')
+
+    def Stop(self):
+        StopAction(self)
 
     def Push(self):
         # On/off-line
@@ -80,23 +89,33 @@ class SingleTaskGP(Draggable):
         super().Push()
 
     def Start(self):
-        self.offlineAction.decisions = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision'}
-        self.offlineAction.objectives = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective'}
-        if self.online:
-            return
-        else:
-            if not self.offlineAction.CheckForValidInputs():
-                return
-        onlineText = 'online' if self.online else 'offline'
-        shared.workspace.assistant.PushMessage(f'Running single objective optimisation with {len(self.offlineAction.decisions)} decision variable(s) ({onlineText}).')
         steps = 50
         initialSamples = 0
-        PerformAction(
-            self,
-            np.empty(steps + 1),
-            numSteps = steps,
-            initialSamples = initialSamples,
-        )
+        if self.online:
+            self.onlineAction.decisions = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision'}
+            self.onlineAction.objectives = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective'}
+            if not self.onlineAction.CheckForValidInputs():
+                return
+            PerformAction(
+                self,
+                np.empty(steps + 1),
+                numSteps = steps,
+                initialSamples = initialSamples,
+                goal = 'MAXIMIZE',
+            )
+            shared.workspace.assistant.PushMessage(f'Running single objective optimisation with {len(self.onlineAction.decisions)} decision variable(s) (online).')
+        else:
+            self.offlineAction.decisions = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision'}
+            self.offlineAction.objectives = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective'}
+            if not self.offlineAction.CheckForValidInputs():
+                return
+            PerformAction(
+                self,
+                np.empty(steps + 1),
+                numSteps = steps,
+                initialSamples = initialSamples,
+            )
+            shared.workspace.assistant.PushMessage(f'Running single objective optimisation with {len(self.offlineAction.decisions)} decision variable(s) (offline).')
 
     def SwitchMode(self):
         if self.online:

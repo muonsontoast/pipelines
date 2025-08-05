@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 2494.051722640623
-  - 1710.8953846133743
+  - 2727.0338039745634
+  - 2265.267696592289
   type: Editor
-  zoom: 0.4979848608291931
+  zoom: 0.45910688682159007
 3:
   linksIn: {}
   linksOut: {}
@@ -36,6 +36,24 @@
     linkedLatticeElement:
       name: Linked Lattice Element
       type: LinkComponent
+  linkedElement: 11
+  linksIn: {}
+  linksOut:
+    8: BPM
+  name: BPM
+  position:
+  - 1482
+  - 1743
+  size:
+  - 325
+  - 75
+  type: BPM
+7:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
     value:
       default: 0
       max: 100
@@ -48,32 +66,14 @@
   linksIn: {}
   linksOut:
     8: corrector
-  name: Corrector
+  name: This is so freakin' kewl
   position:
-  - 1502
-  - 1591
+  - 1364
+  - 1531
   size:
-  - 250
+  - 325
   - 75
   type: Corrector
-7:
-  alignment: Vertical
-  components:
-    linkedLatticeElement:
-      name: Linked Lattice Element
-      type: LinkComponent
-  linkedElement: 11
-  linksIn: {}
-  linksOut:
-    8: BPM
-  name: BPM
-  position:
-  - 1541
-  - 1755
-  size:
-  - 250
-  - 75
-  type: BPM
 8:
   components:
     current:
@@ -103,27 +103,97 @@
       value: 3
       valueType: int
   linksIn:
-    6: corrector
-    7: BPM
+    6: BPM
+    7: corrector
   linksOut:
-    9: data
+    10: data
   name: Orbit Response
   position:
-  - 1943
-  - 1546
+  - 1878
+  - 1345
   size:
   - 575
   - 440
   type: Orbit Response
 9:
   linksIn:
-    8: data
+    11: data
   linksOut: {}
   name: View
   position:
-  - 2690.4680281656706
-  - 1471.6768689037956
+  - 2677.0
+  - 2235.0
   size:
   - 600
   - 500
   type: View
+10:
+  linksIn:
+    8: data
+  linksOut: {}
+  name: View
+  position:
+  - 2612
+  - 1257
+  size:
+  - 600
+  - 500
+  type: View
+11:
+  linksIn:
+    12: decision
+    13: objective
+  linksOut:
+    9: data
+  name: Single Task GP
+  position:
+  - 1959
+  - 2029
+  size:
+  - 600
+  - 500
+  type: Single Task GP
+12:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0
+  linkedElement: 24
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: Corrector
+  position:
+  - 1491
+  - 2184
+  size:
+  - 325
+  - 75
+  type: Corrector
+13:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 11
+  linksIn: {}
+  linksOut:
+    11: objective
+  name: BPM
+  position:
+  - 1496
+  - 2353
+  size:
+  - 325
+  - 75
+  type: BPM

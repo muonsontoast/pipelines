@@ -152,9 +152,9 @@ class ErrorsComponent(QWidget):
             self.rollFix.setStyleSheet(style.PushButtonStyle(color = '#D2C5A0', borderColor = '#A1946D', hoverColor = '#B5AB8D', fontColor = '#1e1e1e'))
         else:
             self.description.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', padding = 5))
-            self.pitch.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
+            self.pitch.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
             self.pitchFix.setStyleSheet(style.PushButtonStyle(color = '#363636', borderColor = '#1e1e1e', hoverColor = '#2d2d2d', fontColor = '#c4c4c4'))
-            self.yaw.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
+            self.yaw.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
             self.yawFix.setStyleSheet(style.PushButtonStyle(color = '#363636', borderColor = '#1e1e1e', hoverColor = '#2d2d2d', fontColor = '#c4c4c4'))
-            self.roll.setStyleSheet(style.LineEditStyle(color = '#2d2d2d', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
+            self.roll.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
             self.rollFix.setStyleSheet(style.PushButtonStyle(color = '#363636', borderColor = '#1e1e1e', hoverColor = '#2d2d2d', fontColor = '#c4c4c4'))

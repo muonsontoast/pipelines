@@ -15,7 +15,7 @@ class Expandable(QWidget):
         self.setFixedWidth(listWidget.viewport().width() - 5)
         self.parent = item
         self.setLayout(QVBoxLayout())
-        self.layout().setContentsMargins(2, 0, 10, 0)
+        self.layout().setContentsMargins(0, 0, 10, 0)
         self.layout().setSpacing(0)
         self.pv = pv
         self.componentKey = componentKey
@@ -31,7 +31,7 @@ class Expandable(QWidget):
         self.nameHousing.setLayout(QHBoxLayout())
         self.nameHousing.setContentsMargins(0, 0, 0, 0)
         self.header = QPushButton(f'\u25BA    {self.name}')
-        self.header.setFixedSize(200, self.headerHeight)
+        self.header.setFixedSize(215, self.headerHeight)
         self.header.setCheckable(True)
         self.header.clicked.connect(self.ToggleContent)
         self.nameHousing.setFixedHeight(self.headerHeight)
@@ -57,7 +57,7 @@ class Expandable(QWidget):
                 self.widget.UpdateColors()
         else:
             self.nameHousing.setStyleSheet(style.InspectorHeaderHousingStyle(fontColor = '#c4c4c4'))
-            self.header.setStyleSheet(style.InspectorHeaderStyle(color = '#363636', hoverColor = '#2d2d2d', borderColor = '#1e1e1e', fontColor = '#c4c4c4'))
+            self.header.setStyleSheet(style.InspectorHeaderStyle(color = '#2e2e2e', hoverColor = '#3e3e3e', borderColor = '#1e1e1e', fontColor = '#c4c4c4'))
             if self.widget is not None:
                 self.widget.UpdateColors()
 

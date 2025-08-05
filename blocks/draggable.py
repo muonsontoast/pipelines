@@ -166,8 +166,9 @@ class Draggable(Entity, QWidget):
                     shared.activePVs.remove(self)
                 self.BaseStyling()
                 self.active = False
-                shared.inspector.mainWindowTitle.setText('')
-                shared.inspector.Push()
+                # print('Resetting the inspector')
+                # shared.inspector.mainWindowTitle.setText('')
+                # shared.inspector.Push()
             else:
                 shared.selectedPV = self
                 if self not in shared.activePVs:
@@ -176,13 +177,15 @@ class Draggable(Entity, QWidget):
                 self.active = True
             return
         if self.active:
-            shared.inspector.mainWindowTitle.setText('')
-            shared.inspector.Push()
+            # print(f'{self.name} is already active!')
+            # shared.inspector.mainWindowTitle.setText('')
+            # shared.inspector.Push()
             if shared.selectedPV == self:
                 shared.selectedPV = None
             shared.activePVs.remove(self)
             self.BaseStyling()
         else:
+            print(f'{self.name} is not active!')
             shared.activePVs.append(self)
             self.SelectedStyling()
         self.active = not self.active

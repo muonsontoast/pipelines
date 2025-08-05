@@ -66,7 +66,7 @@ def CheckProcess(entity, process: Process, queue: Queue, getRawData = True):
     entity.runningCircle.Stop()
     if entity.data.shape != ():
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Holding Data)')
-        shared.workspace.assistant.PushMessage('Finished orbit response measurement.')
+        shared.workspace.assistant.PushMessage(f'{entity.name} has finished and is no longer running.')
     else:
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Empty)')
         shared.workspace.assistant.PushMessage('Stopped action(s).')
@@ -97,9 +97,10 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             print('Post processing attribute name was supplied without also providing an empty numpy array!')
             return
     entity.CreateEmptySharedData(emptyDataArray) # share the data with the process.
+    entity.data[:] = np.nan
         
     queue = Queue()
-    action = entity.offlineAction if not entity.online else entity.offline
+    action = entity.offlineAction if not entity.online else entity.onlineAction
     # Define the pause and stop events and add them to the runningActions dict.
     runningActions[entity.ID] = [Event(), Event()]
 

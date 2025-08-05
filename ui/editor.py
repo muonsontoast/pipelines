@@ -17,7 +17,7 @@ class Editor(Entity, QGraphicsView):
         # shared.app.setAttribute(Qt.AA_UseDesktopOpenGL)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        self.setViewportUpdateMode(QGraphicsView.MinimalViewportUpdate)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -51,7 +51,6 @@ class Editor(Entity, QGraphicsView):
             for item in self.scene.items():
                 if not isinstance(item, QGraphicsLineItem):
                     item.setCacheMode(QGraphicsItem.DeviceCoordinateCache) # -- may need to re-enable this!
-                    item.update()
         else:
             for item in self.scene.items():
                 item.setCacheMode(QGraphicsItem.NoCache)
@@ -113,6 +112,7 @@ class Editor(Entity, QGraphicsView):
             if delta.x() ** 2 + delta.y() ** 2 < shared.cursorTolerance ** 2: # cursor has been moved.
                 for p in shared.activePVs:
                     p.ToggleStyling(active = False)
+                shared.inspector.Push()
         self.SetCacheMode('None')
         super().mouseReleaseEvent(event) # the event needs to propagate beyond the editor to allow drag functionality.
         self.setDragMode(QGraphicsView.NoDrag)

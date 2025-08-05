@@ -7,6 +7,7 @@ from matplotlib.colors import TwoSlopeNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
+import numpy as np
 from .draggable import Draggable
 from .socket import Socket
 from ..ui.runningcircle import RunningCircle
@@ -41,7 +42,7 @@ class View(Draggable):
         self.Push()
 
     def Push(self):
-        super().Push()
+        # super().Push()
         self.main = QWidget()
         self.main.setLayout(QVBoxLayout())
         self.main.layout().setContentsMargins(0, 0, 0, 0)
@@ -97,20 +98,9 @@ class View(Draggable):
         self.widget.layout().addWidget(self.plot)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)) # for spacing
         self.main.layout().addWidget(self.widget)
-        # Data socket
-        self.dataSocketHousing = QWidget()
-        self.dataSocketHousing.setLayout(QHBoxLayout())
-        self.dataSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
-        self.dataSocketHousing.setFixedSize(50, 50)
-        self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'data', 
-        acceptableTypes = ['Orbit Response', 'BPM', 'Single Task GP']
-        )
-        self.dataSocket.setStyleSheet(style.WidgetStyle(marginRight = 2))
-        self.dataSocketHousing.layout().addWidget(self.dataSocket)
-        self.FSocketNames.append('data')
-
-        self.layout().addWidget(self.dataSocket)
-        self.layout().addWidget(self.main)
+        self.AddSocket('data', 'F', acceptableTypes = ['PV', 'BPM', 'Single Task GP', 'Orbit Response'])
+        self.AddSocket('out', 'M')
+        super().Push()
         self.ClearCanvas()
         self.ToggleSpines(False)
         self.UpdateColors()
@@ -131,15 +121,12 @@ class View(Draggable):
             QTimer.singleShot(0, self.CheckData)
    
     def DrawCanvas(self, stream = 'raw', **kwargs):
-        print('drawing canvas')
         if not self.linksIn:
-            print('No PV input for view block. backing out.')
             return
         # access stream of first linked block (may hard restrict it to one block in at some point in the future).
         self.stream = shared.entities[next(iter(self.linksIn))].streams[stream](**kwargs)
         dataShape = self.stream['data'].shape
         if dataShape == (0,):
-            print(f'{shared.entities[next(iter(self.linksIn))].name} is not holding any data')
             return
         if not self.canvasHasBeenCleared:
             self.canvasHasBeenCleared = True
@@ -168,7 +155,8 @@ class View(Draggable):
                         self.axes.set_xlabel(f'{self.stream['xlabel']}{xunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
                         yunits = f' ({self.stream['yunits']})' if self.stream['yunits'] != '' else ''
                         self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
-                        self.ln, = self.axes.plot(range(0, dataShape[0]), self.stream['data'], color = 'tab:blue', animated = True)
+                        self.x = np.array(list(range(0, dataShape[0])))
+                        self.ln, = self.axes.plot(self.x, self.stream['data'], color = 'tab:blue', animated = True)
                         self.axes.set_xlim(self.stream['xlim'])
                         self.axes.set_ylim(self.stream['ylim'])
                         self.axes.set_xlabel(self.stream['xlabel'])

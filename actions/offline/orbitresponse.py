@@ -5,6 +5,7 @@ import time
 from copy import deepcopy
 from multiprocessing.shared_memory import SharedMemory
 from ..action import Action
+from ...simulator import Simulator
 from ... import shared
 
 class OrbitResponseAction(Action):
@@ -18,8 +19,6 @@ class OrbitResponseAction(Action):
         self.BPMs = None
 
     def __getstate__(self):
-        print('In getter, BPMs are:')
-        print(self.BPMs)
         return {
             'lattice': self.lattice,
             'BPMs': [
@@ -45,8 +44,7 @@ class OrbitResponseAction(Action):
         self.lattice = state['lattice']
         self.BPMs = state['BPMs']
         self.correctors = state['correctors']
-        from ... import simulator
-        self.simulator = simulator.Simulator()    
+        self.simulator = Simulator()    
 
     def CheckForValidInputs(self) -> bool:
         # Have both correctors AND BPMs been suppled?
@@ -72,7 +70,7 @@ class OrbitResponseAction(Action):
         print('All correctors and BPMs are linked to lattice elements.')
         return True
 
-    def Run(self, pause, stop, sharedMemoryName, shape, dtype, getRawData: bool = True, **kwargs):
+    def Run(self, pause, stop, sharedMemoryName, shape, dtype, **kwargs):
         '''Calculates the orbit response of the model using PyAT simulations.\n
         Accepts `correctors` (list of PVs) and `BPMs` (list of BPMs).'''
         numSteps = kwargs.get('numSteps')
@@ -95,7 +93,6 @@ class OrbitResponseAction(Action):
         kicks = (np.arange(0, numSteps, 1) - offset) * stepKick * 1e-3 # convert to mrad
         sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
         beam = at.beam(numParticles, sigmaMat)
-        counter = 1
         for col, c in enumerate(self.correctors):
             print('Moved to new corrector')
             idx = 1 if c['alignment'] == 'Vertical' else 0
@@ -118,7 +115,6 @@ class OrbitResponseAction(Action):
                         if stop.is_set():
                             sharedMemory.close()
                             return
-                        counter += 1
                 # BPMs in the model are markers so we have the full phase space information but PVs will typically be separated into BPM:X, BPM:Y
                 self.lattice[c['index']].KickAngle[idx] = 0
         self.Fit(data, kicks, numCorrectors, numBPMs,

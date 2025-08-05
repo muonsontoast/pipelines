@@ -18,7 +18,7 @@ class PV(Draggable):
             proxy,
             name = kwargs.pop('name', 'PV'),
             type = kwargs.pop('type', 'PV'),
-            size = kwargs.pop('size', [250, 75]),
+            size = kwargs.pop('size', [325, 75]),
             components = {
                 'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
                 'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
@@ -51,16 +51,15 @@ class PV(Draggable):
         self.indicator = Indicator(self, 8)
         self.header.layout().addWidget(self.indicator, alignment = Qt.AlignLeft)
         self.title = QLabel(self.name, alignment = Qt.AlignCenter)
+        self.title.setWordWrap(True)
         self.title.setObjectName('title')
         self.header.layout().addWidget(self.title)
         self.header.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
         self.widget.layout().addWidget(self.header, 0, 0, 1, 3)
         self.clickable.layout().addWidget(self.widget)
-        # self.outputSocket = Socket(self, 'M', self.settings['size'][1], self.settings['size'][1] / 2, 'right', 'output')
         self.outSocket = Socket(self, 'M', 50, 25, 'right', 'out')
         self.layout().addWidget(self.clickable)
         self.layout().addWidget(self.outSocket)
-        # self.UpdateColors()
         self.ToggleStyling(active = False)
 
     def mouseReleaseEvent(self, event):
@@ -72,10 +71,10 @@ class PV(Draggable):
         if not canDrag:
             return
         if not hasCursorMoved:
+            print(self.settings)
             if not isActive:
                 shared.inspector.Push(self)
             else:
-                shared.inspector.mainWindowTitle.setText('')
                 shared.inspector.Push()
 
     def BaseStyling(self):

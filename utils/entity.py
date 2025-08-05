@@ -19,8 +19,6 @@ class Entity:
             self.settings[k] = v
         # Some special widgets like the inspector are exempt as they should have expanding size policies.
         if self.type not in ['Inspector'] and 'size' in kwargs.keys():
-            # if 
-            print(f'setting {self.name} size to {kwargs.get('size')}')
             self.setFixedSize(*kwargs.get('size'))
         self.Register(kwargs.get('overrideID')) # register this entity inside the shared.py script.
 

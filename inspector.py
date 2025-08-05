@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import (
-    QWidget, QTabWidget, QListWidget, QListWidgetItem, QLabel, QPushButton,
+    QWidget, QTabWidget, QListWidget, QListWidgetItem, QLabel, QLineEdit, QPushButton,
     QVBoxLayout, QHBoxLayout, QSizePolicy
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from .expandable import Expandable
 from .utils.entity import Entity
 from . import shared
@@ -14,15 +14,22 @@ class Inspector(Entity, QTabWidget):
         # -1 size corresponds to an expanding size policy.
         size = kwargs.pop('size', [415, -1])
         super().__init__(name = 'Inspector', type = 'Inspector', size = size)
-        print('setting shared.inspector')
         shared.inspector = self
         self.parent = parent
         self.setMinimumWidth(size[0])
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.mainWindow = QWidget()
         self.mainWindow.setLayout(QVBoxLayout())
-        self.mainWindow.layout().setContentsMargins(0, 15, 0, 0)
-        self.mainWindowTitle = QLabel('')
+        self.mainWindow.layout().setContentsMargins(10, 10, 10, 0)
+        # Changing mainWindowTitle from label to line edit
+        self.mainWindowTitleWidget = QWidget()
+        self.mainWindowTitleWidget.setLayout(QHBoxLayout())
+        self.mainWindowTitleWidget.layout().setContentsMargins(10, 5, 10, 5)
+        self.mainWindowTitle = QLineEdit()
+        self.mainWindowTitle.textChanged.connect(self.TextChanged)
+        self.mainWindowTitle.returnPressed.connect(self.TextSet)
+        self.mainWindowTitle.setFixedHeight(35)
+        self.mainWindowTitle.setObjectName('title')
         self.mainWindowTitle.setFixedHeight(25)
         self.mainWindowTitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.main = QListWidget()
@@ -34,34 +41,40 @@ class Inspector(Entity, QTabWidget):
         self.main.setVerticalScrollMode(QListWidget.ScrollPerPixel)
         self.main.setSpacing(0)
         self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # Construct the main window
-        self.mainWindow.layout().addWidget(self.mainWindowTitle)
+        self.mainWindowTitleWidget.layout().addWidget(self.mainWindowTitle)
+        self.mainWindow.layout().addWidget(self.mainWindowTitleWidget)
         self.mainWindow.layout().addWidget(self.main)
-        # # Define the scan tab for detailed information on scanning.
-        # self.scan = QListWidget()
-        # # Define the optimiser tab for detailed information on optimisation.
-        # self.optimiser = QListWidget()
-        # Add tabs
+        self.toggle = QPushButton('Swap Plane')
+        self.toggle.setFixedSize(100, 35)
+        self.planeRow = QWidget()
+        self.planeRow.setLayout(QHBoxLayout())
+        self.planeRow.layout().setContentsMargins(2, 0, 10, 0)
         self.addTab(self.mainWindow, 'Inspector')
-        # self.addTab(self.scan, 'Scan')
-        # self.addTab(self.optimiser, 'Optimiser')
         self.Push()
+        self.ToggleStyling()
 
-    def Push(self, pv = None, component = None, deselecting = False):
-        if not deselecting:
-            self.main.setUpdatesEnabled(False) # prevents flashing when redrawing the inspector
+    def Push(self, pv = None, component = None):
+        self.blockSignals(True)
         self.main.clear()
-        if pv is None:
+        if not pv:
+            self.mainWindowTitleWidget.hide()
+            self.main.hide()
+            print('No PV supplied to the inspector.')
             return
-        if component is None:
+        
+        # if component is None:
+        if not component:
             if 'value' in pv.settings['components'].keys():
                 component = pv.settings['components']['value']['name']
             else:
                 component = 'Linked Lattice Element'
+        
+        self.ToggleStyling()
+        self.mainWindowTitleWidget.show()
+        self.main.show()
         # Add a row for PV generic information.
         pvName = pv.settings['name']
-        name = f'Control PV {pvName[9:]}' if pvName[:9] == 'controlPV' else pvName
-        self.mainWindowTitle.setText(name)
+        self.mainWindowTitle.setText(pvName)
 
         self.items = dict()
         self.expandables = dict()
@@ -69,24 +82,18 @@ class Inspector(Entity, QTabWidget):
         # Add an alignment item at the top if one is needed by the component.
         if pv.blockType in ['Kicker', 'BPM']:
             self.items['alignment'] = QListWidgetItem()
-            planeRow = QWidget()
-            planeRow.setLayout(QHBoxLayout())
-            planeRow.layout().setContentsMargins(2, 0, 10, 0)
             if pv.settings['alignment'] == 'Horizontal':
                 text = 'Aligned to <span style = "color: #bc4444">Horizontal</span> plane.'
             else:
                 text = 'Aligned to <span style = "color: #399a26">Vertical</span> plane.'
             self.state = QLabel(text)
             self.state.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-            planeRow.layout().addWidget(self.state)
-            self.toggle = QPushButton('Swap Plane')
-            self.toggle.setFixedSize(100, 35)
-            self.toggle.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
+            self.planeRow.layout().addWidget(self.state)
             self.toggle.clicked.connect(lambda: self.SwapPlane(pv))
-            planeRow.layout().addWidget(self.toggle)
-            self.items['alignment'].setSizeHint(planeRow.sizeHint())
+            self.planeRow.layout().addWidget(self.toggle)
+            self.items['alignment'].setSizeHint(self.planeRow.sizeHint())
             self.main.addItem(self.items['alignment'])
-            self.main.setItemWidget(self.items['alignment'], planeRow)
+            self.main.setItemWidget(self.items['alignment'], self.planeRow)
 
         for k, c in pv.settings['components'].items():
             if 'units' in c.keys():
@@ -101,9 +108,18 @@ class Inspector(Entity, QTabWidget):
             self.main.addItem(self.items[k])
             self.main.setItemWidget(self.items[k], self.expandables[k])
         shared.expandables = self.expandables
-        if not deselecting:
-            self.main.setUpdatesEnabled(True)
-        self.UpdateColors()
+        self.blockSignals(False)
+
+    def TextChanged(self):
+        if shared.selectedPV is None:
+            return
+        shared.selectedPV.name = self.mainWindowTitle.text()
+        shared.selectedPV.settings['name'] = shared.selectedPV.name
+        shared.selectedPV.title.setText(shared.selectedPV.name)
+
+    def TextSet(self):
+        self.TextChanged()
+        self.mainWindowTitle.clearFocus()
 
     def SwapPlane(self, pv):
         if pv.settings['alignment'] == 'Horizontal':
@@ -118,3 +134,10 @@ class Inspector(Entity, QTabWidget):
 
     def UpdateColors(self):
         pass
+
+    def ToggleStyling(self):
+        if shared.lightModeOn:
+            pass
+        else:
+            self.mainWindow.setStyleSheet(style.WidgetStyle(color = '#1a1a1a'))
+            self.mainWindowTitleWidget.setStyleSheet(style.WidgetStyle(color = '#222222', borderRadius = 2))
