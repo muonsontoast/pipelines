@@ -37,10 +37,10 @@ class Inspector(Entity, QTabWidget):
         # Construct the main window
         self.mainWindow.layout().addWidget(self.mainWindowTitle)
         self.mainWindow.layout().addWidget(self.main)
-        # Define the scan tab for detailed information on scanning.
-        self.scan = QListWidget()
-        # Define the optimiser tab for detailed information on optimisation.
-        self.optimiser = QListWidget()
+        # # Define the scan tab for detailed information on scanning.
+        # self.scan = QListWidget()
+        # # Define the optimiser tab for detailed information on optimisation.
+        # self.optimiser = QListWidget()
         # Add tabs
         self.addTab(self.mainWindow, 'Inspector')
         # self.addTab(self.scan, 'Scan')

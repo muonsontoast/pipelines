@@ -1,13 +1,16 @@
-from PySide6.QtWidgets import QWidget, QLabel, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QVBoxLayout, QHBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QVBoxLayout, QHBoxLayout
+from PySide6.QtCore import Qt, QTimer
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.style as mplstyle
+mplstyle.use('fast')
 from .draggable import Draggable
 from .socket import Socket
 from ..ui.runningcircle import RunningCircle
+from ..ui.blitmanager import BlitManager
 from .. import shared
 from .. import style
 
@@ -17,9 +20,6 @@ class View(Draggable):
     '''Displays the data of arbitrary blocks.'''
     def __init__(self, parent, proxy: QGraphicsProxyWidget, fontsize = 12, **kwargs):
         super().__init__(proxy, name = kwargs.pop('name', 'View'), type = 'View', size = kwargs.pop('size', [600, 500]), **kwargs)
-        self.setMouseTracking(True)
-        self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.parent = parent
         self.blockType = 'View'
         self.setLayout(QHBoxLayout())
@@ -28,10 +28,16 @@ class View(Draggable):
         self.active = False
         self.hovering = False
         self.startPos = None
-        self.PVIn = None
         self.stream = None
         self.fontsize = fontsize
+        self.canvasHasBeenCleared = False
+        self.liveUpdatesEnabled = False
+        self.liveUpdateCheckFrequency = 10 # check for live data updates n times a second.
+        self.liveUpdateCheckTimeInMilliseconds = 1 / self.liveUpdateCheckFrequency * 1e3
         self.runningCircle = RunningCircle()
+        self.firstDraw = True
+        # Attrs relevant to plotting
+        self.yline = None # 1d line plots
         self.Push()
 
     def Push(self):
@@ -64,22 +70,31 @@ class View(Draggable):
         self.figure = Figure(figsize = (6.75, 4.25), dpi = 100)
         self.figure.set_facecolor('none')
         self.axes = self.figure.add_subplot(111)
+        self.axes.set_aspect('auto')
         self.axes.tick_params(
             axis = 'both',
             colors = '#c4c4c4',
             which = 'both',
             labelsize = self.fontsize,
         )
-        self.axes.set_facecolor('none')
-        self.ToggleSpines(False)
+        # self.axes.set_facecolor('none')
         self.canvas = FigureCanvas(self.figure)
         self.canvas.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.canvas.setStyleSheet('background: transparent')
-        self.ClearCanvas()
-        self.figure.tight_layout()
         self.plot.layout().addWidget(self.canvas)
+
+        # live updates button
+        self.liveUpdateSection = QWidget()
+        self.liveUpdateSection.setLayout(QHBoxLayout())
+        self.liveUpdateSection.layout().setContentsMargins(15, 15, 15, 15)
+        self.liveUpdateSection.layout().addWidget(QLabel('Live Updates Enabled?'))
+        self.liveButton = QPushButton('No')
+        self.liveButton.setFixedSize(50, 35)
+        self.liveButton.clicked.connect(self.ToggleLiveUpdates)
+        self.liveUpdateSection.layout().addWidget(self.liveButton)
+        self.liveUpdateSection.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
+        self.widget.layout().addWidget(self.liveUpdateSection)
         self.widget.layout().addWidget(self.plot)
-        self.widget.layout().addWidget(QLabel('hahaha'))
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)) # for spacing
         self.main.layout().addWidget(self.widget)
         # Data socket
@@ -87,84 +102,87 @@ class View(Draggable):
         self.dataSocketHousing.setLayout(QHBoxLayout())
         self.dataSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
         self.dataSocketHousing.setFixedSize(50, 50)
-        self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'data', acceptableTypes = ['Orbit Response', 'BPM'])
+        self.dataSocket = Socket(self, 'F', 50, 25, 'left', 'data', 
+        acceptableTypes = ['Orbit Response', 'BPM', 'Single Task GP']
+        )
+        self.dataSocket.setStyleSheet(style.WidgetStyle(marginRight = 2))
         self.dataSocketHousing.layout().addWidget(self.dataSocket)
         self.FSocketNames.append('data')
 
         self.layout().addWidget(self.dataSocket)
         self.layout().addWidget(self.main)
+        self.ClearCanvas()
+        self.ToggleSpines(False)
         self.UpdateColors()
 
+    def CheckData(self):
+        # periodically calls itself until it detects liveUpdatesEnabled is False.
+        if not self.liveUpdatesEnabled:
+            print('Stopping live updates')
+            return
+        if self.linksIn:
+            self.DrawCanvas('raw')
+            QTimer.singleShot(self.liveUpdateCheckTimeInMilliseconds, self.CheckData)
+
+    def ToggleLiveUpdates(self):
+        self.liveUpdatesEnabled = not self.liveUpdatesEnabled
+        self.liveButton.setText('Yes') if self.liveUpdatesEnabled else self.liveButton.setText('No')
+        if self.liveUpdatesEnabled:
+            QTimer.singleShot(0, self.CheckData)
+   
     def DrawCanvas(self, stream = 'raw', **kwargs):
-        print('Drawing view block canvas.')
-        if not self.PVIn:
+        print('drawing canvas')
+        if not self.linksIn:
             print('No PV input for view block. backing out.')
             return
-        print('Clearing canvas')
-        self.ClearCanvas()
-        print('Clearing ticks and tick labels')
-        self.stream = self.PVIn.streams[stream](**kwargs)
-        print('Checking if data exists.')
-        if not 'data' in self.stream.keys():
+        # access stream of first linked block (may hard restrict it to one block in at some point in the future).
+        self.stream = shared.entities[next(iter(self.linksIn))].streams[stream](**kwargs)
+        dataShape = self.stream['data'].shape
+        if dataShape == (0,):
+            print(f'{shared.entities[next(iter(self.linksIn))].name} is not holding any data')
             return
-        print('data available')
-        self.ToggleSpines(True)
-        self.axes.relim()
-        self.axes.autoscale_view()
-        xunits = f' ({self.stream['xunits']})' if self.stream['xunits'] != '' else ''
-        self.axes.set_xlabel(f'{self.stream['xlabel']}{xunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
-        yunits = f' ({self.stream['yunits']})' if self.stream['yunits'] != '' else ''
-        self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
+        if not self.canvasHasBeenCleared:
+            self.canvasHasBeenCleared = True
+            self.ClearCanvas()
+            self.ToggleSpines(True)
         if self.stream['plottype'] == 'imshow':
             if 'norm' in self.stream.keys():
-                print('normed!')
                 im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'], norm = TwoSlopeNorm(vcenter = self.stream['vcenter']))
             else:
                 im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
             divider = make_axes_locatable(self.axes)
             cax = divider.append_axes("right", size = "5%", pad = 0.075)
-            cb = plt.colorbar(im, cax = cax, ax = self.axes)
-            cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
-            cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
+            self.cb = self.figure.colorbar(im, cax = cax, ax = self.axes)
+            self.cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
+            self.cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
+            # testing for now ... this draw call leads to terrible performance live, need to replace with blitting.
+            self.figure.canvas.draw() # I should look into whether blitting can be used to speed up 2D plots.
+        # line plots
         elif self.stream['plottype'] == 'plot':
-            shape = self.stream['data'].shape
-            dimension = len(shape)
+            dimension = len(dataShape)
             if dimension == 1:
-                self.axes.hist(self.stream['data'], bins = kwargs.get('bins'), range = (kwargs.get('min', None), kwargs.get('max', None)))
-            elif dimension == 2:
-                '''Expects 2D data as 2 x n'''
-                self.axes.plot(self.stream['data'][0], self.stream['data'][1], color = kwargs.get('color', 'tab:blue'), marker = 'o', markersize = 8)
-        elif self.stream['plottype'] == 'scatter':
-            print('Generating a scatter plot')
-            shape = self.stream['data'].shape
-            dimension = len(shape)
-            if dimension == 1:
-                print('Dimension 1')
-                self.axes.hist(self.stream['data'], bins = kwargs.get('bins'), range = (kwargs.get('min', None), kwargs.get('max', None)))
-            elif dimension == 2:
-                '''Expects 2D data as 2 x n'''
-                print('Dimension 2')
-                print('shape:', self.stream['data'].shape)
-                print('data:', self.stream['data'])
-                print(self.stream['data'][0])
-                print(self.stream['data'][1])
-                self.axes.scatter(self.stream['data'][0], self.stream['data'][1], marker = 'o', s = 40)
-                self.axes.minorticks_on()
-                self.axes.grid(alpha = .35) if kwargs.get('grid', True) else None
-            # elif dimension == 3:
-            #     '''Rather than 3D points, we assume this to be a collection of lines.'''
-            #     for c in range(shape[0]):
-            #         self.axes.scatter(self.stream['data'][c])
-
-        self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
-        self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
-        self.axes.set_aspect('auto')
-        self.figure.tight_layout()
-        self.canvas.draw()
+                    if self.firstDraw:
+                        self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
+                        self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
+                        xunits = f' ({self.stream['xunits']})' if self.stream['xunits'] != '' else ''
+                        self.axes.set_xlabel(f'{self.stream['xlabel']}{xunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
+                        yunits = f' ({self.stream['yunits']})' if self.stream['yunits'] != '' else ''
+                        self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
+                        self.ln, = self.axes.plot(range(0, dataShape[0]), self.stream['data'], color = 'tab:blue', animated = True)
+                        self.axes.set_xlim(self.stream['xlim'])
+                        self.axes.set_ylim(self.stream['ylim'])
+                        self.axes.set_xlabel(self.stream['xlabel'])
+                        self.axes.set_ylabel(self.stream['ylabel'])
+                        self.axes.grid(alpha = .35)
+                        self.figure.tight_layout()
+                        self.firstDraw = False
+                        self.figure.canvas.draw()
+                        self.bm = BlitManager(self.figure.canvas, [self.ln, ])
+                    else:
+                        self.ln.set_ydata(self.stream['data'])
+                    self.bm.update()
 
     def ClearCanvas(self):
-        self.figure.clf()
-        self.axes = self.figure.add_subplot(111)
         self.axes.tick_params(axis='x', which='both', labelbottom = False, length = 0)
         self.axes.tick_params(axis='y', which='both', labelleft = False, length = 0)
         self.axes.tick_params(
@@ -174,7 +192,6 @@ class View(Draggable):
             labelsize = self.fontsize,
         )
         self.axes.set_facecolor('none')
-        self.ToggleSpines(False)
 
     def ToggleSpines(self, override: bool = None):
         for spine in self.axes.spines.values():
@@ -182,65 +199,28 @@ class View(Draggable):
             state = not spine.get_visible() if not override else override
             spine.set_visible(state)
 
+    def AddLinkIn(self, ID, socket):
+        super().AddLinkIn(ID, socket)
+        self.title.setText('View (Connected)')
+
     def UpdateColors(self):
         if not self.active:
             self.BaseStyling()
             return
         self.SelectedStyling()
 
-    def ToggleStyling(self):
-        pass
-
     def BaseStyling(self):
         if shared.lightModeOn:
-            self.widget.setStyleSheet(f'''
-            QWidget#view {{
-            background-color: #D2C5A0;
-            border: 2px solid #B5AB8D;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 0px;
-            }}
-            ''')
+            pass
         else:
-            "#282828"
-            self.widget.setStyleSheet(f'''
-            QWidget#view {{
-            background-color: #2e2e2e;
-            border: none;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 0px;
-            }}
-            ''')
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12))
             self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
+            self.liveButton.setStyleSheet(style.PushButtonStyle(color = '#3e3e3e', hoverColor = '#4e4e4e', fontColor = '#c4c4c4'))
 
     def SelectedStyling(self):
         if shared.lightModeOn:
-            self.widget.setStyleSheet(f'''
-            QWidget#pvHousing {{
-            background-color: #ECDAAB;
-            border: 4px solid #DCC891;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 10px;
-            }}
-            ''')
-        else:
-            self.widget.setStyleSheet(f'''
-            QWidget#pvHousing {{
-            background-color: #5C5C5C;
-            border: 4px solid #424242;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 10px;
-            }}
-            ''')
+            pass
+        else: 
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12))
+            self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
+            self.liveButton.setStyleSheet(style.PushButtonStyle(color = '#c4c4c4'))

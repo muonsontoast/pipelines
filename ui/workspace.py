@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QTabWidget, QStackedLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QSpacerItem
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt
 from ..utils.entity import Entity
 from ..utils.assistant import Assistant
 from .editor import Editor
@@ -20,7 +20,6 @@ class Workspace(Entity, QTabWidget):
         else:
             self.setFixedWidth(size[0])
             sizePolicy[0] = QSizePolicy.Preferred
-        # Set vertical
         if size[1] is None:
             sizePolicy[1] = QSizePolicy.Expanding
         else:
@@ -53,11 +52,11 @@ class Workspace(Entity, QTabWidget):
         editor.setStyleSheet(style.EditorStyle())
         # message
         editor.message = QWidget()
-        editor.message.setStyleSheet(style.WidgetStyle(color = '#262626'))
+        editor.message.setStyleSheet(style.WidgetStyle(color = '#1a1a1a'))
         editor.message.setFixedHeight(35)
         editorPanel.layout().addWidget(editor.message)
         editor.message.setLayout(QHBoxLayout())
-        editor.message.layout().setContentsMargins(5, 0, 5, 0)
+        editor.message.layout().setContentsMargins(0, 0, 5, 0)
         editor.message.layout().setSpacing(5)
         editor.messageTitle = QLabel('Assistant:')
         editor.message.layout().addWidget(editor.messageTitle, alignment = Qt.AlignLeft)
@@ -65,11 +64,11 @@ class Workspace(Entity, QTabWidget):
         editor.message.layout().addWidget(editor.zoomTitle, alignment = Qt.AlignRight)
         # footer
         footer = QWidget()
-        footer.setStyleSheet(style.WidgetStyle(color = '#262626'))
+        footer.setStyleSheet(style.WidgetStyle(color = '#1a1a1a'))
         footer.setFixedHeight(35)
         editorPanel.layout().addWidget(footer)
         footer.setLayout(QHBoxLayout())
-        footer.layout().setContentsMargins(5, 0, 5, 0)
+        footer.layout().setContentsMargins(0, 0, 5, 0)
         footer.layout().setSpacing(5)
         "#e98514"
         shortcutHints = [
@@ -95,7 +94,3 @@ class Workspace(Entity, QTabWidget):
         tabName = '\U0001F441\uFE0F ' + name if idx > 0 else '\U0001F441\uFE0F Editor'
         self.addTab(editorPanel, tabName)
         shared.activeEditor = shared.editors[-1]
-
-    # def ShowMenu(self):
-    #     position = self.addButton.mapToGlobal(QPoint(0, self.addButton.height()))
-    #     self.menu.popup(position)

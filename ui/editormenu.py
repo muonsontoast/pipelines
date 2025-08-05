@@ -17,7 +17,7 @@ class EditorMenu(Draggable):
         self.proxy = QGraphicsProxyWidget()
         self.proxy.setZValue(100)
         self.proxy.setFocusPolicy(Qt.StrongFocus)
-        super().__init__(self.proxy, size = kwargs.pop('size', [250, 350]), name = 'EditorMenu', type = 'EditorMenu')
+        super().__init__(self.proxy, size = kwargs.pop('size', [350, 250]), name = 'EditorMenu', type = 'EditorMenu')
         self.parent = parent
         self.hidden = True
         self.offset = QPoint(0, 0)
@@ -32,7 +32,7 @@ class EditorMenu(Draggable):
         self.matchingModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.shortcuts = QListView()
         self.shortcuts.pressed.connect(self.RunCommandFromClick)
-        self.shortcuts.setFixedHeight(100)
+        self.shortcuts.setFixedHeight(175)
         self.shortcuts.setFocusPolicy(Qt.NoFocus)
         self.shortcuts.setFrameShape(QListView.NoFrame)
         self.shortcuts.setVerticalScrollMode(QListView.ScrollPerPixel)

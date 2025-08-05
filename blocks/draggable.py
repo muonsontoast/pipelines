@@ -1,9 +1,10 @@
-from PySide6.QtWidgets import QWidget, QGraphicsLineItem
+from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGraphicsLineItem, QHBoxLayout, QVBoxLayout
 from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QLineF, QPointF
 import time
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
+from .socket import Socket
 from .. import style
 from .. import shared
 
@@ -11,6 +12,9 @@ class Draggable(Entity, QWidget):
     def __init__(self, proxy, **kwargs):
         super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), **kwargs)
         self.proxy = proxy
+        self.setLayout(QHBoxLayout())
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
         self.blockType = 'Draggable'
         self.active = False
         self.startDragPosition = None
@@ -24,19 +28,38 @@ class Draggable(Entity, QWidget):
         self.linksOut = dict()
         self.settings['linksIn'] = dict()
         self.settings['linksOut'] = dict()
-        self.data = None # holds the data which is accessed by downstream blocks.
+        self.online = False
         self.streams = dict() # instructions on how to display different data streams, based on the data held in the block.
         self.timer = None # cumulative time since last clock update.
         self.clock = None
-        self.action = None
+        self.offlineAction = None
+        self.onlineAction = None
         self.timeout = 1 / shared.UIMoveUpdateRate # seconds between move draws.
+        self.hovering = False
+        self.startPos = None
+        self.linkedElementAttrs = dict() # A dict of functions that retrieve information exposed by the linked underlying PyAT element.
+        self.stream = None
         self.canRun = False # indicates that a block can run an action.
-        # self.setFixedSize(*kwargs.get('size', [500, 440]))
+        self.FSocketWidgets = QWidget()
+        self.FSocketWidgets.setLayout(QVBoxLayout())
+        self.FSocketWidgets.layout().setContentsMargins(0, 0, 0, 0)
+        self.MSocketWidgets = QWidget()
+        self.MSocketWidgets.setLayout(QVBoxLayout())
+        self.MSocketWidgets.layout().setContentsMargins(0, 0, 0, 0)
+        self.main = QWidget()
+        self.main.setLayout(QVBoxLayout())
+        self.main.layout().setContentsMargins(0, 0, 0, 0)
+        self.setStyleSheet(style.WidgetStyle())
         if kwargs.pop('addToShared', True):
             shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))
+        self.setMouseTracking(True)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
 
     def Push(self):
-        self.ClearLayout()
+        # Add widget sections to the layout.
+        self.layout().addWidget(self.FSocketWidgets)
+        self.layout().addWidget(self.main)
+        self.layout().addWidget(self.MSocketWidgets)
 
     def GetSocketPos(self, name):
         try: 
@@ -122,7 +145,7 @@ class Draggable(Entity, QWidget):
                         line.setP2(socketPos)
                         v['link'].setLine(line)
             # Batch update all outgoing links.
-            socketPos = self.GetSocketPos('output')
+            socketPos = self.GetSocketPos('out')
             for k in self.linksOut.keys():
                 if k == 'free':
                     continue
@@ -175,17 +198,81 @@ class Draggable(Entity, QWidget):
 
     def SetRect(self):
         shared.PVs[self.ID]['rect'] = MapDraggableRectToScene(self)
+    
+    def AddSocket(self, name: str, socketType: str, socketText = '', housingWidth: int = 50, acceptableTypes: list = []) -> Socket:
+        '''Leave `housingWidth` as default value for no accompanying socket name.\n
+        `socketType` should be <F/M>\n'''
+        socketHousing = QWidget()
+        socketHousing.setLayout(QHBoxLayout())
+        socketHousing.layout().setContentsMargins(0, 0, 0, 0)
+        socketHousing.layout().setSpacing(0)
+        socketHousing.setFixedSize(housingWidth, 75)
+        alignment = 'left' if socketType == 'F' else 'right'
+        socket = Socket(self, socketType, 50, 25, alignment, name, acceptableTypes)
+        socketHousing.layout().addWidget(socket)
+        if socketText != '':
+            socketTitle = QLabel(f'{socketText}')
+            socketTitle.setObjectName(f'{socketText}SocketTitle')
+            socketTitle.setAlignment(Qt.AlignCenter)
+            socketHousing.layout().addWidget(socketTitle)
+            setattr(self, f'{name}SocketTitle', socketTitle)
+        setattr(self, f'{name}SocketHousing', socketHousing)
+        setattr(self, f'{name}Socket', socket)
+        if alignment == 'left':
+            socket.setStyleSheet(style.WidgetStyle(marginRight = 2))
+            self.FSocketWidgets.layout().addWidget(getattr(self, f'{name}SocketHousing'), alignment = Qt.AlignRight)
+            self.FSocketNames.append(name)
+        else:
+            socket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
+            self.MSocketWidgets.layout().addWidget(getattr(self, f'{name}SocketHousing'), alignment = Qt.AlignLeft)
+
+    def AddButtons(self):
+        # Control buttons
+        self.buttons = QWidget()
+        buttonsHeight = 35
+        self.buttons.setFixedHeight(buttonsHeight)
+        self.buttons.setLayout(QHBoxLayout())
+        self.buttons.layout().setContentsMargins(15, 2, 15, 10)
+        self.start = QPushButton('Start')
+        self.start.setFixedHeight(buttonsHeight)
+        self.start.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+        self.start.clicked.connect(self.Start)
+        self.pause = QPushButton('Pause')
+        self.pause.setFixedHeight(buttonsHeight)
+        self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+        self.pause.clicked.connect(self.Pause)
+        self.stop = QPushButton('Stop')
+        self.stop.setFixedHeight(buttonsHeight)
+        self.stop.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+        self.stop.clicked.connect(self.Stop)
+        self.clear = QPushButton('Clear')
+        self.clear.setFixedHeight(buttonsHeight)
+        self.clear.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+        self.buttons.layout().addWidget(self.start)
+        self.buttons.layout().addWidget(self.pause)
+        self.buttons.layout().addWidget(self.stop)
+        self.buttons.layout().addWidget(self.clear)
+        self.main.layout().addWidget(self.buttons)
+
+    def Start(self):
+        pass
+
+    def Pause(self):
+        pass
+
+    def Stop(self):
+        pass
 
     def AddLinkIn(self, ID, socket):
         '''`socket` the source is connected to and the `ID` of its parent.'''
         self.linksIn[ID] = dict(link = QGraphicsLineItem(), socket = socket)
         self.settings['linksIn'][ID] = socket
         link = self.linksIn[ID]['link'].line()
-        link.setP1(shared.entities[ID].GetSocketPos('output'))
+        link.setP1(shared.entities[ID].GetSocketPos('out'))
         link.setP2(self.GetSocketPos(socket))
         self.linksIn[ID]['link'].setLine(link)
         self.linksIn[ID]['link'].setZValue(-20)
-        self.linksIn[ID]['link'].setPen(QPen(QColor('#c4c4c4'), 8))
+        self.linksIn[ID]['link'].setPen(QPen(QColor("#323232"), 12))
         shared.activeEditor.scene.addItem(self.linksIn[ID]['link'])
 
     # this can be overridden to trigger logic that should run when removing incoming links to a block.
@@ -199,7 +286,8 @@ class Draggable(Entity, QWidget):
         self.linksOut[ID] = socket
         self.settings['linksOut'][ID] = socket
         if hasattr(self, 'indicator'):
-            self.indicator.setStyleSheet(style.indicatorStyle(4, color = "#E0A159", borderColor = "#E7902D"))
+            self.indicatorStyleToUse = self.indicatorSelectedStyle
+            self.ToggleStyling(active = self.active)
 
     # this can be overridden to trigger logic that should run when removing outgoing links from a block.
     def RemoveLinkOut(self, ID):
@@ -207,4 +295,6 @@ class Draggable(Entity, QWidget):
         self.settings['linksOut'].pop(ID)
         if hasattr(self, 'indicator'):
             if len(self.linksOut.values()) == 0:
-                self.indicator.setStyleSheet(style.indicatorStyle(4))
+                self.indicatorStyleToUse = self.indicatorStyle
+                self.ToggleStyling(active = self.active)
+                # self.widget.setStyleSheet(self.widgetStyle + self.indicatorStyleToUse)

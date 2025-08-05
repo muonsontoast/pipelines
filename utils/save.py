@@ -22,7 +22,12 @@ def Save():
             if entitySettings['type'] == 'Editor':
                 entitySettings['positionInSceneCoords'] = [entity.positionInSceneCoords.x(), entity.positionInSceneCoords.y()]
             settings[entity.ID] = entitySettings
+            if entity.sharingData:
+                print(f'Cleaning up data from {entity.name}')
+                entity.CleanUp() # remove the shared memory data from memory to stop persistance.
+                print(f'Finished cleaning up data from {entity.name}')
         yaml.dump(settings, f)
+        print('Dumped session settings to disk.')
 
 def FormatComponents(components: dict):
     newComponents = dict()

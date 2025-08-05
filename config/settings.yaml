@@ -1,0 +1,377 @@
+0:
+  name: MainWindow
+  type: MainWindow
+1:
+  name: Workspace
+  type: Workspace
+2:
+  name: Editor
+  positionInSceneCoords:
+  - 3009.093893822616
+  - 1048.8237715957669
+  type: Editor
+  zoom: 0.37851926200716396
+3:
+  linksIn: {}
+  linksOut: {}
+  name: EditorMenu
+  size:
+  - 350
+  - 250
+  type: EditorMenu
+4:
+  name: Global Lattice
+  sceneHeight: 145
+  sceneWidth: 1200
+  type: Global Lattice
+5:
+  name: Inspector
+  size:
+  - 415
+  - -1
+  type: Inspector
+6:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0
+  linkedElement: 24
+  linksIn: {}
+  linksOut:
+    8: decision
+  name: Corrector
+  position:
+  - 1781
+  - 1645
+  size:
+  - 250
+  - 75
+  type: Corrector
+7:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 11
+  linksIn: {}
+  linksOut:
+    8: objective
+  name: BPM
+  position:
+  - 1790
+  - 1817
+  size:
+  - 250
+  - 75
+  type: BPM
+8:
+  linksIn:
+    6: decision
+    7: objective
+  linksOut:
+    9: data
+    12: data
+  name: Single Task GP
+  position:
+  - 2335
+  - 1509
+  size:
+  - 600
+  - 500
+  type: Single Task GP
+9:
+  linksIn:
+    8: data
+  linksOut: {}
+  name: View
+  position:
+  - 3250
+  - 1156
+  size:
+  - 600
+  - 500
+  type: View
+10:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0
+  linkedElement: 24
+  linksIn: {}
+  linksOut:
+    13: corrector
+  name: Corrector
+  position:
+  - 1727
+  - 505
+  size:
+  - 250
+  - 75
+  type: Corrector
+11:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0
+  linkedElement: 71
+  linksIn: {}
+  linksOut:
+    13: corrector
+  name: Corrector
+  position:
+  - 1624
+  - 618
+  size:
+  - 250
+  - 75
+  type: Corrector
+12:
+  linksIn:
+    8: data
+  linksOut: {}
+  name: View
+  position:
+  - 3385
+  - 1950
+  size:
+  - 600
+  - 500
+  type: View
+13:
+  components:
+    current:
+      default: 0.5
+      max: 5
+      min: 0.01
+      name: Current
+      type: SliderComponent
+      units: mrad
+      value: 0.5
+    repeats:
+      default: 5
+      max: 20
+      min: 1
+      name: Repeats
+      type: SliderComponent
+      units: ''
+      value: 5
+      valueType: int
+    steps:
+      default: 3
+      max: 9
+      min: 3
+      name: Steps
+      type: SliderComponent
+      units: mrad
+      value: 3
+      valueType: int
+  linksIn:
+    10: corrector
+    11: corrector
+    15: BPM
+    16: corrector
+    17: corrector
+    18: corrector
+    19: BPM
+    20: BPM
+    21: BPM
+  linksOut:
+    14: data
+  name: Orbit Response
+  position:
+  - 2226
+  - 562
+  size:
+  - 575
+  - 440
+  type: Orbit Response
+14:
+  linksIn:
+    13: data
+  linksOut: {}
+  name: View
+  position:
+  - 3144
+  - 376
+  size:
+  - 600
+  - 500
+  type: View
+15:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 11
+  linksIn: {}
+  linksOut:
+    13: BPM
+  name: BPM
+  position:
+  - 1734
+  - 1031
+  size:
+  - 250
+  - 75
+  type: BPM
+16:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0
+  linkedElement: 119
+  linksIn: {}
+  linksOut:
+    13: corrector
+  name: Corrector
+  position:
+  - 1602
+  - 719
+  size:
+  - 250
+  - 75
+  type: Corrector
+17:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0
+  linkedElement: 168
+  linksIn: {}
+  linksOut:
+    13: corrector
+  name: Corrector
+  position:
+  - 1610
+  - 810
+  size:
+  - 250
+  - 75
+  type: Corrector
+18:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0
+  linkedElement: 235
+  linksIn: {}
+  linksOut:
+    13: corrector
+  name: Corrector
+  position:
+  - 1660
+  - 902
+  size:
+  - 250
+  - 75
+  type: Corrector
+19:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 58
+  linksIn: {}
+  linksOut:
+    13: BPM
+  name: BPM
+  position:
+  - 1853
+  - 1130
+  size:
+  - 250
+  - 75
+  type: BPM
+20:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 106
+  linksIn: {}
+  linksOut:
+    13: BPM
+  name: BPM
+  position:
+  - 1908
+  - 1215
+  size:
+  - 250
+  - 75
+  type: BPM
+21:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 155
+  linksIn: {}
+  linksOut:
+    13: BPM
+  name: BPM
+  position:
+  - 2012
+  - 1285
+  size:
+  - 250
+  - 75
+  type: BPM

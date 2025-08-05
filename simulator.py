@@ -27,7 +27,6 @@ class Simulator:
         return self.CalculateSurvivingFraction(pOut)
 
     def TrackBeam(self):
-        # sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
         sigmaMat = at.sigma_matrix(**self.inputTwiss)
         beam = at.beam(self.numParticles, sigmaMat)
         pOut, *_ = shared.lattice.track(beam, refpts = np.arange(len(shared.lattice)), nturns = 1);

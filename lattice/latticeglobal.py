@@ -56,7 +56,7 @@ class LatticeGlobal(Entity, QWidget):
         normalisedS = element.iloc[2] / shared.elements.iloc[-1].iloc[2] * self.sceneWidth
         dipole = QGraphicsRectItem(normalisedS, self.verticalCenter - self.halfHeight / 2, self.elementThickness, self.halfHeight)
         dipole.setPen(Qt.NoPen)
-        dipole.setBrush(QBrush("#f4bf00"))
+        dipole.setBrush(QBrush("#f4b700"))
         self.scene.addItem(dipole)
         shared.app.processEvents()
 

@@ -1,10 +1,10 @@
-from PySide6.QtWidgets import QFrame, QGraphicsLineItem, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QFrame, QGraphicsLineItem, QHBoxLayout
 from PySide6.QtCore import QSize, QLineF
 from PySide6.QtGui import QPen, QColor
 from .socketinteractable import SocketInteractable
 from .. import shared
 
-class Socket(QFrame):
+class Socket(QWidget):
     '''Accepts kwargs `borderTopLeftRadius`, `borderTopRightRadius`, `borderBottomRightRadius`, `borderBottomLeftRadius`, `contentOffset`'''
     def __init__(self, parent, socketType, width, radius, alignment = 'left', name = '', acceptableTypes = list(), **kwargs):
         '''`type` should be a string <M/F/MF>\n
@@ -40,7 +40,7 @@ class Socket(QFrame):
         print('creating a link')
         self.parent.linksOut['free'] = dict(link = QGraphicsLineItem(), socket = None)
         self.parent.linksOut['free']['link'].setZValue(-20)
-        self.parent.linksOut['free']['link'].setPen(QPen(QColor('#c4c4c4'), 8))
+        self.parent.linksOut['free']['link'].setPen(QPen(QColor("#454545"), 12))
         shared.activeEditor.scene.addItem(self.parent.linksOut['free']['link'])
         print('link added to scene')
         self.parent.dragging = True

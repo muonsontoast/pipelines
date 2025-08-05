@@ -55,7 +55,7 @@ dark01 = {
 
 def WidgetStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderRadius`, `borderRadius<TopLeft/TopRight/BottomRight/BottomLeft>`, `borderThickness`, `borderColor`, `borders` = list(<left/top/right/down> (str)), `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderRadius`, `borderRadius<TopLeft/TopRight/BottomRight/BottomLeft>`, `borderThickness`, `borderColor`, `borders` = list(<left/top/right/down> (str)), `marginLeft`, `marginRight`, `fontColor`, `fontSize`, `fontFamily`'''
     borders = kwargs.get('borders', list())
     borderThickness = f'{kwargs.get('borderThickness', 2)}px solid {kwargs.get('borderColor'), 'transparent'}'
     borderRadius = kwargs.get('borderRadius', '')
@@ -78,11 +78,13 @@ def WidgetStyle(**kwargs):
     '''
     return f'''
     QWidget {{
-    background-color: {kwargs.get('color', '#242424')};
+    background-color: {kwargs.get('color', 'transparent')};
     color: {kwargs.get('fontColor', fontColor)};
     font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
     font-weight: bold;
+    margin-left: {kwargs.get('marginLeft', 1)}px;
+    margin-right: {kwargs.get('marginRight', 1)}px;
     {borderRadius}
     {borders}
     }}'''
@@ -276,8 +278,15 @@ def TabWidgetStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
     `color`, `borderRadius`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
+    QTabWidget {{
+    color: {kwargs.get('fontColor', fontColor)};
+    font-size: {kwargs.get('fontSize', fontSize)}px;
+    font-family: {kwargs.get('fontFamily', fontFamily)};
+    border: none;
+    border-radius: {kwargs.get('borderRadius', 6)};
+    }}
     QTabWidget::pane {{
-    background: {kwargs.get('color', 'transparent')};
+    background-color: {kwargs.get('color', 'transparent')};
     color: {kwargs.get('fontColor', fontColor)};
     font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};
@@ -674,14 +683,10 @@ def Dark01():
         if e.widget is not None:
             e.widget.UpdateColors()
     for e in shared.editors:
-        '#242424'
-        e.scene.setBackgroundBrush(QColor(34, 34, 34))
         if hasattr(e, 'popup'):
             e.popup.UpdateColors()
-    shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#262626'))
-    shared.inspector.mainWindowTitle.setStyleSheet(LabelStyle(fontColor = '#c4c4c4', fontSize = 16))
-    shared.workspace.UpdateColors()
-    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#262626", fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#262626') + TabStyle(color = "#262626", hoverColor = "#2D2D2D", selectedColor = "#363636", fontColor = '#C4C4C4') + TabWidgetStyle(fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
+    shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#1a1a1a')) # controls color of the inspector.
+    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#1a1a1a", borderColor = '#1a1a1a', fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#262626') + TabStyle(color = "#1a1a1a", hoverColor = "#B26A17", selectedColor = "#985911", fontColor = '#C4C4C4') + TabWidgetStyle(color = "#1a1a1a", fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
 
 def socketStyle(radius, color = tabSelectedColor, alignment = 'left'):
     '''`alignment` is the side of the widget the socket sits on.'''
@@ -707,14 +712,14 @@ def socketStyle(radius, color = tabSelectedColor, alignment = 'left'):
     {align}
     }}'''
 
-def indicatorStyle(radius, color = tabSelectedColor, borderColor = tabColor):
+def IndicatorStyle(radius, color = 'transparent', borderColor = None):
     '''`radius` is an int and `color`, `borderColor` are hex color strings (#ABCDEF).'''
+    border = 'border: none;' if not borderColor else f'border: 1px solid {borderColor};'
     return f'''
     QFrame {{
     background-color: {color};
     border-radius: {radius}px;
-    border: none;
-    padding: 1px;
+    {border}
     }}'''
 
 def AdjustLabelColor(label, color = 'transparent'):

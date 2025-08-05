@@ -8,6 +8,8 @@ from ..blocks.corrector import Corrector
 from ..blocks.bpm import BPM
 from ..blocks.orbitresponse import OrbitResponse
 from ..blocks.view import View
+from ..blocks.composition.add import Add
+from ..blocks.bayesian.singletaskgp import SingleTaskGP
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
 from .. import shared
@@ -21,6 +23,8 @@ blockTypes = {
     'BPM': BPM,
     'Orbit Response': OrbitResponse,
     'View': View,
+    'Add': Add,
+    'Single Task GP': SingleTaskGP,
 }
 
 def Undo():
@@ -65,7 +69,7 @@ def ReusmeAllActions():
     for r in shared.runnableBlocks.values():
         TogglePause(r, False)
 
-def AddBlock(blockType, name: str, pos: QPoint, overrideID = None):
+def CreateBlock(blockType, name: str, pos: QPoint, overrideID = None):
     '''Returns a proxy along with its widget.'''
     proxy = QGraphicsProxyWidget()
     w = blockType(editor, proxy, name = name, overrideID = overrideID)
@@ -80,20 +84,26 @@ def AddBlock(blockType, name: str, pos: QPoint, overrideID = None):
     shared.workspace.assistant.PushMessage(f'Created {prefix} {w.name} at ({rectCenter.x():.0f}, {rectCenter.y():.0f})')
     return proxy, w
 
-def AddPV(pos: QPoint):
-    proxy, widget = AddBlock(blockTypes['PV'], 'PV', pos)
+def CreatePV(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['PV'], 'PV', pos)
 
-def AddCorrector(pos: QPoint):
-    proxy, widget = AddBlock(blockTypes['Corrector'], 'Corrector', pos)
+def CreateCorrector(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Corrector'], 'Corrector', pos)
     
-def AddBPM(pos: QPoint):
-    proxy, widget = AddBlock(blockTypes['BPM'], 'BPM', pos)
+def CreateBPM(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['BPM'], 'BPM', pos)
 
-def AddOrbitResponse(pos: QPoint):
-    proxy, widget = AddBlock(blockTypes['Orbit Response'], 'Orbit Response', pos)
+def CreateOrbitResponse(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Orbit Response'], 'Orbit Response', pos)
 
-def AddView(pos: QPoint):
-    proxy, widget = AddBlock(blockTypes['View'], 'View', pos)
+def CreateView(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['View'], 'View', pos)
+
+def CreateAdd(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Add'], 'Add', pos)
+
+def CreateSingleTaskGP(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Single Task GP'], 'Single Task GP', pos)
 
 def Delete():
     if not shared.selectedPV:
@@ -110,7 +120,7 @@ def Delete():
     shared.entities.pop(shared.selectedPV.ID)
     shared.PVs.pop(shared.selectedPV.ID)
     shared.workspace.assistant.PushMessage(f'Deleted {shared.selectedPV.name} and removed its connections (if any).')
-    if shared.selectedPV.type in ['Corrector', 'BPM', 'PV']:
+    if shared.selectedPV in shared.activePVs:
         shared.activePVs.remove(shared.selectedPV)
     shared.selectedPV.deleteLater()
     shared.selectedPV = None
@@ -143,11 +153,13 @@ commands = {
     'Save': dict(shortcut = ['Ctrl+S'], func = SaveSettings, args = []),
     'Area Select': dict(shortcut = ['Shift+A'], func = BoxSelect, args = []),
     'Snip': dict(shortcut = ['Shift+C'], func = Snip, args = []),
-    'Add PV': dict(shortcut = ['Ctrl+Shift+P'], func = AddPV, args = [GetMousePos]),
-    'Add Corrector': dict(shortcut = ['Ctrl+Shift+C'], func = AddCorrector, args = [GetMousePos]),
-    'Add BPM': dict(shortcut = ['Ctrl+Shift+B'], func = AddBPM, args = [GetMousePos]),
-    'Add Orbit Response': dict(shortcut = ['Ctrl+Shift+O'], func = AddOrbitResponse, args = [GetMousePos]),
-    'Add View': dict(shortcut = ['Ctrl+Shift+V'], func = AddView, args = [GetMousePos]),
+    'PV': dict(shortcut = ['Ctrl+Shift+P'], func = CreatePV, args = [GetMousePos]),
+    'Corrector': dict(shortcut = ['Ctrl+Shift+C'], func = CreateCorrector, args = [GetMousePos]),
+    'BPM': dict(shortcut = ['Ctrl+Shift+B'], func = CreateBPM, args = [GetMousePos]),
+    'Orbit Response': dict(shortcut = ['Ctrl+Shift+O'], func = CreateOrbitResponse, args = [GetMousePos]),
+    'View': dict(shortcut = ['Ctrl+Shift+V'], func = CreateView, args = [GetMousePos]),
+    'Add (Composition)': dict(shortcut = ['Ctrl+Shift+A'], func = CreateAdd, args = [GetMousePos]),
+    'Single Task Gaussian Process': dict(shortcut = ['Ctrl+Shift+G'], func = CreateSingleTaskGP, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),

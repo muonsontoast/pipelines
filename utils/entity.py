@@ -1,3 +1,5 @@
+from multiprocessing.shared_memory import SharedMemory
+import numpy as np
 from .. import shared
 
 class Entity:
@@ -8,6 +10,8 @@ class Entity:
         super().__init__()
         self.name = kwargs.get('name', 'Entity')
         self.type = kwargs.get('type', 'Entity')
+        self.data = np.empty((0,))
+        self.sharingData = False
         self.settings = dict(name = self.name, type = self.type)
         for k, v in kwargs.items(): # Assign entity-specific attributes.
             if k == 'overrideID':
@@ -19,6 +23,16 @@ class Entity:
             print(f'setting {self.name} size to {kwargs.get('size')}')
             self.setFixedSize(*kwargs.get('size'))
         self.Register(kwargs.get('overrideID')) # register this entity inside the shared.py script.
+
+    def CreateEmptySharedData(self, emptyArray: np.ndarray, attrName = 'data'):
+        sharedMemoryName = f'{attrName}SharedMemory'
+        setattr(self, sharedMemoryName, SharedMemory(create = True, size = emptyArray.nbytes))
+        setattr(self, attrName, np.ndarray(emptyArray.shape, dtype = emptyArray.dtype, buffer = getattr(self, sharedMemoryName).buf))
+        self.sharingData = True
+    
+    def CleanUp(self):
+        # remove the data from memory to stop it persisting after closing the application.
+        self.dataSharedMemory.unlink()
 
     def Register(self, overrideID = None):
         '''Registers this object as an entity inside the shared entity list.'''

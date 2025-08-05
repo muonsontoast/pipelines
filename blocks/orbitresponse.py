@@ -19,18 +19,12 @@ to save the data, or for further processing in a pipeline.
 
 class OrbitResponse(Draggable):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
-        super().__init__(proxy, name = kwargs.pop('name', 'Orbit Response'), type = 'Orbit Response', size = kwargs.pop('size', [550, 440]), **kwargs)
-        self.setMouseTracking(True)
-        self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        super().__init__(proxy, name = kwargs.pop('name', 'Orbit Response'), type = 'Orbit Response', size = kwargs.pop('size', [575, 440]), **kwargs)
         self.parent = parent
         self.correctors = dict()
         self.BPMs = dict()
-
+        self.ORM = np.empty((0,))
         self.setStyleSheet('background: none')
-        self.setLayout(QHBoxLayout())
-        self.layout().setContentsMargins(0, 0, 0, 0)
-        self.layout().setSpacing(0)
         self.settings['components'] = {
             'current': dict(name = 'Current', value = .5, min = .01, max = 5, default = .5, units = 'mrad', type = SliderComponent),
             'steps': dict(name = 'Steps', value = 3, min = 3, max = 9, default = 3, units = 'mrad', valueType = int, type = SliderComponent),
@@ -68,10 +62,6 @@ class OrbitResponse(Draggable):
         self.Push()
 
     def Push(self):
-        super().Push()
-        self.main = QWidget()
-        self.main.setLayout(QVBoxLayout())
-        self.main.layout().setContentsMargins(0, 0, 0, 0)
         self.widget = QWidget()
         self.widget.setObjectName('orbitResponse')
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -91,7 +81,6 @@ class OrbitResponse(Draggable):
         # Add header to layout
         self.widget.layout().addWidget(header)
         # On/off-line
-        self.online = False
         self.mode = QWidget()
         self.mode.setLayout(QHBoxLayout())
         self.mode.layout().setContentsMargins(15, 10, 15, 0)
@@ -130,85 +119,16 @@ class OrbitResponse(Draggable):
         # BPM Repeats ...
         self.CreateSection('repeats', '# BPM measurements (0.2s wait)', 19, 0)
         # Some padding
-        self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)) # for spacing
-        # Sockets
-        sockets = QWidget()
-        sockets.setLayout(QVBoxLayout())
-        sockets.layout().setContentsMargins(0, 0, 0, 0)
-        # Corrector socket
-        self.correctorSocketHousing = QWidget()
-        self.correctorSocketHousing.setLayout(QHBoxLayout())
-        self.correctorSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
-        self.correctorSocketHousing.layout().setSpacing(0)
-        self.correctorSocketHousing.setFixedSize(140, 50)
-        self.correctorSocket = Socket(self, 'F', 50, 25, 'left', 'corrector', ['Corrector'])
-        self.correctorSocketHousing.layout().addWidget(self.correctorSocket)
-        correctorSocketTitle = QLabel('Correctors')
-        correctorSocketTitle.setObjectName('correctorSocketTitle')
-        correctorSocketTitle.setAlignment(Qt.AlignCenter)
-        self.correctorSocketHousing.layout().addWidget(correctorSocketTitle)
-        sockets.layout().addWidget(self.correctorSocketHousing, alignment = Qt.AlignRight)
-        # BPM Socket
-        self.BPMSocketHousing = QWidget()
-        self.BPMSocketHousing.setLayout(QHBoxLayout())
-        self.BPMSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
-        self.BPMSocketHousing.layout().setSpacing(0)
-        self.BPMSocketHousing.setFixedSize(140, 50)
-        self.BPMSocket = Socket(self, 'F', 50, 25, 'left', 'BPM', acceptableTypes = ['BPM'])
-        self.BPMSocketHousing.layout().addWidget(self.BPMSocket)
-        BPMSocketTitle = QLabel('BPMs')
-        BPMSocketTitle.setObjectName('BPMSocketTitle')
-        BPMSocketTitle.setAlignment(Qt.AlignCenter)
-        self.BPMSocketHousing.layout().addWidget(BPMSocketTitle)
-        sockets.layout().addWidget(self.BPMSocketHousing, alignment = Qt.AlignRight)
-        # Add sockets to layout
-        self.layout().addWidget(sockets)
+        self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
+        self.AddSocket('corrector', 'F', 'Correctors', 175, acceptableTypes = ['Corrector'])
+        self.AddSocket('BPM', 'F', 'BPMs', 145, acceptableTypes = ['BPM'])
         # Add orbit response widget to layout
         self.main.layout().addWidget(self.widget)
-        # Control buttons
-        self.buttons = QWidget()
-        buttonsHeight = 35
-        self.buttons.setFixedHeight(buttonsHeight)
-        self.buttons.setLayout(QHBoxLayout())
-        self.buttons.layout().setContentsMargins(15, 2, 15, 10)
-        self.start = QPushButton('Start')
-        self.start.setFixedHeight(buttonsHeight)
-        self.start.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
-        self.start.clicked.connect(self.Start)
-        self.pause = QPushButton('Pause')
-        self.pause.setFixedHeight(buttonsHeight)
-        self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
-        self.pause.clicked.connect(self.Pause)
-        self.stop = QPushButton('Stop')
-        self.stop.setFixedHeight(buttonsHeight)
-        self.stop.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
-        self.stop.clicked.connect(self.Stop)
-        self.clear = QPushButton('Clear')
-        self.clear.setFixedHeight(buttonsHeight)
-        self.clear.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#1e1e1e', fontColor = '#c4c4c4'))
-        self.buttons.layout().addWidget(self.start)
-        self.buttons.layout().addWidget(self.pause)
-        self.buttons.layout().addWidget(self.stop)
-        self.buttons.layout().addWidget(self.clear)
-        self.main.layout().addWidget(self.buttons)
-        self.layout().addWidget(self.main)
-        # Output socket
-        self.outputSocketHousing = QWidget()
-        self.outputSocketHousing.setObjectName('outputSocketHousing')
-        self.outputSocketHousing.setLayout(QHBoxLayout())
-        self.outputSocketHousing.layout().setContentsMargins(0, 0, 0, 0)
-        self.outputSocketHousing.setFixedSize(50, 50)
-        self.outputSocket = Socket(self, 'M', 50, 25, 'right', 'output')
-        self.outputSocketHousing.layout().addWidget(self.outputSocket)
-        self.layout().addWidget(self.outputSocketHousing)
-        self.FSocketNames.extend(['corrector', 'BPM'])
+        self.AddSocket('out', 'M')
+        self.AddButtons()
+        super().Push()
         # Update colors
         self.UpdateColors()
-
-    # data can be visualised many ways
-    # there should be a record of the differnt ways of visualising, as well as instructions for how to do so.
-    # the view block will automatically know how to follow these instructions.
-    # blocks that are fed the output of a block holding data, will know which option to pick.
 
     def Start(self):
         global toggleState
@@ -219,13 +139,20 @@ class OrbitResponse(Draggable):
                 return
             onlineText = 'online' if self.online else 'offline'
             shared.workspace.assistant.PushMessage(f'Running orbit response measurement ({onlineText}).')
+            numBPMs = len(self.BPMs.keys())
+            numCorrectors = len(self.correctors.keys())
             if not PerformAction(
                 self,
+                # empty array
+                np.empty((numBPMs, numCorrectors,
                 self.settings['components']['steps']['value'],
-                self.settings['components']['current']['value'],
-                self.settings['components']['repeats']['value'],
+                self.settings['components']['repeats']['value'])),
+                postProcessedDataName = 'ORM',
+                emptyPostProcessedDataArray = np.empty((numBPMs, numCorrectors)),
+                numSteps = self.settings['components']['steps']['value'],
+                stepKick = self.settings['components']['current']['value'],
+                repeats = self.settings['components']['repeats']['value'],
                 getRawData = False,
-                postProcessedData = 'ORM'
             ):
                 shared.workspace.assistant.PushMessage('Orbit response measurement already running.', 'Error')
         else:
@@ -237,6 +164,11 @@ class OrbitResponse(Draggable):
 
     def Stop(self):
         StopAction(self)
+
+    def CleanUp(self):
+        # remove the data from memory to stop it persisting after closing the application.
+        self.dataSharedMemory.unlink()
+        self.ORMSharedMemory.unlink()
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()
@@ -290,7 +222,7 @@ class OrbitResponse(Draggable):
             super().mousePressEvent(event)
             return
         shared.PVLinkSource = self
-        shared.activeSocket = self.outputSocket
+        shared.activeSocket = self.outSocket
         super().mousePressEvent(event)
 
     def UpdateColors(self):
@@ -321,65 +253,17 @@ class OrbitResponse(Draggable):
 
     def BaseStyling(self):
         if shared.lightModeOn:
-            self.widget.setStyleSheet(f'''
-            QWidget#orbitResponse {{
-            background-color: #D2C5A0;
-            border: 2px solid #B5AB8D;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 0px;
-            }}
-            ''')
+            pass
         else:
-            "#282828"
-            self.widget.setStyleSheet(f'''
-            QWidget#orbitResponse {{
-            background-color: #2e2e2e;
-            border: none;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 0px;
-            }}
-            ''')
+            self.setStyleSheet(style.WidgetStyle())
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, fontColor = '#c4c4c4'))
+            self.correctorSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
+            self.BPMSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
             self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
-            self.correctorSocketHousing.setStyleSheet(f'''
-            QWidget#correctorSocketTitle {{
-            background-color: #2e2e2e;
-            color: #c4c4c4;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 10px;
-            }}
-            ''')
-            self.BPMSocketHousing.setStyleSheet(f'''
-            QWidget#BPMSocketTitle {{
-            background-color: #2e2e2e;
-            color: #c4c4c4;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 10px;
-            }}
-            ''')
 
     def SelectedStyling(self):
         if shared.lightModeOn:
-            self.widget.setStyleSheet(f'''
-            QWidget#pvHousing {{
-            background-color: #ECDAAB;
-            border: 4px solid #DCC891;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: {style.fontSize};
-            font-family: {style.fontFamily};
-            padding: 10px;
-            }}
-            ''')
+            pass
         else:
             self.widget.setStyleSheet(f'''
             QWidget#pvHousing {{

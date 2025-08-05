@@ -84,9 +84,6 @@ class MainWindow(Entity, QMainWindow):
             shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
         self.lightModeOn = False
         shared.mainWindow = self
-        # # Allow crtl+W shortcut for exit
-        # QShortcut(QKeySequence('Ctrl+W'), self).activated.connect(self.close)
-        
         # Create a master widget to contain everything.
         self.master = QWidget()
         self.master.setLayout(QStackedLayout())
@@ -140,7 +137,6 @@ class MainWindow(Entity, QMainWindow):
         self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
         self.page.layout().addWidget(self.workspace, 2, 1, 2, 6)
         self.page.layout().addWidget(self.inspector, 2, 7, 2, 2)
-        # self.page.layout().addWidget(QWidget(), 3, 7, 1, 2)
         screenPad = 0
         # Small amount of padding at the left of the screen.
         leftPad = QWidget()

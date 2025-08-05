@@ -14,10 +14,10 @@ class Editor(Entity, QGraphicsView):
         self.minScale = minScale
         self.maxScale = maxScale
         self.canDrag = False
-        shared.app.setAttribute(Qt.AA_UseDesktopOpenGL)
+        # shared.app.setAttribute(Qt.AA_UseDesktopOpenGL)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.MinimalViewportUpdate)
+        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -50,11 +50,11 @@ class Editor(Entity, QGraphicsView):
         if mode == 'Device':
             for item in self.scene.items():
                 if not isinstance(item, QGraphicsLineItem):
-                    item.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+                    item.setCacheMode(QGraphicsItem.DeviceCoordinateCache) # -- may need to re-enable this!
+                    item.update()
         else:
             for item in self.scene.items():
                 item.setCacheMode(QGraphicsItem.NoCache)
-                item.update()
 
     def mousePressEvent(self, event):
         '''Another PV may already be selected so handle this here.'''
