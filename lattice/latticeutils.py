@@ -295,8 +295,9 @@ def DrawTrajectories(lattice, pOut, **kwargs):
     ax[1, 0].grid(alpha = .35)
     ax[1, 1].grid(alpha = .35)
 
-def LoadLattice(pth):
-    return at.load_mat(pth, mat_key = 'THERING', energy = 1e8, periodicity = 0)
+def LoadLattice(pth, energy = 1e8):
+    '''Specify a file `path` and an `energy` in eV.'''
+    return at.load_mat(pth, mat_key = 'THERING', energy = energy, periodicity = 0)
 
 def UpdateAperture(apertureBounds, lattice, disable6D = True):
     latticeWithFinalAperture = deepcopy(lattice)

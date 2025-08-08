@@ -19,10 +19,13 @@ class OrbitResponseAction(Action):
         self.BPMs = None
 
     def __getstate__(self):
+        print('Inside ORM action getter, correctors look like:')
+        print([v.name for v in self.correctors.values()])
         return {
             'lattice': self.lattice,
             'BPMs': [
                 { 
+                    'name': b.name,
                     'index': b.settings['linkedElement'].Index,
                     'alignment': b.settings['alignment'],
                     'linkedElementAttrs': b.linkedElementAttrs,
@@ -31,6 +34,7 @@ class OrbitResponseAction(Action):
             ],
             'correctors': [
                 { 
+                    'name': c.name,
                     'index': c.settings['linkedElement'].Index,
                     'alignment': c.settings['alignment'],
                     'default': c.settings['components']['value']['default'],
@@ -73,6 +77,8 @@ class OrbitResponseAction(Action):
     def Run(self, pause, stop, sharedMemoryName, shape, dtype, **kwargs):
         '''Calculates the orbit response of the model using PyAT simulations.\n
         Accepts `correctors` (list of PVs) and `BPMs` (list of BPMs).'''
+        print('Inside ORM action, correctors look like:')
+        print([v['name'] for v in self.correctors])
         numSteps = kwargs.get('numSteps')
         stepKick = kwargs.get('stepKick')
         repeats = kwargs.get('repeats')
@@ -81,31 +87,32 @@ class OrbitResponseAction(Action):
         data = np.ndarray(shape, dtype, buffer = sharedMemory.buf)
         numBPMs = len(self.BPMs)
         numCorrectors = len(self.correctors)
-        BPMIdxs = np.empty(numBPMs, dtype = np.uint32) # refpts needs to be uint32 ndarray for atpass to work.
-        print('BPMs:')
-        print(self.BPMs)
-        for _, b in enumerate(self.BPMs):
-            print('index is', b)
-            BPMIdxs[_] = np.uint32(b['index'])
-        BPMIdxs = np.sort(BPMIdxs) # PyAT will throw an error if refpts isn't sorted in ascending order.
-        # target kicks
         offset = int(numSteps / 2)
         kicks = (np.arange(0, numSteps, 1) - offset) * stepKick * 1e-3 # convert to mrad
-        sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
+        # twiss in values for the LTB
+        # sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
+        # twiss in values for the BTS
+        sigmaMat = at.sigma_matrix(betax = 12.13, betay = 2.94, alphax = -2.92, alphay = .75, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
         beam = at.beam(numParticles, sigmaMat)
+        counter = 0
+        totalSteps = numCorrectors * numBPMs * numSteps * repeats
+        # # Sort the correctors and BPMs to produce a proper ORM (Index -> Alignment)
+        # self.correctors = sorted(sorted(self.correctors, key = lambda c: c['index']), key = lambda c: c['alignment'])
+        # self.BPMs = sorted(sorted(self.BPMs, key = lambda b: b['index']), key = lambda b: b['alignment'])
         for col, c in enumerate(self.correctors):
-            print('Moved to new corrector')
             idx = 1 if c['alignment'] == 'Vertical' else 0
             for _, k in enumerate(kicks):
                 kickAngle = c['default'] + k
                 # Should errors be applied to the value? ---- this will be added in a future version.
                 self.lattice[c['index']].KickAngle[idx] = kickAngle
                 for row, b in enumerate(self.BPMs):
+                    BPMIdx = b['index']
                     for r in range(repeats):
-                        beamOut = lattice_pass(self.lattice, deepcopy(beam), nturns = 1, refpts = BPMIdxs) # has shape 6 x numParticles x numRefpts x nturns
-                        centre = np.mean(beamOut[0, :, row]) if b['alignment'] == 'Horizontal' else np.mean(beamOut[2, :, row])
+                        beamOut = lattice_pass(self.lattice, deepcopy(beam), nturns = 1, refpts = np.array([BPMIdx])) # has shape 6 x numParticles x numRefpts x nturns
+                        centre = np.mean(beamOut[0, :, 0, 0]) if b['alignment'] == 'Horizontal' else np.mean(beamOut[2, :, 0, 0])
                         data[row, col, _, r] = centre
-                        # print(f'On step {counter} / {totalSteps}')
+                        print(f'On step {counter} / {totalSteps}', end = '\r', flush = True)
+                        counter += 1
                         # check for interrupts
                         while pause.is_set():
                             if stop.is_set():

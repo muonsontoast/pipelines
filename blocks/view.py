@@ -137,11 +137,13 @@ class View(Draggable):
                 im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'], norm = TwoSlopeNorm(vcenter = self.stream['vcenter']))
             else:
                 im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
+            self.axes.set_aspect('auto')
             divider = make_axes_locatable(self.axes)
             cax = divider.append_axes("right", size = "5%", pad = 0.075)
             self.cb = self.figure.colorbar(im, cax = cax, ax = self.axes)
             self.cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
             self.cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
+            self.figure.tight_layout()
             # testing for now ... this draw call leads to terrible performance live, need to replace with blitting.
             self.figure.canvas.draw() # I should look into whether blitting can be used to speed up 2D plots.
         # line plots

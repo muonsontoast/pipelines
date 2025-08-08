@@ -45,7 +45,8 @@ class KickAngleComponent(QWidget):
     #     self.UpdateColors()
 
     def UpdateColors(self):
-        if self.pv.settings['alignment'] == 'Vertical':
-            self.slider.UpdateColors(fillColorDark = "#338522", fillColorLight = "#318720")
-        else:
-            self.slider.UpdateColors()
+        pass
+        # if self.pv.settings['alignment'] == 'Vertical':
+        #     self.slider.UpdateColors(fillColorDark = "#338522", fillColorLight = "#318720")
+        # else:
+        #     self.slider.UpdateColors()

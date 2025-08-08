@@ -71,7 +71,7 @@ class PV(Draggable):
         if not canDrag:
             return
         if not hasCursorMoved:
-            print(self.settings)
+            # Draggable mouse release event gets called after this PV mouse release event so the shared.selectedPV has not been set yet.
             if not isActive:
                 shared.inspector.Push(self)
             else:

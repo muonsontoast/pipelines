@@ -30,7 +30,7 @@ cwd = str(Path.cwd().resolve()) # Get the current working directory.
 signal.signal(signal.SIGINT, signal.SIG_DFL) # Allow Ctrl+C interrupt from terminal.
 
 class MainWindow(Entity, QMainWindow):
-    def __init__(self):
+    def __init__(self, latticeName = 'dls_ltb'):
         super().__init__(name = 'MainWindow', type = 'MainWindow')
         settingsPath = os.path.join(shared.cwd, 'config\\settings.yaml')
         shared.window = self
@@ -77,7 +77,7 @@ class MainWindow(Entity, QMainWindow):
                 shared.runningCircleFrames[_] = QPixmap(os.path.join(defaultRunningCirclePath, f'{_}.png'))
             print(f'Finished loading compressed frames in {time.time() - t:.3f} seconds.')
         # Load lattice
-        shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), 'Lattice', 'dls_ltb.mat')) # for now ...
+        shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), 'Lattice', f'{latticeName}.mat')) # for now ...
         if shared.elements is None:
             shared.lattice = latticeutils.LoadLattice(shared.latticePath)
             shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
@@ -209,7 +209,7 @@ def GetMainWindow():
 if __name__ == "__main__":
     shared.app = QApplication(sys.argv)
     shared.app.setStyle(QStyleFactory.create('Fusion'))
-    window = MainWindow()
+    window = MainWindow(*sys.argv[1:]) # skip first arg which is app name.
     window.show()
     sys.exit(shared.app.exec())
     w = Workspace(None)

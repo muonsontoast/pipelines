@@ -209,8 +209,8 @@ class SliderComponent(QWidget):
 
     def UpdateColors(self, **kwargs):
         '''Override `fillColorLight` and `fillColorDark` with a #ABCDEF color string.'''
-        fillColorDark = kwargs.get('fillColorLight', "#C74343")
-        fillColorLight = kwargs.get('fillColorDark', "#B43C3C")
+        fillColorDark = kwargs.get('fillColorDark', "#4E4E4E")
+        fillColorLight = kwargs.get('fillColorLight', "#AFAFAF")
         if shared.lightModeOn:
             self.slider.setStyleSheet(style.SliderStyle(backgroundColor = "#D2C5A0", fillColor = fillColorLight, handleColor = "#2E2E2E"))
             self.value.setStyleSheet(style.LineEditStyle(color = '#D2C5A0', fontColor = '#1e1e1e', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))

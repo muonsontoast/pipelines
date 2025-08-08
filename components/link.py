@@ -24,6 +24,7 @@ class LinkComponent(QWidget):
         self.completer = QCompleter()
         self.completer.setModel(QStringListModel(shared.names))
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setFilterMode(Qt.MatchContains)
         # Text search
         self.search = QLineEdit()
         self.search.setFixedSize(250, 30)

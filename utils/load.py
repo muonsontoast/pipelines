@@ -42,8 +42,9 @@ def Load(path):
                             QPoint(v['position'][0], v['position'][1]), 
                             ID
                         )
-                        print(f'Here is {v['name']} ID:', entity.ID)
                         entity.settings['size'] = v['size']
+                        if 'alignment' in v:
+                            entity.settings['alignment'] = v['alignment']
                         entity.setFixedSize(*v['size'])
                         if 'linkedElement' in v.keys():
                             if shared.elements is None: # fetch lattice info if this is the first time instantiating a linked block.
@@ -51,7 +52,7 @@ def Load(path):
                                 shared.lattice = LoadLattice(shared.latticePath)
                                 shared.elements = GetLatticeInfo(shared.lattice)
                                 shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
-                            shared.entities[ID].settings['linkedElement'] = shared.elements.iloc[v['linkedElement']]
+                            entity.settings['linkedElement'] = shared.elements.iloc[v['linkedElement']]
                 LinkBlocks()
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')
                 shared.workspace.assistant.PushMessage(f'Loaded saved session from {path}')

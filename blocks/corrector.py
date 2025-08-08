@@ -14,7 +14,7 @@ class Corrector(PV):
         self.typeLabel.setAlignment(Qt.AlignLeft)
         # invoke parent pv constructor
         super().__init__(parent, proxy, name = kwargs.pop('name', 'Corrector'), type = 'Corrector')
-        self.blockType = 'Corrector'
+        # self.blockType = 'Corrector'
         self.settings['alignment'] = kwargs.get('alignment', 'Vertical')
         self.settings['components']['value'] = dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = kickangle.KickAngleComponent)
         # Add labels to layout

@@ -132,6 +132,9 @@ class OrbitResponse(Draggable):
 
     def Start(self):
         global toggleState
+        # Sort the correctors and BPMs to produce a proper ORM (Index -> Alignment)
+        self.correctors = dict(sorted(sorted(self.correctors.items(), key = lambda item: item[1].settings['linkedElement'].Index), key = lambda item: item[1].settings['alignment']))
+        self.BPMs = dict(sorted(sorted(self.BPMs.items(), key = lambda item: item[1].settings['linkedElement'].Index), key = lambda item: item[1].settings['alignment']))
         if not self.online:
             self.offlineAction.correctors = self.correctors
             self.offlineAction.BPMs = self.BPMs

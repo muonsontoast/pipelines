@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QWidget, QTabWidget, QListWidget, QListWidgetItem, QLabel, QLineEdit, QPushButton,
+    QApplication, QWidget, QTabWidget, QListWidget, QListWidgetItem, QLabel, QLineEdit, QPushButton,
     QVBoxLayout, QHBoxLayout, QSizePolicy
 )
 from PySide6.QtCore import Qt, QTimer
@@ -44,21 +44,19 @@ class Inspector(Entity, QTabWidget):
         self.mainWindowTitleWidget.layout().addWidget(self.mainWindowTitle)
         self.mainWindow.layout().addWidget(self.mainWindowTitleWidget)
         self.mainWindow.layout().addWidget(self.main)
-        self.toggle = QPushButton('Swap Plane')
-        self.toggle.setFixedSize(100, 35)
-        self.planeRow = QWidget()
-        self.planeRow.setLayout(QHBoxLayout())
-        self.planeRow.layout().setContentsMargins(2, 0, 10, 0)
         self.addTab(self.mainWindow, 'Inspector')
         self.Push()
         self.ToggleStyling()
 
     def Push(self, pv = None, component = None):
-        self.blockSignals(True)
+        self.main.setUpdatesEnabled(False)
         self.main.clear()
+        self.toggle = QPushButton('Swap Plane')
+        self.toggle.setFixedSize(100, 35)
         if not pv:
             self.mainWindowTitleWidget.hide()
             self.main.hide()
+            # self.main.setVisible(False)
             print('No PV supplied to the inspector.')
             return
         
@@ -68,8 +66,6 @@ class Inspector(Entity, QTabWidget):
                 component = pv.settings['components']['value']['name']
             else:
                 component = 'Linked Lattice Element'
-        
-        self.ToggleStyling()
         self.mainWindowTitleWidget.show()
         self.main.show()
         # Add a row for PV generic information.
@@ -80,7 +76,7 @@ class Inspector(Entity, QTabWidget):
         self.expandables = dict()
 
         # Add an alignment item at the top if one is needed by the component.
-        if pv.blockType in ['Kicker', 'BPM']:
+        if pv.type in ['Corrector', 'BPM']:
             self.items['alignment'] = QListWidgetItem()
             if pv.settings['alignment'] == 'Horizontal':
                 text = 'Aligned to <span style = "color: #bc4444">Horizontal</span> plane.'
@@ -88,6 +84,9 @@ class Inspector(Entity, QTabWidget):
                 text = 'Aligned to <span style = "color: #399a26">Vertical</span> plane.'
             self.state = QLabel(text)
             self.state.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+            self.planeRow = QWidget()
+            self.planeRow.setLayout(QHBoxLayout())
+            self.planeRow.layout().setContentsMargins(2, 0, 10, 0)
             self.planeRow.layout().addWidget(self.state)
             self.toggle.clicked.connect(lambda: self.SwapPlane(pv))
             self.planeRow.layout().addWidget(self.toggle)
@@ -96,19 +95,39 @@ class Inspector(Entity, QTabWidget):
             self.main.setItemWidget(self.items['alignment'], self.planeRow)
 
         for k, c in pv.settings['components'].items():
+            print(f'Found a component: {k}, with type: {c['type']}')
             if 'units' in c.keys():
                 name = c['name'] + f' ({c['units']})'
             else:
                 name = c['name']
             self.items[k] = QListWidgetItem()
             self.expandables[k] = Expandable(self.main, self.items[k], name, pv, k)
+            print(f'Inspector sees list width as: {self.main.width()}')
+            print(f'Inspector sees list viewport width as: {self.main.viewport().width()}')
+            print(f'{k} width is: {self.expandables[k].width}') # expandable width is changing!
             if c['name'] == component:
                 self.expandables[k].ToggleContent()
             self.items[k].setSizeHint(self.expandables[k].sizeHint())
             self.main.addItem(self.items[k])
             self.main.setItemWidget(self.items[k], self.expandables[k])
+            # self.items[k].setSizeHint(self.expandables[k].sizeHint())
+            # self.main.addItem(self.items[k])
+            # self.main.setItemWidget(self.items[k], self.expandables[k])
         shared.expandables = self.expandables
-        self.blockSignals(False)
+        self.ToggleStyling()
+        self.main.setUpdatesEnabled(True)
+
+        # QTimer.singleShot(0, self.UpdateListWidgetItemWidths)
+
+    def UpdateListWidgetItemWidths(self):
+        for k, e in self.expandables.items():
+            self.items[k].setSizeHint(e.sizeHint())
+            self.main.addItem(self.items[k])
+            self.main.setItemWidget(self.items[k], self.expandables[k])
+        def AllowUpdates():
+            self.main.setUpdatesEnabled(True)
+            print(f'list widget size hint is: {self.main.sizeHint()}')
+        QTimer.singleShot(0, AllowUpdates)
 
     def TextChanged(self):
         if shared.selectedPV is None:
@@ -123,21 +142,22 @@ class Inspector(Entity, QTabWidget):
 
     def SwapPlane(self, pv):
         if pv.settings['alignment'] == 'Horizontal':
+            print('Swapping plane to Vertical')
             pv.settings['alignment'] = 'Vertical'
             self.state.setText('Aligned to <span style = "color: #399a26">Vertical</span> plane.')
         else:
+            print('Swapping plane to Horizontal')
             pv.settings['alignment'] = 'Horizontal'
             self.state.setText('Aligned to <span style = "color: #bc4444">Horizontal</span> plane.')
-        pv.UpdateColors()
-        for e in self.expandables.values():
-            e.widget.UpdateColors()
 
     def UpdateColors(self):
         pass
 
     def ToggleStyling(self):
+        '''Accepts an `override` which should be True or False.'''
         if shared.lightModeOn:
             pass
         else:
-            self.mainWindow.setStyleSheet(style.WidgetStyle(color = '#1a1a1a'))
-            self.mainWindowTitleWidget.setStyleSheet(style.WidgetStyle(color = '#222222', borderRadius = 2))
+            self.mainWindow.setStyleSheet(style.WidgetStyle(color = '#1a1a1a', marginLeft = 0, marginRight = 0, borderThickness = 0))
+            self.mainWindowTitleWidget.setStyleSheet(style.WidgetStyle(color = '#222222', borderRadius = 2, marginLeft = 0, marginRight = 0, borderThickness = 0))
+            self.toggle.setStyleSheet(style.PushButtonStyle(color = '#262626', hoverColor = '#3d3d3d', fontColor = '#c4c4c4', padding = 0))

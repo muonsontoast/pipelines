@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 2379.0363107923595
-  - 1873.4656123549087
+  - 2266.3686758891668
+  - 1495.7464535981203
   type: Editor
-  zoom: 0.4905347575848139
+  zoom: 0.3516638790850355
 3:
   linksIn: {}
   linksOut: {}
@@ -91,7 +91,7 @@
       name: Repeats
       type: SliderComponent
       units: ''
-      value: 1
+      value: 5
       valueType: int
     steps:
       default: 3
@@ -165,8 +165,7 @@
       units: mrad
       value: 0
   linksIn: {}
-  linksOut:
-    11: decision
+  linksOut: {}
   name: BS-PC-VSTR-01:SETI
   position:
   - 2059
@@ -176,8 +175,7 @@
   - 75
   type: Corrector
 11:
-  linksIn:
-    10: decision
+  linksIn: {}
   linksOut: {}
   name: Single Task GP
   position:

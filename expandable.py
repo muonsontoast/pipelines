@@ -12,8 +12,9 @@ class Expandable(QWidget):
         `item` is the ListWidgetItem this expandable is attached to.\n
         Accepts a list of kwarg widgets to display in the expandable content region.'''
         super().__init__()
-        self.setFixedWidth(listWidget.viewport().width() - 5)
+        self.list = listWidget
         self.parent = item
+        # self.setFixedWidth(self.list.viewport().width() - 5)
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 10, 0)
         self.layout().setSpacing(0)
@@ -24,7 +25,6 @@ class Expandable(QWidget):
         self.width = self.width()
         self.headerHeight = 40
         self.widgetsDrawn = False
-        self.widget = None
         # Header button
         self.name = name
         self.nameHousing = QWidget()
@@ -69,6 +69,8 @@ class Expandable(QWidget):
             # Is this the first time drawing widgets for this expandable?
             if not self.widgetsDrawn:
                 item = QListWidgetItem()
+                print(f'Expandable ({self.name}) sees list width as: {self.list.viewport().width()}')
+                self.widget.setFixedWidth(self.list.viewport().width() - 20)
                 item.setSizeHint(self.widget.sizeHint())
                 self.content.addItem(item)
                 self.content.setItemWidget(item, self.widget)

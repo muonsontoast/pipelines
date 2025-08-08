@@ -35,8 +35,8 @@ def StopAction(entity):
     '''Stop an entity's action if it is running. Returns true if successful else false.'''
     if entity.ID in runningActions:
         runningActions[entity.ID][1].set()
-        shared.entities[entity.ID].title.setText(f'{shared.entities[entity.ID].name.split(' (')[0]} (Empty)')
-        shared.entities[entity.ID].runningCircle.Stop()
+        entity.title.setText(f'{entity.name.split(' (')[0]} (Stopped)')
+        entity.runningCircle.Stop()
         return True
     else:
         print(f'{entity.name} has no running action to stop.')
@@ -47,7 +47,7 @@ def StopActions():
     '''Stop all currently running actions.'''
     IDs = list(runningActions.keys())
     for ID in IDs:
-        shared.entities[ID].title.setText(f'{shared.entities[ID].name.split(' (')[0]} (Empty)')
+        shared.entities[ID].title.setText(f'{shared.entities[ID].name.split(' (')[0]} (Stopped)')
         shared.entities[ID].runningCircle.Stop()
         runningActions[ID][1].set()
 
@@ -62,14 +62,14 @@ def CheckProcess(entity, process: Process, queue: Queue, getRawData = True):
         threading.Timer(.1, CheckProcess, args = (entity, process, queue, getRawData)).start()
         return
     process.join()
-    runningActions.pop(entity.ID)
-    entity.runningCircle.Stop()
-    if entity.data.shape != ():
+    if not runningActions[entity.ID][1].is_set():
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Holding Data)')
+        entity.runningCircle.Stop()
         shared.workspace.assistant.PushMessage(f'{entity.name} has finished and is no longer running.')
     else:
-        entity.title.setText(f'{entity.title.text().split(' (')[0]} (Empty)')
+        StopAction(entity)
         shared.workspace.assistant.PushMessage('Stopped action(s).')
+    runningActions.pop(entity.ID)
 
 def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
     '''Set `getRawData` to False to perform post processing.\n

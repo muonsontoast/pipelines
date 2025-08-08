@@ -17,7 +17,7 @@ class Editor(Entity, QGraphicsView):
         # shared.app.setAttribute(Qt.AA_UseDesktopOpenGL)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.MinimalViewportUpdate)
+        self.setViewportUpdateMode(QGraphicsView.SmartViewportUpdate)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -51,6 +51,7 @@ class Editor(Entity, QGraphicsView):
             for item in self.scene.items():
                 if not isinstance(item, QGraphicsLineItem):
                     item.setCacheMode(QGraphicsItem.DeviceCoordinateCache) # -- may need to re-enable this!
+                    item.update()
         else:
             for item in self.scene.items():
                 item.setCacheMode(QGraphicsItem.NoCache)

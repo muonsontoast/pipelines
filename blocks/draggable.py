@@ -84,13 +84,13 @@ class Draggable(Entity, QWidget):
             self.startDragPos = event.position().toPoint()
             self.clock = time.time()
             self.timer = 0
-            shared.activeEditor.SetCacheMode()
         shared.activeEditor.mouseButtonPressed = event.button()
         event.accept()
 
     def mouseMoveEvent(self, event):
         if self.clock == None:
             return
+        shared.activeEditor.SetCacheMode()
         self.timer = time.time() - self.clock
         # in general, draw less often than the mouseMoveEvent is triggered to improve performance.
         if self.timer > self.timeout:
@@ -185,7 +185,6 @@ class Draggable(Entity, QWidget):
             shared.activePVs.remove(self)
             self.BaseStyling()
         else:
-            print(f'{self.name} is not active!')
             shared.activePVs.append(self)
             self.SelectedStyling()
         self.active = not self.active
