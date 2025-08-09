@@ -3,3 +3,4 @@ An app inspired by UI from the game design industry, hopefully accelerating rese
 A very early example of what you can do with the tool:
 
 <img width="955" height="715" alt="image" src="https://github.com/user-attachments/assets/18b27bb2-fa8b-4fcc-93af-4d40a675dbb5" />
+<img width="1889" height="1136" alt="image" src="https://github.com/user-attachments/assets/ab7d5048-fc1f-451b-ae40-b99f9899cd1f" />
