@@ -39,6 +39,12 @@ class SingleTaskGPAction(Action):
             ],
         }
     
+    def __setstate__(self, state):
+        self.lattice = state['lattice']
+        self.decisions = state['decisions']
+        self.objectives = state['objectives']
+        self.simulator = Simulator()
+    
     def CheckForValidInputs(self):
         # Have both correctors AND BPMs been suppled?
         if len(self.decisions) == 0:
@@ -63,7 +69,7 @@ class SingleTaskGPAction(Action):
         print('All decision variables and objectives are linked to lattice elements.')
         return True
 
-    def Run(self, pause, stop, sharedMemoryName, shape, dtype, **kwargs):
+    def Run(self, pause, stop, error, sharedMemoryName, shape, dtype, **kwargs):
         initialSamples = kwargs.get('initialSamples')
         numSteps = kwargs.get('numSteps')
         repeats = kwargs.get('repeats')
@@ -96,6 +102,5 @@ class SingleTaskGPAction(Action):
             if stop.is_set():
                 sharedMemory.close()
                 return
-            currentStep += 1
             data[_ + 1] = np.min(X.data.f) # store the running optimal value.
         sharedMemory.close()

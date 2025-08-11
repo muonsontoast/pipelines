@@ -40,7 +40,7 @@ class SingleTaskGP(Draggable):
         self.content.layout().setSpacing(0)
 
         self.streams = {
-            'raw': lambda **kwargs: {
+            'default': lambda **kwargs: {
                 'xlabel': 'Step',
                 'xlim': [0, len(self.data) - 1],
                 'ylabel': f'{kwargs.get('ylabel', 'Objective')}',

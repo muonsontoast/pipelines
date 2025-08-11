@@ -36,11 +36,26 @@ class OrbitResponse(Draggable):
         self.offlineAction = OrbitResponseAction()
         self.runningCircle = RunningCircle()
         # Define orbit response streams
-        # All streams contain a 'raw' entry for the de facto use case.
+        # All streams contain a 'default' entry for the de facto use case.
         self.streams = {
             'raw': lambda **kwargs: {
+                # Axis names
+                'ax': ['BPM', 'Corrector', 'Step (mrad)'],
+                # Names of each item in the respective axes
+                'names': [[b.name for b in self.BPMs.values()],
+                          [c.name for c in self.correctors.values()],
+                          [str(s) for s in self.settings['components']['current']['value'] * (np.array(range(self.settings['components']['steps']['value'])) - int(self.settings['components']['steps']['value'] / 2))],
+                          [f'Measurement {r + 1}' for r in range(self.settings['components']['repeats']['value'])]],
+                # Full raw data
+                'data': self.data,
+            },
+            'default': lambda **kwargs: {
                 'xlabel': 'Corrector Number',
                 'ylabel': 'BPM Number',
+                'xticks': np.arange(len(self.correctors)),
+                'yticks': np.arange(len(self.BPMs)),
+                'xticklabels': [c.name for c in self.correctors.values()],
+                'yticklabels': [b.name for b in self.BPMs.values()],
                 'xunits': '',
                 'yunits': '',
                 'plottype': 'imshow',

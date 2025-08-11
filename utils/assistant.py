@@ -23,9 +23,7 @@ class Assistant:
         self.message = 'Assistant: '
 
     def Review(self):
-        print('reviewing message')
         self.messageTitle.setText(self.message)
-        # on the next pass,reset the message.
         if self.message != self.defaultMessage:
             self.message = self.defaultMessage
 

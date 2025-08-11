@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGraphicsLineItem, Q
 from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QLineF, QPointF
 import time
+import re # regex
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
 from .socket import Socket
@@ -166,9 +167,6 @@ class Draggable(Entity, QWidget):
                     shared.activePVs.remove(self)
                 self.BaseStyling()
                 self.active = False
-                # print('Resetting the inspector')
-                # shared.inspector.mainWindowTitle.setText('')
-                # shared.inspector.Push()
             else:
                 shared.selectedPV = self
                 if self not in shared.activePVs:
@@ -177,9 +175,6 @@ class Draggable(Entity, QWidget):
                 self.active = True
             return
         if self.active:
-            # print(f'{self.name} is already active!')
-            # shared.inspector.mainWindowTitle.setText('')
-            # shared.inspector.Push()
             if shared.selectedPV == self:
                 shared.selectedPV = None
             shared.activePVs.remove(self)

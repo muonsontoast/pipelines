@@ -20,9 +20,8 @@ plt.rcParams['text.usetex'] = True
 class View(Draggable):
     '''Displays the data of arbitrary blocks.'''
     def __init__(self, parent, proxy: QGraphicsProxyWidget, fontsize = 12, **kwargs):
-        super().__init__(proxy, name = kwargs.pop('name', 'View'), type = 'View', size = kwargs.pop('size', [600, 500]), **kwargs)
+        super().__init__(proxy, name = kwargs.pop('name', 'View'), type = 'View', size = kwargs.pop('size', [1000, 850]), **kwargs)
         self.parent = parent
-        self.blockType = 'View'
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
@@ -47,7 +46,6 @@ class View(Draggable):
         self.main.setLayout(QVBoxLayout())
         self.main.layout().setContentsMargins(0, 0, 0, 0)
         self.widget = QWidget()
-        self.widget.setObjectName('view')
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.setLayout(QVBoxLayout())
         self.widget.layout().setContentsMargins(0, 0, 0, 0)
@@ -68,7 +66,7 @@ class View(Draggable):
         self.plot = QWidget()
         self.plot.setLayout(QVBoxLayout())
         self.plot.layout().setContentsMargins(15, 15, 15, 15)
-        self.figure = Figure(figsize = (6.75, 4.25), dpi = 100)
+        self.figure = Figure(figsize = (6.75, 7.25), dpi = 100)
         self.figure.set_facecolor('none')
         self.axes = self.figure.add_subplot(111)
         self.axes.set_aspect('auto')
@@ -120,7 +118,7 @@ class View(Draggable):
         if self.liveUpdatesEnabled:
             QTimer.singleShot(0, self.CheckData)
    
-    def DrawCanvas(self, stream = 'raw', **kwargs):
+    def DrawCanvas(self, stream = 'default', **kwargs):
         if not self.linksIn:
             return
         # access stream of first linked block (may hard restrict it to one block in at some point in the future).
@@ -132,17 +130,23 @@ class View(Draggable):
             self.canvasHasBeenCleared = True
             self.ClearCanvas()
             self.ToggleSpines(True)
+            self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
+            self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
         if self.stream['plottype'] == 'imshow':
             if 'norm' in self.stream.keys():
                 im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'], norm = TwoSlopeNorm(vcenter = self.stream['vcenter']))
             else:
                 im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
-            self.axes.set_aspect('auto')
             divider = make_axes_locatable(self.axes)
             cax = divider.append_axes("right", size = "5%", pad = 0.075)
             self.cb = self.figure.colorbar(im, cax = cax, ax = self.axes)
             self.cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
             self.cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
+            self.axes.set_xticks(self.stream['xticks'])
+            self.axes.set_xticklabels(self.stream['xticklabels'], rotation = 90)
+            self.axes.set_yticks(self.stream['yticks'])
+            self.axes.set_yticklabels(self.stream['yticklabels'])
+            self.axes.set_aspect('auto')
             self.figure.tight_layout()
             # testing for now ... this draw call leads to terrible performance live, need to replace with blitting.
             self.figure.canvas.draw() # I should look into whether blitting can be used to speed up 2D plots.
@@ -190,6 +194,9 @@ class View(Draggable):
             spine.set_visible(state)
 
     def AddLinkIn(self, ID, socket):
+        # Allow only one block to connect to a view block at any one time.
+        if self.linksIn:
+            super().RemoveLinkIn(next(iter(self.linksIn)))
         super().AddLinkIn(ID, socket)
         self.title.setText('View (Connected)')
 

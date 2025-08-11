@@ -51,7 +51,6 @@ class Editor(Entity, QGraphicsView):
             for item in self.scene.items():
                 if not isinstance(item, QGraphicsLineItem):
                     item.setCacheMode(QGraphicsItem.DeviceCoordinateCache) # -- may need to re-enable this!
-                    item.update()
         else:
             for item in self.scene.items():
                 item.setCacheMode(QGraphicsItem.NoCache)

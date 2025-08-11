@@ -62,7 +62,7 @@ class SocketInteractable(QFrame):
                     else:
                         self.parent.parent.BPMs[shared.PVLinkSource.ID] = shared.PVLinkSource
                 elif self.parent.parent.type == 'View':
-                    self.parent.parent.DrawCanvas(stream = 'raw')
+                    self.parent.parent.DrawCanvas(stream = 'default')
                 shared.PVLinkSource = None
 
     def leaveEvent(self, event):

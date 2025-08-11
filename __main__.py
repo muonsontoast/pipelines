@@ -76,6 +76,11 @@ class MainWindow(Entity, QMainWindow):
             for _ in range(shared.runningCircleNumFrames):
                 shared.runningCircleFrames[_] = QPixmap(os.path.join(defaultRunningCirclePath, f'{_}.png'))
             print(f'Finished loading compressed frames in {time.time() - t:.3f} seconds.')
+        # Create a folder for saving data held in blocks (not sessions)
+        dataDumpPath = os.path.join(shared.cwd, 'datadump')
+        if not os.path.exists(dataDumpPath):
+            print('Data dump folder does not exist, creating one.')
+            os.mkdir(dataDumpPath)
         # Load lattice
         shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), 'Lattice', f'{latticeName}.mat')) # for now ...
         if shared.elements is None:

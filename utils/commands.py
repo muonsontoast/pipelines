@@ -8,6 +8,7 @@ from ..blocks.corrector import Corrector
 from ..blocks.bpm import BPM
 from ..blocks.orbitresponse import OrbitResponse
 from ..blocks.view import View
+from ..blocks.save import Save as SaveBlock
 from ..blocks.composition.add import Add
 from ..blocks.bayesian.singletaskgp import SingleTaskGP
 from .multiprocessing import TogglePause, StopActions, runningActions
@@ -23,6 +24,7 @@ blockTypes = {
     'BPM': BPM,
     'Orbit Response': OrbitResponse,
     'View': View,
+    'Save': SaveBlock,
     'Add': Add,
     'Single Task GP': SingleTaskGP,
 }
@@ -99,6 +101,9 @@ def CreateOrbitResponse(pos: QPoint):
 def CreateView(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['View'], 'View', pos)
 
+def CreateSave(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Save'], 'Save', pos)
+
 def CreateAdd(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Add'], 'Add', pos)
 
@@ -108,7 +113,6 @@ def CreateSingleTaskGP(pos: QPoint):
 def Delete():
     if not shared.selectedPV:
         return
-    print(f'Deleting draggable block ({shared.selectedPV}).')
     editor.scene.removeItem(shared.selectedPV.proxy)
     for ID in shared.selectedPV.linksIn.keys():
         shared.activeEditor.scene.removeItem(shared.selectedPV.linksIn[ID]['link'])
@@ -158,6 +162,7 @@ commands = {
     'BPM': dict(shortcut = ['Ctrl+Shift+B'], func = CreateBPM, args = [GetMousePos]),
     'Orbit Response': dict(shortcut = ['Ctrl+Shift+O'], func = CreateOrbitResponse, args = [GetMousePos]),
     'View': dict(shortcut = ['Ctrl+Shift+V'], func = CreateView, args = [GetMousePos]),
+    'Save (Block)': dict(shortcut = ['Ctrl+Shift+S'], func = CreateSave, args = [GetMousePos]),
     'Add (Composition)': dict(shortcut = ['Ctrl+Shift+A'], func = CreateAdd, args = [GetMousePos]),
     'Single Task Gaussian Process': dict(shortcut = ['Ctrl+Shift+G'], func = CreateSingleTaskGP, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
