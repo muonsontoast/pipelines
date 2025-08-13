@@ -185,7 +185,9 @@ class MainWindow(Entity, QMainWindow):
         self.buttonHousing.layout().addWidget(self.toggleDarkModeButton)
         self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
         self.page.layout().addWidget(self.buttonHousing, 4, 8)
-        shared.app.processEvents()
+        # Give the editor focus by default
+        shared.activeEditor.setFocus()
+        # shared.app.processEvents()
 
         # Load in settings if they exist and apply to existing entities, and create new ones if they don't already exist.
         print('Loading settings from:', settingsPath)

@@ -56,7 +56,6 @@ class Inspector(Entity, QTabWidget):
         if not pv:
             self.mainWindowTitleWidget.hide()
             self.main.hide()
-            # self.main.setVisible(False)
             print('No PV supplied to the inspector.')
             return
         
@@ -95,29 +94,20 @@ class Inspector(Entity, QTabWidget):
             self.main.setItemWidget(self.items['alignment'], self.planeRow)
 
         for k, c in pv.settings['components'].items():
-            print(f'Found a component: {k}, with type: {c['type']}')
             if 'units' in c.keys():
                 name = c['name'] + f' ({c['units']})'
             else:
                 name = c['name']
             self.items[k] = QListWidgetItem()
             self.expandables[k] = Expandable(self.main, self.items[k], name, pv, k)
-            print(f'Inspector sees list width as: {self.main.width()}')
-            print(f'Inspector sees list viewport width as: {self.main.viewport().width()}')
-            print(f'{k} width is: {self.expandables[k].width}') # expandable width is changing!
             if c['name'] == component:
                 self.expandables[k].ToggleContent()
             self.items[k].setSizeHint(self.expandables[k].sizeHint())
             self.main.addItem(self.items[k])
             self.main.setItemWidget(self.items[k], self.expandables[k])
-            # self.items[k].setSizeHint(self.expandables[k].sizeHint())
-            # self.main.addItem(self.items[k])
-            # self.main.setItemWidget(self.items[k], self.expandables[k])
         shared.expandables = self.expandables
         self.ToggleStyling()
         self.main.setUpdatesEnabled(True)
-
-        # QTimer.singleShot(0, self.UpdateListWidgetItemWidths)
 
     def UpdateListWidgetItemWidths(self):
         for k, e in self.expandables.items():

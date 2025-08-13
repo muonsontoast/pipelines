@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 2955.594673465271
-  - 1814.4199934035591
+  - 3255.5561701168085
+  - 2099.4735259341273
   type: Editor
-  zoom: 0.4188666365907722
+  zoom: 0.2915016514569767
 3:
   linksIn: {}
   linksOut: {}
@@ -629,7 +629,7 @@
       name: Repeats
       type: SliderComponent
       units: ''
-      value: 5
+      value: 1
       valueType: int
     steps:
       default: 3
@@ -672,8 +672,8 @@
     36: data
   name: Orbit Response
   position:
-  - 2260
-  - 1590
+  - 2342.0
+  - 1843.0
   size:
   - 575
   - 440
@@ -686,8 +686,8 @@
     35: data
   name: Single Task GP
   position:
-  - 2428
-  - 916
+  - 2402
+  - 1068
   size:
   - 600
   - 500
@@ -698,8 +698,8 @@
   linksOut: {}
   name: View
   position:
-  - 3107.0
-  - 1941.0
+  - 3050.0
+  - 2059.0
   size:
   - 1000
   - 850
@@ -711,7 +711,7 @@
   name: View
   position:
   - 3274
-  - 740
+  - 624
   size:
   - 1000
   - 850
@@ -722,9 +722,9 @@
   linksOut: {}
   name: Save
   position:
-  - 3020
-  - 1685
+  - 3127.398161721512
+  - 1691.1488526984256
   size:
-  - 500
-  - 200
+  - 600
+  - 300
   type: Save

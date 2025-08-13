@@ -4,7 +4,6 @@ from copy import deepcopy
 from .. import shared
 
 def Save():
-    print('Saving Session Data')
     path = os.path.join(shared.cwd, 'config')
     if not os.path.exists(path):
         print('Config folder does not exist. Creating one.')
@@ -23,7 +22,6 @@ def Save():
                 entitySettings['positionInSceneCoords'] = [entity.positionInSceneCoords.x(), entity.positionInSceneCoords.y()]
             settings[entity.ID] = entitySettings
             if entity.sharingData:
-                print(f'Cleaning up data from {entity.name}')
                 entity.CleanUp() # remove the shared memory data from memory to stop persistance.
                 print(f'Finished cleaning up data from {entity.name}')
         yaml.dump(settings, f)

@@ -142,6 +142,9 @@ class View(Draggable):
             self.cb = self.figure.colorbar(im, cax = cax, ax = self.axes)
             self.cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
             self.cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
+            for spine in self.cb.ax.spines.values():
+                spine.set_edgecolor("#c4c4c4")
+                spine.set_linewidth(1)
             self.axes.set_xticks(self.stream['xticks'])
             self.axes.set_xticklabels(self.stream['xticklabels'], rotation = 90)
             self.axes.set_yticks(self.stream['yticks'])

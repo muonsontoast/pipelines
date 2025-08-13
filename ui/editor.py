@@ -1,9 +1,8 @@
 from PySide6.QtWidgets import QFrame, QLabel, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem
-from PySide6.QtCore import Qt, QPoint, QSize
-from PySide6.QtGui import QPainter
+from PySide6.QtCore import Qt, QPoint, QKeyCombination
+from PySide6.QtGui import QPainter, QCursor
 from .editormenu import EditorMenu
 from ..utils.entity import Entity
-from ..blocks.socket import Socket
 from .. import shared
 
 class Editor(Entity, QGraphicsView):
@@ -14,11 +13,10 @@ class Editor(Entity, QGraphicsView):
         self.minScale = minScale
         self.maxScale = maxScale
         self.canDrag = False
-        # shared.app.setAttribute(Qt.AA_UseDesktopOpenGL)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
         self.setViewportUpdateMode(QGraphicsView.SmartViewportUpdate)
-        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.setDragMode(QGraphicsView.NoDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -41,6 +39,7 @@ class Editor(Entity, QGraphicsView):
         self.coordsTitle.setText(f'Editor center: ({self.positionInSceneCoords.x():.0f}, {self.positionInSceneCoords.y():.0f})')
         self.zoomTitle.setText(f'Zoom: {self.transform().m11() * 100:.0f}%')
 
+    # this draw override prevents widget artefacting when dragging blocks around a scene
     def drawBackground(self, painter, rect):
         pass
 
@@ -65,6 +64,7 @@ class Editor(Entity, QGraphicsView):
         if not self.menu.hidden and shared.PVs[self.menu.ID]['rect'].contains(self.startPos):
             super().mousePressEvent(event)
             return
+            
         for ID, p in shared.PVs.items():
             if p['rect'].contains(self.startPos):
                 if ID != self.menu.ID:
@@ -123,8 +123,14 @@ class Editor(Entity, QGraphicsView):
             shared.app.sendEvent(self.menu, event)
             event.accept()
             return
-        if event is None:
-            return
+        else:
+            cursorPos = self.mapToScene(self.mapFromGlobal(QCursor.pos()))
+            for p in shared.PVs.values():
+                if p['pv'].type == 'Save':
+                    if p['rect'].contains(cursorPos):
+                        shared.app.sendEvent(p['pv'], event)
+                        event.accept()
+                        return
         angle = event.angleDelta().y()
         zoomFactor = 1 + angle / 1000
         # get current scale
@@ -146,4 +152,12 @@ class Editor(Entity, QGraphicsView):
                 shared.app.sendEvent(self.menu, event)
                 event.accept()
                 return
+            else:
+                cursorPos = self.mapToScene(self.mapFromGlobal(QCursor.pos()))
+                for p in shared.PVs.values():
+                    if p['pv'].type == 'Save':
+                        if p['rect'].contains(cursorPos):
+                            shared.app.sendEvent(p['pv'], event)
+                            event.accept()
+                            return
         super().keyPressEvent(event)
