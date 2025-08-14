@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import QFrame, QLabel, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem
-from PySide6.QtCore import Qt, QPoint, QKeyCombination
+from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QPainter, QCursor
 from .editormenu import EditorMenu
 from ..utils.entity import Entity
 from .. import shared
 
 class Editor(Entity, QGraphicsView):
-    def __init__(self, window, minScale = 3, maxScale = .2):
+    def __init__(self, window, minScale = 3, maxScale = .15):
         '''Scale gets larger the more you zoom in, so `minScale` is max zoom in (> 1) and `maxScale` is max zoom out (< 1)'''
         super().__init__(name = 'Editor', type = 'Editor', zoom = 1)
         self.parent = window
@@ -15,7 +15,7 @@ class Editor(Entity, QGraphicsView):
         self.canDrag = False
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.SmartViewportUpdate)
+        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setDragMode(QGraphicsView.NoDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)

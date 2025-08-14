@@ -4,10 +4,29 @@ import yaml
 import time
 from .commands import blockTypes, CreateBlock
 from ..lattice.latticeutils import LoadLattice, GetLatticeInfo
+from ..components import BPM, errors, kickangle, link, slider
 from .. import shared
 
 settings = None
 t = None
+componentsLookup = {
+    'LinkComponent': link.LinkComponent,
+    'KickAngleComponent': kickangle.KickAngleComponent,
+    'ErrorsComponent': errors.ErrorsComponent,
+    'BPMComponent': BPM.BPMComponent,
+    'SliderComponent': slider.SliderComponent,
+}
+valueTypeLookup = {
+    'int': int,
+    'float': float,
+}
+
+def UpdateLinkedLatticeElements():
+    for entity in shared.entities.values():
+        if 'components' in entity.settings:
+            if 'value' in entity.settings['components']:
+                if entity.settings['components']['value']['type'] == slider.SliderComponent:
+                    entity.UpdateLinkedElement(override = entity.settings['components']['value']['value'])
 
 # Have to loop over entities again as they won't all be added before the prior loop.
 def LinkBlocks():
@@ -18,6 +37,7 @@ def LinkBlocks():
                 shared.entities[ID].AddLinkIn(sourceID, socket)
             for targetID, socket in v['linksOut'].items():
                 shared.entities[ID].AddLinkOut(targetID, socket)
+    UpdateLinkedLatticeElements()
 
 def Load(path):
     '''Populate entities from a settings file held inside the config folder.'''
@@ -46,13 +66,18 @@ def Load(path):
                         if 'alignment' in v:
                             entity.settings['alignment'] = v['alignment']
                         entity.setFixedSize(*v['size'])
-                        if 'linkedElement' in v.keys():
+                        if 'linkedElement' in v:
                             if shared.elements is None: # fetch lattice info if this is the first time instantiating a linked block.
-                                print('shared element is empty!')
                                 shared.lattice = LoadLattice(shared.latticePath)
                                 shared.elements = GetLatticeInfo(shared.lattice)
                                 shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
                             entity.settings['linkedElement'] = shared.elements.iloc[v['linkedElement']]
+                            # Assign the correct components
+                            for componentName, c in v['components'].items():
+                                v['components'][componentName]['type'] = componentsLookup[c['type']]
+                                if 'valueType' in v['components'][componentName]:
+                                    v['components'][componentName]['valueType'] = valueTypeLookup[v['components'][componentName]['valueType']]
+                            entity.settings['components'] = v['components']
                 LinkBlocks()
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')
                 shared.workspace.assistant.PushMessage(f'Loaded saved session from {path}')

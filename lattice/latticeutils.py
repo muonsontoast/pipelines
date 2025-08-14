@@ -1,10 +1,9 @@
 import at
-from at import get_s_pos, linopt2
+from at import linopt2
 from at import elements as emnts
 import numpy as np
 from copy import deepcopy
 import pandas as pd
-from datetime import datetime
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 

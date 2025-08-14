@@ -96,6 +96,28 @@ class LinkComponent(QWidget):
         self.positionEdit.setText(f'{self.linkedElement.iloc[2]:.3f}')
         self.indexEdit.setText(f'{self.linkedElement.Index}')
         self.pv.settings['linkedElement'] = self.linkedElement
+        # linked element-specific logic
+        if self.linkedElement.Type == 'Quadrupole':
+            if 'alignment' in self.pv.settings:
+                self.pv.settings.pop('alignment')
+            self.pv.settings['components']['value']['name'] = 'Setpoint'
+            self.pv.settings['components']['value']['units'] = 'm⁻²'
+            self.pv.settings['components']['value']['value'] = shared.lattice[self.pv.settings['linkedElement'].Index].K
+            self.pv.settings['components']['value']['default'] = shared.lattice[self.pv.settings['linkedElement'].Index].K
+        elif self.linkedElement.Type == 'Corrector':
+            self.pv.settings['alignment'] = 'Horizontal' if 'alignment' not in self.pv.settings else self.pv.settings['alignment']
+            self.pv.settings['components']['value']['name'] = 'Kick'
+            self.pv.settings['components']['value']['units'] = 'mrad'
+            idx = 0 if self.pv.settings['alignment'] == 'Horizontal' else 1
+            self.pv.settings['components']['value']['value'] = float(shared.lattice[self.pv.settings['linkedElement'].Index].KickAngle[idx])
+            self.pv.settings['components']['value']['default'] = float(shared.lattice[self.pv.settings['linkedElement'].Index].KickAngle[idx])
+        # Adjust slider range if necessary
+        if self.pv.settings['components']['value']['value'] < self.pv.settings['components']['value']['min']:
+            self.pv.settings['components']['value']['min'] = self.pv.settings['components']['value']['value']
+        elif self.pv.settings['components']['value']['value'] > self.pv.settings['components']['value']['max']:
+            self.pv.settings['components']['value']['max'] = self.pv.settings['components']['value']['value']
+        
+        shared.inspector.Push(self.pv)
 
     def UpdateColors(self):
         if shared.lightModeOn:

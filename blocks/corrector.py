@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QLabel, QSizePolicy, QSpacerItem, QGraphicsProxyWidget
+from PySide6.QtWidgets import QLabel, QGraphicsProxyWidget
 from PySide6.QtCore import Qt
 from .pv import PV
 from ..components import kickangle
@@ -14,9 +14,8 @@ class Corrector(PV):
         self.typeLabel.setAlignment(Qt.AlignLeft)
         # invoke parent pv constructor
         super().__init__(parent, proxy, name = kwargs.pop('name', 'Corrector'), type = 'Corrector')
-        # self.blockType = 'Corrector'
         self.settings['alignment'] = kwargs.get('alignment', 'Vertical')
-        self.settings['components']['value'] = dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = kickangle.KickAngleComponent)
+        self.settings['components']['value'] = dict(name = 'Kick', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = kickangle.KickAngleComponent)
         # Add labels to layout
         self.typeLabel.setText(f'{self.type} ({self.settings['alignment']})')
         # Apply colors

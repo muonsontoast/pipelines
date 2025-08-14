@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QLabel, QMenu, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt, QPoint
 import numpy as np
+from copy import deepcopy
 from .draggable import Draggable
-from .socket import Socket
 from .. import shared
 from .. import style
 from ..components.slider import SliderComponent
@@ -153,6 +153,7 @@ class OrbitResponse(Draggable):
         if not self.online:
             self.offlineAction.correctors = self.correctors
             self.offlineAction.BPMs = self.BPMs
+            self.offlineAction.lattice = deepcopy(shared.lattice)
             if not self.offlineAction.CheckForValidInputs():
                 return
             onlineText = 'online' if self.online else 'offline'
@@ -161,7 +162,6 @@ class OrbitResponse(Draggable):
             numCorrectors = len(self.correctors.keys())
             if not PerformAction(
                 self,
-                # empty array
                 np.empty((numBPMs, numCorrectors,
                 self.settings['components']['steps']['value'],
                 self.settings['components']['repeats']['value'])),

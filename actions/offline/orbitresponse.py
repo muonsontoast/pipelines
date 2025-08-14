@@ -84,7 +84,7 @@ class OrbitResponseAction(Action):
         numBPMs = len(self.BPMs)
         numCorrectors = len(self.correctors)
         offset = int(numSteps / 2)
-        kicks = (np.arange(0, numSteps, 1) - offset) * stepKick * 1e-3 # convert to mrad
+        kicks = (np.arange(0, numSteps, 1) - offset) * stepKick
         try:
             # twiss in values for the LTB
             # sigmaMat = at.sigma_matrix(betax = 3.731, betay = 2.128, alphax = -.0547, alphay = -.1263, emitx = 2.6e-7, emity = 2.6e-7, blength = 0, espread = 1.5e-2)
@@ -96,7 +96,7 @@ class OrbitResponseAction(Action):
             for col, c in enumerate(self.correctors):
                 idx = 1 if c['alignment'] == 'Vertical' else 0
                 for _, k in enumerate(kicks):
-                    kickAngle = c['default'] + k
+                    kickAngle = 1e-3 * (c['default'] + k) # convert the kick target value from rad to mrad.
                     # Should errors be applied to the value? ---- this will be added in a future version.
                     self.lattice[c['index']].KickAngle[idx] = kickAngle
                     for row, b in enumerate(self.BPMs):

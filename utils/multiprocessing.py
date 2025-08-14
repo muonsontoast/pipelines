@@ -55,6 +55,8 @@ def StopActions():
         shared.entities[ID].title.setText(f'{shared.entities[ID].name.split(' (')[0]} (Stopped)')
         shared.entities[ID].runningCircle.Stop()
         runningActions[ID][1].set()
+        if len(runningActions[ID]) == 4:
+            runningActions[ID][3].set()
 
 def RunProcess(action, queue, pause, stop, error, sharedMemoryName, shape, dtype, **kwargs):
     '''Accepts an entity `ID`, and other `args` to pass to the Run() method of the entity's action.'''
@@ -64,9 +66,16 @@ def RunProcess(action, queue, pause, stop, error, sharedMemoryName, shape, dtype
     queue.put(action.Run(pause, stop, error, sharedMemoryName, shape, dtype, **kwargs))
 
 def WaitForSaveToFinish(entity, saveProcess, deltaTime, lastTime):
+    deltaTime += time.time() - lastTime
+    lastTime = time.time()
+    if not runningActions[entity.ID][3]:
+        if deltaTime < .1:
+            return threading.Timer(.1, WaitForSaveToFinish, args = (entity, saveProcess, deltaTime, lastTime))
+        print('Setting save STOP')
+        runningActions[entity.ID][3].set()
+        deltaTime = 0
+
     if runningActions[entity.ID][3].is_set():
-        deltaTime += time.time() - lastTime
-        lastTime = time.time()
         if deltaTime > maxWait:
             shared.workspace.assitant.PushMessage(f'It took too long to save {entity.name}\'s data. This was triggered to allow the app to safely exit the process without hanging. Either check for errors, or extend the *maxWait* in utils/multiprocessing.py')
         else:
@@ -97,7 +106,7 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
             shared.workspace.assistant.PushMessage('Stopped action(s).')
 
     if saving:
-        runningActions[entity.ID][3].set()
+        # runningActions[entity.ID][3].set()
         WaitForSaveToFinish(entity, saveProcess, 0, time.time())
 
     runningActions.pop(entity.ID)
@@ -142,7 +151,10 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
     )
     # Check if this block is attached to a save block
     saving = False
+    saveProcess = None
     for ID in entity.linksOut:
+        if ID == 'free':
+            continue
         if shared.entities[ID].type == 'Save':
             saving = True
             runningActions[entity.ID].append(Event())

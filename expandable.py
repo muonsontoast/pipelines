@@ -69,7 +69,6 @@ class Expandable(QWidget):
             # Is this the first time drawing widgets for this expandable?
             if not self.widgetsDrawn:
                 item = QListWidgetItem()
-                print(f'Expandable ({self.name}) sees list width as: {self.list.viewport().width()}')
                 self.widget.setFixedWidth(self.list.viewport().width() - 20)
                 item.setSizeHint(self.widget.sizeHint())
                 self.content.addItem(item)

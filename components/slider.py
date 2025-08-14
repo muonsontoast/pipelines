@@ -2,9 +2,43 @@ from PySide6.QtWidgets import (
     QWidget, QLineEdit, QSlider, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 from .. import shared
 from .. import style
+
+class SliderBar(QSlider):
+    def __init__(self, orientation, parent):
+        super().__init__(orientation)
+        self.parent = parent
+        self.oldValue = None
+
+    # def UpdateLinkedElement(self, event = None, oldValue = None):
+    #     '''`event` should be a mouseReleaseEvent if it needs to be called.'''
+    #     if 'linkedElement' not in self.parent.pv.settings:
+    #         return super().mouseReleaseEvent(event)
+    #     linkedType = self.parent.pv.settings['linkedElement'].Type
+    #     if linkedType == 'Corrector':
+    #         idx = 0 if self.parent.pv.settings['alignment'] == 'Horizontal' else 1
+    #         shared.lattice[self.parent.pv.settings['linkedElement'].Index].KickAngle[idx] = self.parent.ToAbsolute(self.value())
+    #         print(f'{self.parent.pv.name} was changed from {self.parent.ToAbsolute(self.oldValue):.3f} to {shared.lattice[self.parent.pv.settings['linkedElement'].Index].KickAngle[idx]:.3f}')
+    #     elif linkedType == 'Quadrupole':
+    #         shared.lattice[self.parent.pv.settings['linkedElement'].Index].K = self.parent.ToAbsolute(self.value())
+    #         print(f'{self.parent.pv.name} was changed from {self.parent.ToAbsolute(self.oldValue):.3f} to {shared.lattice[self.parent.pv.settings['linkedElement'].Index].K:.3f}')
+    #     self.oldValue = None
+
+    def mousePressEvent(self, event):
+        self.oldValue = self.value()
+        super().mousePressEvent(event)
+    
+    def mouseReleaseEvent(self, event):
+        if not self.oldValue:
+            return super().mouseReleaseEvent(event)
+        if 'linkedElement' not in self.parent.pv.settings:
+            return super().mouseReleaseEvent(event)
+        # self.UpdateLinkedElement(event)
+        self.parent.pv.UpdateLinkedElement(self, self.parent.ToAbsolute, event)
+        self.oldValue = None
+        super().mouseReleaseEvent(event)
 
 class SliderComponent(QWidget):
     def __init__(self, pv, component, sliderSteps = 1000000, floatdp = 3, **kwargs):
@@ -35,7 +69,7 @@ class SliderComponent(QWidget):
         self.sliderRow.layout().setContentsMargins(self.sliderOffset, 0, 0, 0)
         self.sliderRow.layout().setSpacing(0)
         # Slider
-        self.slider = QSlider(Qt.Horizontal)
+        self.slider = SliderBar(Qt.Horizontal, self)
         self.slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.slider.setRange(0, sliderSteps)
         self.slider.setValue(self.ToSliderValue(pv.settings['components'][component]['value']))
@@ -134,12 +168,14 @@ class SliderComponent(QWidget):
             self.value = value
             self.UpdateColors()
         self.UpdateSlider()
+        self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
 
     def UpdateSlider(self):
         self.slider.setValue(self.ToSliderValue(float(self.value.text())))
 
     def Reset(self):
         self.slider.setValue(self.ToSliderValue(self.pv.settings['components'][self.component]['default']))
+        self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
 
     def SetDefault(self):
         self.default.clearFocus()

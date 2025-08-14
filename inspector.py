@@ -58,8 +58,7 @@ class Inspector(Entity, QTabWidget):
             self.main.hide()
             print('No PV supplied to the inspector.')
             return
-        
-        # if component is None:
+
         if not component:
             if 'value' in pv.settings['components'].keys():
                 component = pv.settings['components']['value']['name']
@@ -75,7 +74,8 @@ class Inspector(Entity, QTabWidget):
         self.expandables = dict()
 
         # Add an alignment item at the top if one is needed by the component.
-        if pv.type in ['Corrector', 'BPM']:
+        # if pv.type in ['Corrector', 'BPM']:
+        if 'alignment' in pv.settings:
             self.items['alignment'] = QListWidgetItem()
             if pv.settings['alignment'] == 'Horizontal':
                 text = 'Aligned to <span style = "color: #bc4444">Horizontal</span> plane.'
@@ -93,14 +93,18 @@ class Inspector(Entity, QTabWidget):
             self.main.addItem(self.items['alignment'])
             self.main.setItemWidget(self.items['alignment'], self.planeRow)
 
-        for k, c in pv.settings['components'].items():
+        def SortName(item):
+            key, component = item
+            return key == 'linkedLatticeElement'
+
+        for k, c in sorted(pv.settings['components'].items(), key = SortName):
             if 'units' in c.keys():
                 name = c['name'] + f' ({c['units']})'
             else:
                 name = c['name']
             self.items[k] = QListWidgetItem()
             self.expandables[k] = Expandable(self.main, self.items[k], name, pv, k)
-            if c['name'] == component:
+            if c['name'] == component or c['name'] == 'Linked Lattice Element':
                 self.expandables[k].ToggleContent()
             self.items[k].setSizeHint(self.expandables[k].sizeHint())
             self.main.addItem(self.items[k])
@@ -116,7 +120,6 @@ class Inspector(Entity, QTabWidget):
             self.main.setItemWidget(self.items[k], self.expandables[k])
         def AllowUpdates():
             self.main.setUpdatesEnabled(True)
-            print(f'list widget size hint is: {self.main.sizeHint()}')
         QTimer.singleShot(0, AllowUpdates)
 
     def TextChanged(self):

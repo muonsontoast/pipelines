@@ -27,7 +27,7 @@ class PV(Draggable):
         self.parent = parent
         self.indicator = None
         self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, marginRight = 0, fontSize = 16)
-        self.widgetSelectedStyle = style.WidgetStyle(color = "#363636", borderRadius = 12, marginRight = 0, fontSize = 16)
+        self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 16)
         self.indicatorStyle = style.IndicatorStyle(8, color = '#c4c4c4', borderColor = "#b7b7b7")
         self.indicatorSelectedStyle = style.IndicatorStyle(8, color = "#E0A159", borderColor = "#E7902D")
         self.indicatorStyleToUse = self.indicatorStyle
@@ -61,6 +61,25 @@ class PV(Draggable):
         self.layout().addWidget(self.clickable)
         self.layout().addWidget(self.outSocket)
         self.ToggleStyling(active = False)
+
+    def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
+        '''`event` should be a mouseReleaseEvent if it needs to be called.'''
+        if 'linkedElement' not in self.settings:
+            if event:
+                return super().mouseReleaseEvent(event)
+            return
+        linkedType = self.settings['linkedElement'].Type
+        if linkedType == 'Corrector':
+            idx = 0 if self.settings['alignment'] == 'Horizontal' else 1
+            if not override:
+                shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = func(slider.value())
+            else:
+                shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = override
+        elif linkedType == 'Quadrupole':
+            if not override:
+                shared.lattice[self.settings['linkedElement'].Index].K = func(slider.value())
+            else:
+                shared.lattice[self.settings['linkedElement'].Index].K = override
 
     def mouseReleaseEvent(self, event):
         # Store temporary values since Draggable overwrites them in its mouseReleaseEvent override.

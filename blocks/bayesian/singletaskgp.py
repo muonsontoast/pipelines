@@ -55,7 +55,6 @@ class SingleTaskGP(Draggable):
 
         self.Push()
         self.ToggleStyling(active = False)
-        print(f'{self.name}\'s data looks like this on creation:', self.data)
 
     def Pause(self):
         TogglePause(self, True)
