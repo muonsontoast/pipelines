@@ -135,11 +135,9 @@ class Inspector(Entity, QTabWidget):
 
     def SwapPlane(self, pv):
         if pv.settings['alignment'] == 'Horizontal':
-            print('Swapping plane to Vertical')
             pv.settings['alignment'] = 'Vertical'
             self.state.setText('Aligned to <span style = "color: #399a26">Vertical</span> plane.')
         else:
-            print('Swapping plane to Horizontal')
             pv.settings['alignment'] = 'Horizontal'
             self.state.setText('Aligned to <span style = "color: #bc4444">Horizontal</span> plane.')
 

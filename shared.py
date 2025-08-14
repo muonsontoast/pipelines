@@ -20,7 +20,7 @@ controlPVs = None
 objectivePVs = None
 entities = dict() # store each entity along with its ID for sorting and ID assignment reasons.
 entityTypes = ['PV', 'GUI'] # can be more than just PVs, anything you might want to save the state of.
-cursorTolerance = 5 # tolerance with which to ignore cursor moves due to hand shake.
+cursorTolerance = 2.5 # tolerance with which to ignore cursor moves due to hand shake.
 # PVs = []
 PVs = dict()
 activePVs = [] # subset of PVs active -- will only ever be empty or length one, as active ones get cleared up upon clicking other PVs.
@@ -36,7 +36,7 @@ names = None # lattice element names
 runningCircleNumFrames = 119
 runningCircleResolution = 30 # z x z pixels
 runningCircleFrames = [None for _ in range(runningCircleNumFrames)] # frames used by the circle indicating progress in blocks.
-UIMoveUpdateRate = 1000 # number of times to handle UI movement inside the editor per second.
+UIMoveUpdateRate = 480 # number of times to handle UI movement inside the editor per second.
 currentMousePos = None
 mousePosUponRelease = None # used to determine if the user released the mouse inside another socket.
 

@@ -177,7 +177,6 @@ undoneActions = [] # Ctrl+Shift+Z / Ctrl+Y cycles through this list, from back t
 
 def ConnectShortcuts():
     global editor
-    print('Connecting shortcuts')
     editor = shared.editors[0]
     # Get function arguments
     def InvokeAction(action):

@@ -18,20 +18,17 @@ class RunningCircle(QWidget):
         self.label.setVisible(True)
 
     def Stop(self):
-        print('Stopping running circle')
         self.running = False
         self.label.setVisible(False)
         self.stop = False
     
     def Start(self, timeout = 15):
-        print('Starting running circle')
         # default refresh rate is 60 fps / 15 ms
         self.running = True
         self.label.setVisible(True)
         self.timer.start(timeout)
 
     def CreateTimer(self):
-        print('Creating timer for running circle')
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.UpdateFrame)
 

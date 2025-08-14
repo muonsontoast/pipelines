@@ -176,7 +176,6 @@ class Save(Draggable):
             self.GetIndexFromString(os.path.basename(self.savePath.text()))
 
     def ConfirmPathText(self):
-        print('confirming')
         savePath = QLineEdit(self.savePath.text())
         savePath.setCursorPosition(0)
         savePath.setFixedHeight(35)

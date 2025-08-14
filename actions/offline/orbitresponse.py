@@ -96,7 +96,7 @@ class OrbitResponseAction(Action):
             for col, c in enumerate(self.correctors):
                 idx = 1 if c['alignment'] == 'Vertical' else 0
                 for _, k in enumerate(kicks):
-                    kickAngle = 1e-3 * (c['default'] + k) # convert the kick target value from rad to mrad.
+                    kickAngle = 1e-3 * (c['default'] + k) # convert the kick target value from mrad to rad.
                     # Should errors be applied to the value? ---- this will be added in a future version.
                     self.lattice[c['index']].KickAngle[idx] = kickAngle
                     for row, b in enumerate(self.BPMs):
@@ -118,7 +118,8 @@ class OrbitResponseAction(Action):
                                 return
                     # BPMs in the model are markers so we have the full phase space information but PVs will typically be separated into BPM:X, BPM:Y
                     self.lattice[c['index']].KickAngle[idx] = 0
-            self.Fit(data, kicks, numCorrectors, numBPMs,
+            # To be consistent with units, convert kicks to units of rad to get an orbit response in m / rad = mm / mrad.
+            self.Fit(data, kicks * 1e-3, numCorrectors, numBPMs,
                 kwargs.get('postProcessedSharedMemoryName'),
                 kwargs.get('postProcessedShape'),
                 kwargs.get('postProcessedDType'),

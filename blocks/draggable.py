@@ -41,6 +41,7 @@ class Draggable(Entity, QWidget):
         self.linkedElementAttrs = dict() # A dict of functions that retrieve information exposed by the linked underlying PyAT element.
         self.stream = None
         self.canRun = False # indicates that a block can run an action.
+        self.editorWidgetsHaveBeenCached = False # ensures caching only happens once when this block is dragged at the start.
         self.FSocketWidgets = QWidget()
         self.FSocketWidgets.setLayout(QVBoxLayout())
         self.FSocketWidgets.layout().setContentsMargins(0, 0, 0, 0)
@@ -91,7 +92,9 @@ class Draggable(Entity, QWidget):
     def mouseMoveEvent(self, event):
         if self.clock == None:
             return
-        shared.activeEditor.SetCacheMode()
+        if not self.editorWidgetsHaveBeenCached:
+            shared.activeEditor.SetCacheMode(widgetToIgnore = self.proxy)
+            self.editorWidgetsHaveBeenCached = True
         self.timer = time.time() - self.clock
         # in general, draw less often than the mouseMoveEvent is triggered to improve performance.
         if self.timer > self.timeout:
@@ -116,21 +119,22 @@ class Draggable(Entity, QWidget):
                 finalPos = self.proxy.pos()
                 self.settings['position'] = [finalPos.x(), finalPos.y()]
                 shared.activeEditor.SetCacheMode('None')
+        self.editorWidgetsHaveBeenCached = False
         self.startDragPos = None
         self.cursorMoved = False
         event.accept()
 
     def HandleMouseMove(self, mousePos, buttons):
         mousePosInSceneCoords = self.proxy.mapToScene(mousePos)
-        outputSocketPos = self.GetSocketPos('output')
         if not self.canDrag:
             # Move the end point of the free link coming out the block.
             if self.dragging:
+                outputSocketPos = self.GetSocketPos('output')
                 self.linksOut['free']['link'].setLine(QLineF(outputSocketPos, mousePosInSceneCoords))
         elif buttons & Qt.LeftButton and self.startDragPos:
-            delta = mousePosInSceneCoords - self.startDragPos
-            if (delta.x() ** 2 + delta.y() ** 2) < shared.cursorTolerance ** 2:
-                return
+            # delta = mousePosInSceneCoords - self.startDragPos
+            # if (delta.x() ** 2 + delta.y() ** 2) < shared.cursorTolerance ** 2:
+            #     return
             self.cursorMoved = True
             startDragPosInSceneCoords = self.proxy.mapToScene(self.startDragPos)
             newPos = self.proxy.pos() + mousePosInSceneCoords - startDragPosInSceneCoords

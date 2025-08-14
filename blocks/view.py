@@ -16,10 +16,11 @@ from .. import shared
 from .. import style
 
 plt.rcParams['text.usetex'] = True
+plt.rcParams['font.size'] = 14
 
 class View(Draggable):
     '''Displays the data of arbitrary blocks.'''
-    def __init__(self, parent, proxy: QGraphicsProxyWidget, fontsize = 12, **kwargs):
+    def __init__(self, parent, proxy: QGraphicsProxyWidget, fontsize = 14, **kwargs):
         super().__init__(proxy, name = kwargs.pop('name', 'View'), type = 'View', size = kwargs.pop('size', [1000, 850]), **kwargs)
         self.parent = parent
         self.setLayout(QHBoxLayout())

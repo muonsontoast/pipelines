@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 3398.181952033952
-  - 1473.298155283823
+  - 2346.9677786216394
+  - 1218.2027234632687
   type: Editor
-  zoom: 0.5314606532234198
+  zoom: 0.3242481669036509
 3:
   linksIn: {}
   linksOut: {}
@@ -37,7 +37,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: 0.27
       max: 5.0
       min: -5.0
       name: Slider
@@ -64,7 +64,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: 0.059
       max: 5.0
       min: -5.0
       name: Slider
@@ -91,7 +91,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: 1.4
       max: 5.0
       min: -5.0
       name: Slider
@@ -118,7 +118,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: 1.5
       max: 5.0
       min: -5.0
       name: Slider
@@ -145,7 +145,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: 0.676
       max: 5.0
       min: -5.0
       name: Slider
@@ -172,7 +172,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: -0.39
       max: 5.0
       min: -5.0
       name: Slider
@@ -199,7 +199,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: -0.557
       max: 5.0
       min: -5.0
       name: Slider
@@ -226,7 +226,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: -0.689
       max: 5.0
       min: -5.0
       name: Slider
@@ -253,7 +253,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: 0.395
       max: 5.0
       min: -5.0
       name: Kick
@@ -280,7 +280,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: -0.693
       max: 5.0
       min: -5.0
       name: Slider
@@ -307,7 +307,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: -0.121
       max: 5.0
       min: -5.0
       name: Slider
@@ -334,7 +334,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: 0.102
       max: 5.0
       min: -5.0
       name: Slider
@@ -348,7 +348,7 @@
     32: corrector
   name: BS-PC-VSTR-03:SETI
   position:
-  - 1814
+  - 1816
   - 1455
   size:
   - 325
@@ -361,7 +361,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: -0.125
       max: 5.0
       min: -5.0
       name: Slider
@@ -388,7 +388,7 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0
+      default: 0.078
       max: 5.0
       min: -5.0
       name: Slider
@@ -641,7 +641,7 @@
       name: Repeats
       type: SliderComponent
       units: ''
-      value: 1
+      value: 5
       valueType: int
     steps:
       default: 3
@@ -690,6 +690,31 @@
   - 575
   - 440
   type: Orbit Response
+33:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -1.3618727
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -1.362
+      valueType: float
+  linkedElement: 54
+  linksIn: {}
+  linksOut: {}
+  name: QF01
+  position:
+  - 1444
+  - 641
+  size:
+  - 325
+  - 75
+  type: PV
 34:
   linksIn:
     32: data
@@ -702,6 +727,281 @@
   - 600
   - 300
   type: Save
+35:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.63592728
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -0.6020099999999999
+      valueType: float
+  linkedElement: 64
+  linksIn: {}
+  linksOut: {}
+  name: QD02
+  position:
+  - 1067
+  - 720
+  size:
+  - 325
+  - 75
+  type: PV
+36:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 1.0453633
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -0.9050000000000002
+      valueType: float
+  linkedElement: 115
+  linksIn: {}
+  linksOut: {}
+  name: QD04
+  position:
+  - 1064
+  - 876
+  size:
+  - 325
+  - 75
+  type: PV
+37:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.46136965
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 0.7410000000000005
+      valueType: float
+  linkedElement: 62
+  linksIn: {}
+  linksOut: {}
+  name: QF02
+  position:
+  - 1442
+  - 718
+  size:
+  - 325
+  - 75
+  type: PV
+38:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.89584231
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 1.0809999999999995
+      valueType: float
+  linkedElement: 113
+  linksIn: {}
+  linksOut: {}
+  name: QF04
+  position:
+  - 1442
+  - 874
+  size:
+  - 325
+  - 75
+  type: PV
+39:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 1.1245489
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 1.1189999999999998
+      valueType: float
+  linkedElement: 129
+  linksIn: {}
+  linksOut: {}
+  name: QD05
+  position:
+  - 1066
+  - 954
+  size:
+  - 325
+  - 75
+  type: PV
+40:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.34864665
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -0.5460099999999999
+      valueType: float
+  linkedElement: 80
+  linksIn: {}
+  linksOut: {}
+  name: QD03
+  position:
+  - 1066
+  - 798
+  size:
+  - 325
+  - 75
+  type: PV
+41:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -5.0
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 1.4190000000000005
+      valueType: float
+  linkedElement: 52
+  linksIn: {}
+  linksOut: {}
+  name: QD01
+  position:
+  - 1066
+  - 642
+  size:
+  - 325
+  - 75
+  type: PV
+42:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -1.0348828
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -1.035
+      valueType: float
+  linkedElement: 131
+  linksIn: {}
+  linksOut: {}
+  name: QF05
+  position:
+  - 1440
+  - 951
+  size:
+  - 325
+  - 75
+  type: PV
+43:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.5461448
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 0.3490000000000002
+      valueType: float
+  linkedElement: 78
+  linksIn: {}
+  linksOut: {}
+  name: QF03
+  position:
+  - 1442
+  - 796
+  size:
+  - 325
+  - 75
+  type: PV
+44:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 1.0861206
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 1.1099999999999994
+      valueType: float
+  linkedElement: 142
+  linksIn: {}
+  linksOut: {}
+  name: QD06
+  position:
+  - 1065
+  - 1032
+  size:
+  - 325
+  - 75
+  type: PV
+45:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.88699216
+      max: 5.0
+      min: -5.0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -0.9199999999999999
+      valueType: float
+  linkedElement: 144
+  linksIn: {}
+  linksOut: {}
+  name: QF06
+  position:
+  - 1438
+  - 1029
+  size:
+  - 325
+  - 75
+  type: PV
 47:
   linksIn:
     32: data

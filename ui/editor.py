@@ -43,12 +43,17 @@ class Editor(Entity, QGraphicsView):
     def drawBackground(self, painter, rect):
         pass
 
-    def SetCacheMode(self, mode = 'Device'):
+    def SetCacheMode(self, mode = 'Device', widgetToIgnore = None):
         '''Restores the image cache of blocks in the scene.\n
-        `item` should be one of <Device/None>'''
+        `item` should be one of <Device/None>\n
+        `widgetToIgnore` is a widget that should not be cached (such as one being dragged aroudn the scene).'''
         if mode == 'Device':
             for item in self.scene.items():
                 if not isinstance(item, QGraphicsLineItem):
+                    if widgetToIgnore == item: # don't cache widgets which are being moved.
+                        item.setCacheMode(QGraphicsItem.NoCache)
+                        item.update()
+                        continue
                     item.setCacheMode(QGraphicsItem.DeviceCoordinateCache) # -- may need to re-enable this!
         else:
             for item in self.scene.items():

@@ -48,11 +48,9 @@ class SingleTaskGPAction(Action):
     def CheckForValidInputs(self):
         # Have both correctors AND BPMs been suppled?
         if len(self.decisions) == 0:
-            print('No decision variables supplied! Backing out.')
             shared.workspace.assistant.PushMessage('Single Task GP is missing decision variables', 'Error')
             return False
         if len(self.objectives) == 0:
-            print('No objective variables supplied! Backing out.')
             shared.workspace.assistant.PushMessage('Single Task GP is missing objectives', 'Error')
             return False
         # Check whether all PVs have been linked to lattice elements.
