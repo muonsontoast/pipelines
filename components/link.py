@@ -111,11 +111,12 @@ class LinkComponent(QWidget):
             idx = 0 if self.pv.settings['alignment'] == 'Horizontal' else 1
             self.pv.settings['components']['value']['value'] = float(shared.lattice[self.pv.settings['linkedElement'].Index].KickAngle[idx])
             self.pv.settings['components']['value']['default'] = float(shared.lattice[self.pv.settings['linkedElement'].Index].KickAngle[idx])
-        # Adjust slider range if necessary
-        if self.pv.settings['components']['value']['value'] < self.pv.settings['components']['value']['min']:
-            self.pv.settings['components']['value']['min'] = self.pv.settings['components']['value']['value']
-        elif self.pv.settings['components']['value']['value'] > self.pv.settings['components']['value']['max']:
-            self.pv.settings['components']['value']['max'] = self.pv.settings['components']['value']['value']
+        # Adjust slider range if necessary for the relevant types
+        if self.linkedElement.Type in ['Corrector', 'Quadrupole']: # this list will grow over time
+            if self.pv.settings['components']['value']['value'] < self.pv.settings['components']['value']['min']:
+                self.pv.settings['components']['value']['min'] = self.pv.settings['components']['value']['value']
+            elif self.pv.settings['components']['value']['value'] > self.pv.settings['components']['value']['max']:
+                self.pv.settings['components']['value']['max'] = self.pv.settings['components']['value']['value']
         
         shared.inspector.Push(self.pv)
 

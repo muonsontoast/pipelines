@@ -23,7 +23,7 @@ class SingleTaskGP(Draggable):
         self.title = QLabel(f'{self.settings['name']} (Empty)', alignment = Qt.AlignCenter)
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         self.header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
-        self.AddSocket('decision', 'F', 'Decisions', 175, acceptableTypes = ['PV', 'Corrector'])
+        self.AddSocket('decision', 'F', 'Decisions', 175, acceptableTypes = ['PV', 'Corrector', 'SVD'])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = ['PV', 'BPM'])
         self.AddSocket('context', 'F', 'Context', 175, acceptableTypes = ['PV', 'Corrector', 'BPM'])
         self.AddSocket('out', 'M')

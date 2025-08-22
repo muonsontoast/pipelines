@@ -22,7 +22,8 @@ class PV(Draggable):
             components = {
                 'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
                 'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
-            }
+            },
+            **kwargs
         )
         self.parent = parent
         self.indicator = None
@@ -72,9 +73,9 @@ class PV(Draggable):
         if linkedType == 'Corrector':
             idx = 0 if self.settings['alignment'] == 'Horizontal' else 1
             if not override:
-                shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = func(slider.value())
+                shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = func(slider.value()) * 1e-3 # mrad -> rad
             else:
-                shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = override
+                shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = override * 1e-3 # mrad -> rad
         elif linkedType == 'Quadrupole':
             if not override:
                 shared.lattice[self.settings['linkedElement'].Index].K = func(slider.value())

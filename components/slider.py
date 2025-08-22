@@ -12,20 +12,6 @@ class SliderBar(QSlider):
         self.parent = parent
         self.oldValue = None
 
-    # def UpdateLinkedElement(self, event = None, oldValue = None):
-    #     '''`event` should be a mouseReleaseEvent if it needs to be called.'''
-    #     if 'linkedElement' not in self.parent.pv.settings:
-    #         return super().mouseReleaseEvent(event)
-    #     linkedType = self.parent.pv.settings['linkedElement'].Type
-    #     if linkedType == 'Corrector':
-    #         idx = 0 if self.parent.pv.settings['alignment'] == 'Horizontal' else 1
-    #         shared.lattice[self.parent.pv.settings['linkedElement'].Index].KickAngle[idx] = self.parent.ToAbsolute(self.value())
-    #         print(f'{self.parent.pv.name} was changed from {self.parent.ToAbsolute(self.oldValue):.3f} to {shared.lattice[self.parent.pv.settings['linkedElement'].Index].KickAngle[idx]:.3f}')
-    #     elif linkedType == 'Quadrupole':
-    #         shared.lattice[self.parent.pv.settings['linkedElement'].Index].K = self.parent.ToAbsolute(self.value())
-    #         print(f'{self.parent.pv.name} was changed from {self.parent.ToAbsolute(self.oldValue):.3f} to {shared.lattice[self.parent.pv.settings['linkedElement'].Index].K:.3f}')
-    #     self.oldValue = None
-
     def mousePressEvent(self, event):
         self.oldValue = self.value()
         super().mousePressEvent(event)
@@ -35,7 +21,6 @@ class SliderBar(QSlider):
             return super().mouseReleaseEvent(event)
         if 'linkedElement' not in self.parent.pv.settings:
             return super().mouseReleaseEvent(event)
-        # self.UpdateLinkedElement(event)
         self.parent.pv.UpdateLinkedElement(self, self.parent.ToAbsolute, event)
         self.oldValue = None
         super().mouseReleaseEvent(event)
@@ -138,9 +123,20 @@ class SliderComponent(QWidget):
         self.UpdateColors()
 
     def ToAbsolute(self, v):
+        self.range = 1 if self.range == 0 else self.range
+        print('===ToAbsolute====')
+        print('val:', v)
+        print('min:', self.pv.settings['components'][self.component]['min'])
+        print('range:', self.range)
+        print('steps:', self.steps)
         return self.pv.settings['components'][self.component]['min'] + v / self.steps * self.range
     
     def ToSliderValue(self, v):
+        self.range = 1 if self.range == 0 else self.range
+        print('val:', v)
+        print('min:', self.pv.settings['components'][self.component]['min'])
+        print('range:', self.range)
+        print('steps:', self.steps)
         return (v - self.pv.settings['components'][self.component]['min']) / self.range * self.steps
 
     def UpdateSliderValue(self):
@@ -177,12 +173,17 @@ class SliderComponent(QWidget):
         self.slider.setValue(self.ToSliderValue(self.pv.settings['components'][self.component]['default']))
         self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
 
-    def SetDefault(self):
-        self.default.clearFocus()
-        default = max(self.pv.settings['components'][self.component]['min'], min(self.pv.settings['components'][self.component]['max'], float(self.default.text())))
-        self.default.setText(f'{default:.{self.floatdp}f}')
+    def SetDefault(self, override = False):
+        if not override:
+            self.default.clearFocus()
+            default = max(self.pv.settings['components'][self.component]['min'], min(self.pv.settings['components'][self.component]['max'], float(self.default.text())))
+            self.default.setText(f'{default:.{self.floatdp}f}')
+        else:
+            default = max(self.pv.settings['components'][self.component]['min'], min(self.pv.settings['components'][self.component]['max'], self.pv.settings['components'][self.component]['default']))
+        
         self.pv.settings['components'][self.component]['default'] = default
-        if self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
+        
+        if not self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
             default = QLineEdit(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
             default.setAlignment(Qt.AlignCenter)
             default.setFixedSize(75, 25)
@@ -194,20 +195,29 @@ class SliderComponent(QWidget):
             self.default = default
             self.UpdateColors()
 
-    def SetMinimum(self):
-        self.minimum.clearFocus()
-        v = float(self.minimum.text())
-        self.pv.settings['components'][self.component]['min'] = v
-        self.pv.settings['components'][self.component]['default'] = max(v, self.pv.settings['components'][self.component]['default'])
-        self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
-        self.range = self.pv.settings['components'][self.component]['max'] - v
-        self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
-        self.minimum.setText(f'{v:.{self.floatdp}f}')
-        newSliderValue = max(float(self.value.text()), v)
-        self.slider.setValue(self.ToSliderValue(newSliderValue))
-        self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
+    def SetMinimum(self, override = False):
+        '''`override` is a bool. Component should be updated before calling this override. '''
+        if not override:
+            self.minimum.clearFocus()
+            v = float(self.minimum.text())
+            self.pv.settings['components'][self.component]['min'] = v
+            self.pv.settings['components'][self.component]['default'] = max(v, self.pv.settings['components'][self.component]['default'])
+            self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
+            self.range = self.pv.settings['components'][self.component]['max'] - v
+            self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
+            self.minimum.setText(f'{v:.{self.floatdp}f}')
+            newSliderValue = max(float(self.value.text()), v)
+            self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
+        else:
+            # self.range = self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min']
+            self.range = 1
+            self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min'] - 1)
+            newSliderValue = max(self.pv.settings['components'][self.component]['value'], self.pv.settings['components'][self.component]['min'])
+
         self.pv.settings['components'][self.component]['value'] = newSliderValue
-        if self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
+        self.slider.setValue(self.ToSliderValue(newSliderValue)) # assign the value of the slider
+
+        if not self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
             minimum = QLineEdit(f'{self.pv.settings['components'][self.component]['min']:.{self.floatdp}f}')
             minimum.setAlignment(Qt.AlignCenter)
             minimum.setFixedSize(75, 25)
@@ -219,19 +229,28 @@ class SliderComponent(QWidget):
             self.minimum = minimum
             self.UpdateColors()
     
-    def SetMaximum(self):
-        self.maximum.clearFocus()
-        v = float(self.maximum.text())
-        self.pv.settings['components'][self.component]['max'] = v
-        self.pv.settings['components'][self.component]['default'] = min(v, self.pv.settings['components'][self.component]['default'])
-        self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
-        self.range = v - self.pv.settings['components'][self.component]['min']
-        self.maximum.setText(f'{v:.{self.floatdp}f}')
-        newSliderValue = min(float(self.value.text()), v)
-        self.slider.setValue(self.ToSliderValue(newSliderValue))
-        self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
+    def SetMaximum(self, override = False):
+        '''`override` is a bool. Component should be updated before calling this override. '''
+        if not override:
+            self.maximum.clearFocus()
+            v = float(self.maximum.text())
+            self.pv.settings['components'][self.component]['max'] = v
+            self.pv.settings['components'][self.component]['default'] = min(v, self.pv.settings['components'][self.component]['default'])
+            self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
+            self.range = v - self.pv.settings['components'][self.component]['min']
+            self.maximum.setText(f'{v:.{self.floatdp}f}')
+            newSliderValue = min(float(self.value.text()), v)
+            self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
+        else:
+            # self.range = self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min']
+            self.range = 1
+            self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - 1)
+            newSliderValue = min(self.pv.settings['components'][self.component]['value'], self.pv.settings['components'][self.component]['max'])
+        
         self.pv.settings['components'][self.component]['value'] = newSliderValue
-        if self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
+        self.slider.setValue(self.ToSliderValue(newSliderValue))
+        
+        if not self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
             maximum = QLineEdit(f'{self.pv.settings['components'][self.component]['max']:.{self.floatdp}f}')
             maximum.setAlignment(Qt.AlignCenter)
             maximum.setFixedSize(75, 25)

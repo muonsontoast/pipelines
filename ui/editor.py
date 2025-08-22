@@ -15,7 +15,7 @@ class Editor(Entity, QGraphicsView):
         self.canDrag = False
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        self.setViewportUpdateMode(QGraphicsView.SmartViewportUpdate)
         self.setDragMode(QGraphicsView.NoDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -137,7 +137,7 @@ class Editor(Entity, QGraphicsView):
                         event.accept()
                         return
         angle = event.angleDelta().y()
-        zoomFactor = 1 + angle / 1000
+        zoomFactor = 1 + angle / 2000
         # get current scale
         currentScale = self.transform().m11()
         if (currentScale * zoomFactor > self.minScale) or (currentScale * zoomFactor < self.maxScale):

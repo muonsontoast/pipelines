@@ -1,8 +1,8 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGraphicsLineItem, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QPushButton, QLabel, QGraphicsLineItem, QHBoxLayout, QVBoxLayout
 from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QLineF, QPointF
 import time
-import re # regex
+from ..components.slider import SliderComponent
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
 from .socket import Socket
@@ -199,6 +199,35 @@ class Draggable(Entity, QWidget):
 
     def SetRect(self):
         shared.PVs[self.ID]['rect'] = MapDraggableRectToScene(self)
+
+    def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
+        housing = QWidget()
+        housing.setLayout(QHBoxLayout())
+        housing.layout().setContentsMargins(15, 20, 15, 0)
+        title = QLabel(title)
+        title.setStyleSheet(style.LabelStyle(padding = 0, fontColor = '#c4c4c4'))
+        housing.layout().addWidget(title)
+        self.widget.layout().addWidget(housing, alignment = Qt.AlignLeft)
+        widget = QWidget()
+        widget.setFixedHeight(50)
+        widget.setLayout(QVBoxLayout())
+        widget.layout().setContentsMargins(15, 10, 15, 0)
+        setattr(self, name, QListWidget())
+        v = getattr(self, name)
+        widget.layout().addWidget(v)
+        v.setFocusPolicy(Qt.NoFocus)
+        v.setSelectionMode(QListWidget.NoSelection)
+        v.setStyleSheet(style.InspectorSectionStyle())
+        setattr(self, f'{name}Amount', SliderComponent(self, f'{name}', sliderSteps, floatdp, hideRange = True, paddingBottom = 5, sliderOffset = 0, sliderRowSpacing = 15))
+        amount = getattr(self, f'{name}Amount')
+        if disableValue:
+            amount.value.setEnabled(False)
+        amount.setMaximumWidth(320)
+        item = QListWidgetItem()
+        item.setSizeHint(amount.sizeHint())
+        v.addItem(item)
+        v.setItemWidget(item, amount)
+        self.widget.layout().addWidget(widget)
     
     def AddSocket(self, name: str, socketType: str, socketText = '', housingWidth: int = 50, acceptableTypes: list = []) -> Socket:
         '''Leave `housingWidth` as default value for no accompanying socket name.\n
@@ -227,32 +256,37 @@ class Draggable(Entity, QWidget):
             socket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
             self.MSocketWidgets.layout().addWidget(getattr(self, f'{name}SocketHousing'), alignment = Qt.AlignLeft)
 
-    def AddButtons(self):
+    def AddButtons(self, *args):
+        '''Specify buttons not to draw by including `<start/pause/stop/clear>` as str args.'''
         # Control buttons
         self.buttons = QWidget()
         buttonsHeight = 35
         self.buttons.setFixedHeight(buttonsHeight)
         self.buttons.setLayout(QHBoxLayout())
         self.buttons.layout().setContentsMargins(15, 2, 15, 10)
-        self.start = QPushButton('Start')
-        self.start.setFixedHeight(buttonsHeight)
-        self.start.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-        self.start.clicked.connect(self.Start)
-        self.pause = QPushButton('Pause')
-        self.pause.setFixedHeight(buttonsHeight)
-        self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-        self.pause.clicked.connect(self.Pause)
-        self.stop = QPushButton('Stop')
-        self.stop.setFixedHeight(buttonsHeight)
-        self.stop.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-        self.stop.clicked.connect(self.Stop)
-        self.clear = QPushButton('Clear')
-        self.clear.setFixedHeight(buttonsHeight)
-        self.clear.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-        self.buttons.layout().addWidget(self.start)
-        self.buttons.layout().addWidget(self.pause)
-        self.buttons.layout().addWidget(self.stop)
-        self.buttons.layout().addWidget(self.clear)
+        if 'start' not in args:
+            self.start = QPushButton('Start')
+            self.start.setFixedHeight(buttonsHeight)
+            self.start.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+            self.start.clicked.connect(self.Start)
+            self.buttons.layout().addWidget(self.start)
+        if 'pause' not in args:
+            self.pause = QPushButton('Pause')
+            self.pause.setFixedHeight(buttonsHeight)
+            self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+            self.pause.clicked.connect(self.Pause)
+            self.buttons.layout().addWidget(self.pause)
+        if 'stop' not in args:
+            self.stop = QPushButton('Stop')
+            self.stop.setFixedHeight(buttonsHeight)
+            self.stop.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+            self.stop.clicked.connect(self.Stop)
+            self.buttons.layout().addWidget(self.stop)
+        if 'clear' not in args:
+            self.clear = QPushButton('Clear')
+            self.clear.setFixedHeight(buttonsHeight)
+            self.clear.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+            self.buttons.layout().addWidget(self.clear)
         self.main.layout().addWidget(self.buttons)
 
     def Start(self):

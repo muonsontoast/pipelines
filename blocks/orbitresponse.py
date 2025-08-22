@@ -130,9 +130,9 @@ class OrbitResponse(Draggable):
         # # Corrector step current / kick
         self.CreateSection('current', 'Kick / step (mrad)', 1e6, 3)
         # Corrector steps
-        self.CreateSection('steps', '# Steps', 3, 0)
+        self.CreateSection('steps', 'Steps', 3, 0)
         # BPM Repeats ...
-        self.CreateSection('repeats', '# BPM measurements (0.2s wait)', 19, 0)
+        self.CreateSection('repeats', 'BPM measurements (0.2s wait)', 19, 0)
         # Some padding
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.AddSocket('corrector', 'F', 'Correctors', 175, acceptableTypes = ['Corrector'])
@@ -146,7 +146,6 @@ class OrbitResponse(Draggable):
         self.UpdateColors()
 
     def Start(self):
-        global toggleState
         # Sort the correctors and BPMs to produce a proper ORM (Index -> Alignment)
         self.correctors = dict(sorted(sorted(self.correctors.items(), key = lambda item: item[1].settings['linkedElement'].Index), key = lambda item: item[1].settings['alignment']))
         self.BPMs = dict(sorted(sorted(self.BPMs.items(), key = lambda item: item[1].settings['linkedElement'].Index), key = lambda item: item[1].settings['alignment']))
@@ -173,8 +172,6 @@ class OrbitResponse(Draggable):
                 getRawData = False,
             ):
                 shared.workspace.assistant.PushMessage('Orbit response measurement already running.', 'Error')
-        else:
-            pass
 
     def Pause(self):
         TogglePause(self, True)
@@ -188,34 +185,34 @@ class OrbitResponse(Draggable):
         self.dataSharedMemory.unlink()
         self.ORMSharedMemory.unlink()
 
-    def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
-        housing = QWidget()
-        housing.setLayout(QHBoxLayout())
-        housing.layout().setContentsMargins(15, 20, 15, 0)
-        title = QLabel(title)
-        title.setStyleSheet(style.LabelStyle(padding = 0, fontColor = '#c4c4c4'))
-        housing.layout().addWidget(title)
-        self.widget.layout().addWidget(housing, alignment = Qt.AlignLeft)
-        widget = QWidget()
-        widget.setFixedHeight(50)
-        widget.setLayout(QVBoxLayout())
-        widget.layout().setContentsMargins(15, 10, 15, 0)
-        setattr(self, name, QListWidget())
-        v = getattr(self, name)
-        widget.layout().addWidget(v)
-        v.setFocusPolicy(Qt.NoFocus)
-        v.setSelectionMode(QListWidget.NoSelection)
-        v.setStyleSheet(style.InspectorSectionStyle())
-        setattr(self, f'{name}Amount', SliderComponent(self, f'{name}', sliderSteps, floatdp, hideRange = True, paddingBottom = 5, sliderOffset = 0, sliderRowSpacing = 15))
-        amount = getattr(self, f'{name}Amount')
-        if disableValue:
-            amount.value.setEnabled(False)
-        amount.setMaximumWidth(320)
-        item = QListWidgetItem()
-        item.setSizeHint(amount.sizeHint())
-        v.addItem(item)
-        v.setItemWidget(item, amount)
-        self.widget.layout().addWidget(widget)
+    # def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
+    #     housing = QWidget()
+    #     housing.setLayout(QHBoxLayout())
+    #     housing.layout().setContentsMargins(15, 20, 15, 0)
+    #     title = QLabel(title)
+    #     title.setStyleSheet(style.LabelStyle(padding = 0, fontColor = '#c4c4c4'))
+    #     housing.layout().addWidget(title)
+    #     self.widget.layout().addWidget(housing, alignment = Qt.AlignLeft)
+    #     widget = QWidget()
+    #     widget.setFixedHeight(50)
+    #     widget.setLayout(QVBoxLayout())
+    #     widget.layout().setContentsMargins(15, 10, 15, 0)
+    #     setattr(self, name, QListWidget())
+    #     v = getattr(self, name)
+    #     widget.layout().addWidget(v)
+    #     v.setFocusPolicy(Qt.NoFocus)
+    #     v.setSelectionMode(QListWidget.NoSelection)
+    #     v.setStyleSheet(style.InspectorSectionStyle())
+    #     setattr(self, f'{name}Amount', SliderComponent(self, f'{name}', sliderSteps, floatdp, hideRange = True, paddingBottom = 5, sliderOffset = 0, sliderRowSpacing = 15))
+    #     amount = getattr(self, f'{name}Amount')
+    #     if disableValue:
+    #         amount.value.setEnabled(False)
+    #     amount.setMaximumWidth(320)
+    #     item = QListWidgetItem()
+    #     item.setSizeHint(amount.sizeHint())
+    #     v.addItem(item)
+    #     v.setItemWidget(item, amount)
+    #     self.widget.layout().addWidget(widget)
 
     def SwitchMode(self):
         if self.online:

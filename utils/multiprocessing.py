@@ -1,4 +1,3 @@
-from PySide6.QtCore import QTimer
 from multiprocessing import Queue, Process, Event
 import multiprocessing as mp
 mp.set_start_method('spawn', force = True) # force linux machines to call __getstate__ and __setstate__ methods attached to actions.

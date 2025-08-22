@@ -62,6 +62,7 @@ class SocketInteractable(QFrame):
                     else:
                         self.parent.parent.BPMs[shared.PVLinkSource.ID] = shared.PVLinkSource
                 elif self.parent.parent.type == 'View':
+                    self.parent.parent.firstDraw = True # allow static elements on the canvas to be redrawn
                     self.parent.parent.DrawCanvas(stream = 'default')
                 shared.PVLinkSource = None
 

@@ -10,6 +10,7 @@ from ..blocks.orbitresponse import OrbitResponse
 from ..blocks.view import View
 from ..blocks.save import Save as SaveBlock
 from ..blocks.composition.add import Add
+from ..blocks.composition.svd import SVD
 from ..blocks.bayesian.singletaskgp import SingleTaskGP
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
@@ -26,6 +27,7 @@ blockTypes = {
     'View': View,
     'Save': SaveBlock,
     'Add': Add,
+    'SVD': SVD,
     'Single Task GP': SingleTaskGP,
 }
 
@@ -107,6 +109,9 @@ def CreateSave(pos: QPoint):
 def CreateAdd(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Add'], 'Add', pos)
 
+def CreateSVD(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['SVD'], 'SVD', pos)
+
 def CreateSingleTaskGP(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Single Task GP'], 'Single Task GP', pos)
 
@@ -164,6 +169,7 @@ commands = {
     'View': dict(shortcut = ['Ctrl+Shift+V'], func = CreateView, args = [GetMousePos]),
     'Save (Block)': dict(shortcut = ['Ctrl+Shift+S'], func = CreateSave, args = [GetMousePos]),
     'Add (Composition)': dict(shortcut = ['Ctrl+Shift+A'], func = CreateAdd, args = [GetMousePos]),
+    'SVD (Singular Value Decomposition)': dict(shortcut = [], func = CreateSVD, args = [GetMousePos]),
     'Single Task Gaussian Process': dict(shortcut = ['Ctrl+Shift+G'], func = CreateSingleTaskGP, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),

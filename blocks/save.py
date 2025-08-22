@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QVBoxLayout, QSizePolicy, QSpacerItem
 )
 from PySide6.QtCore import Qt, QTimer, QModelIndex, QSortFilterProxyModel, QItemSelectionModel
-from PySide6.QtGui import QKeySequence
 from .draggable import Draggable
 from .. import shared
 from .. import style

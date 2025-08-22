@@ -26,7 +26,7 @@ class EditorMenu(Draggable):
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.model = QStringListModel([k + f" ({', '.join(v['shortcut'])})" for k, v in zip(commands.commands.keys(), commands.commands.values())])
+        self.model = QStringListModel([k + f" [{', '.join(v['shortcut'])}]" if v['shortcut'] else k for k, v in zip(commands.commands.keys(), commands.commands.values())])
         self.matchingModel = QSortFilterProxyModel()
         self.matchingModel.setSourceModel(self.model)
         self.matchingModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
@@ -115,7 +115,7 @@ class EditorMenu(Draggable):
 
     def RunCommandFromSearch(self):
         text = self.shortcuts.model().index(self.currentShortcutIndex, 0).data()
-        commandName = text.split(' (')[0]
+        commandName = text.split(' [')[0]
         args = []
         for arg in commands.commands[commandName]['args']:
             if arg == commands.GetMousePos:
@@ -126,7 +126,7 @@ class EditorMenu(Draggable):
 
     def RunCommandFromClick(self, index):
         text = index.data()
-        commandName = text.split(' (')[0]
+        commandName = text.split(' [')[0]
         args = []
         for arg in commands.commands[commandName]['args']:
             if arg == commands.GetMousePos:
