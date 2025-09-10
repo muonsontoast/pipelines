@@ -25,3 +25,13 @@ def MapViewportRectToScene():
     bottomRightInSceneCoords = shared.activeEditor.mapToScene(bottomRight)
     shared.activeEditor.rectInSceneCoords = QRectF(topLeftInSceneCoords, bottomRightInSceneCoords)
     return shared.activeEditor.rectInSceneCoords
+
+def MultiSceneBoundingRect():
+    selectedItems = shared.activeEditor.area.selectedItems
+    if not selectedItems:
+        return QRectF()
+    
+    rect = selectedItems[0].sceneBoundingRect()
+    for item in selectedItems[1:]:
+        rect = rect.united(item.sceneBoundingRect())
+    return rect

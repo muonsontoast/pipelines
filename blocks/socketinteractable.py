@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QFrame
 from PySide6.QtCore import Qt, QLineF, QRectF
+import numpy as np
 from .. import style
 from .. import shared
 
@@ -62,8 +63,10 @@ class SocketInteractable(QFrame):
                     else:
                         self.parent.parent.BPMs[shared.PVLinkSource.ID] = shared.PVLinkSource
                 elif self.parent.parent.type == 'View':
+                    if np.isinf(shared.PVLinkSource.data).all():
+                        shared.PVLinkSource.Start() # ensure data is populated before first draw
                     self.parent.parent.firstDraw = True # allow static elements on the canvas to be redrawn
-                    self.parent.parent.DrawCanvas(stream = 'default')
+                    self.parent.parent.DrawCanvas(next(iter(self.parent.parent.streamTypesIn.values())))
                 shared.PVLinkSource = None
 
     def leaveEvent(self, event):

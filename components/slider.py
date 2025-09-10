@@ -10,19 +10,24 @@ class SliderBar(QSlider):
     def __init__(self, orientation, parent):
         super().__init__(orientation)
         self.parent = parent
-        self.oldValue = None
+        # self.oldValue = None
 
     def mousePressEvent(self, event):
-        self.oldValue = self.value()
+        # self.oldValue = self.value()
         super().mousePressEvent(event)
     
     def mouseReleaseEvent(self, event):
-        if not self.oldValue:
-            return super().mouseReleaseEvent(event)
-        if 'linkedElement' not in self.parent.pv.settings:
-            return super().mouseReleaseEvent(event)
-        self.parent.pv.UpdateLinkedElement(self, self.parent.ToAbsolute, event)
-        self.oldValue = None
+        print(f'Released {self.parent.pv.name} slider inside the inspector')
+        # if not self.oldValue:
+        #     return super().mouseReleaseEvent(event)
+        # if 'linkedElement' not in self.parent.pv.settings:
+        #     return super().mouseReleaseEvent(event)
+        # if 'linkedElement' in self.parent.pv.settings:
+        #     print('About to update it\'s linked element')
+        #     self.parent.pv.UpdateLinkedElement(self, self.parent.ToAbsolute, event)
+        # else:
+        #     self.parent.pv.data[0] = self.parent.ToAbsolute(self.value())
+        # self.oldValue = None
         super().mouseReleaseEvent(event)
 
 class SliderComponent(QWidget):
@@ -124,19 +129,10 @@ class SliderComponent(QWidget):
 
     def ToAbsolute(self, v):
         self.range = 1 if self.range == 0 else self.range
-        print('===ToAbsolute====')
-        print('val:', v)
-        print('min:', self.pv.settings['components'][self.component]['min'])
-        print('range:', self.range)
-        print('steps:', self.steps)
         return self.pv.settings['components'][self.component]['min'] + v / self.steps * self.range
     
     def ToSliderValue(self, v):
         self.range = 1 if self.range == 0 else self.range
-        print('val:', v)
-        print('min:', self.pv.settings['components'][self.component]['min'])
-        print('range:', self.range)
-        print('steps:', self.steps)
         return (v - self.pv.settings['components'][self.component]['min']) / self.range * self.steps
 
     def UpdateSliderValue(self):
@@ -145,6 +141,12 @@ class SliderComponent(QWidget):
         if 'valueType' not in self.pv.settings['components'][self.component].keys():
             self.pv.settings['components'][self.component]['valueType'] = float
         self.pv.settings['components'][self.component]['value'] = self.pv.settings['components'][self.component]['valueType'](v)
+        if 'linkedElement' in self.pv.settings:
+            print('About to update it\'s linked element')
+            self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
+        else:
+            if self.pv.type in self.pv.pvBlockTypes:
+                self.pv.data[0] = v
 
     def SetSliderValue(self):
         self.value.clearFocus()
@@ -164,14 +166,23 @@ class SliderComponent(QWidget):
             self.value = value
             self.UpdateColors()
         self.UpdateSlider()
-        self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
 
     def UpdateSlider(self):
-        self.slider.setValue(self.ToSliderValue(float(self.value.text())))
+        newValue = float(self.value.text())
+        self.slider.setValue(self.ToSliderValue(newValue))
+        if 'linkedElement' in self.pv.settings:
+            print('About to update it\'s linked element')
+            self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
+        else:
+            self.pv.data[0] = self.ToAbsolute(self.slider.value())
 
     def Reset(self):
         self.slider.setValue(self.ToSliderValue(self.pv.settings['components'][self.component]['default']))
-        self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
+        if 'linkedElement' in self.pv.settings:
+            print('About to update it\'s linked element')
+            self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
+        else:
+            self.pv.data[0] = self.ToAbsolute(self.slider.value())
 
     def SetDefault(self, override = False):
         if not override:

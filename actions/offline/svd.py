@@ -10,8 +10,8 @@ from ... import shared
 class SVDAction(Action):
     '''Computes the trajectory of the beam for a given set of corrector strengths\n
     or the inverse problem of finding the set of corrector strengths producing a given offset in BPMs.'''
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         self.correctors = None
         self.BPMs = None
         self.ORM = None
@@ -89,19 +89,20 @@ class SVDAction(Action):
             arr, idxs, inv = np.unique(np.array([b['index'] for b in self.BPMs]), return_index = True, return_inverse = True)
             # calculate the nominal trajectory through the lattice
             beamOut = lattice_pass(self.lattice, deepcopy(beam), nturns = 1, refpts = arr) # has shape 6 x numParticles x numRefpts x nturns
+            print(f'Ran PyAT')
             # get horizontal BPM list idxs
-            xIdxs = [idxs[inv[i]] for i, b in enumerate(self.BPMs) if b['alignment'] == 'Horizontal']
-            yIdxs = [idxs[inv[i]] for i, b in enumerate(self.BPMs) if b['alignment'] == 'Vertical']
-            # get horizontal centres
+            xIdxs = [inv[i] for i, b in enumerate(self.BPMs) if b['alignment'] == 'Horizontal']
+            yIdxs = [inv[i] for i, b in enumerate(self.BPMs) if b['alignment'] == 'Vertical']
+            # get beam centres
             xCentres = np.mean(beamOut[0, :, xIdxs, 0], 1) * 1e3 # convert back to mm at the end
             yCentres = np.mean(beamOut[2, :, yIdxs, 0], 1) * 1e3
             S = np.zeros((len(self.BPMs), len(self.correctors)))
             np.fill_diagonal(S, self.s) # modifies matrix in-place
-            ORM = self.U @ S @ self.VT
-            cVec = np.array([c['value'] - c['default'] for c in self.correctors])[:, None] # convert to column vector
-            # We solve (and inverse of) dBPMx = ORM dtheta (BPMs orders, x then y, and within those bins, by index & same for correctors)
-            # 1. calculate the predicted trajectory for the set corrector values
-            dBPM = ORM @ cVec
+            ORM = self.U @ S @ self.VT # SVD decomposition on ORM
+            # cVec = np.array([c['value'] - c['default'] for c in self.correctors])[:, None] # convert to column vector
+            # # We solve (and inverse of) dBPMx = ORM dtheta (BPMs orders, x then y, and within those bins, by index & same for correctors)
+            # # 1. calculate the predicted trajectory for the set corrector values
+            # dBPM = ORM @ cVec
             data[:, 1] = np.concatenate([xCentres, yCentres]) # tracking output
         except Exception as e:
             sharedMemory.close()

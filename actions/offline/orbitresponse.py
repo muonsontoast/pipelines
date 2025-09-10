@@ -10,8 +10,8 @@ from ... import shared
 
 class OrbitResponseAction(Action):
     '''Perform, manipulate and save orbit response measurements.'''
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         # Step range in Amps / convert to mrad with factor 0.6 mrad / Amp
         # This is how you extract lattice elements by name
         # BPMs = shared.lattice.get_uint32_index('BPM')
@@ -52,11 +52,11 @@ class OrbitResponseAction(Action):
         # Have both correctors AND BPMs been suppled?
         if len(self.BPMs) == 0:
             print('No BPMs supplied! Backing out.')
-            shared.workspace.assistant.PushMessage('Orbit Response is missing BPMs', 'Error')
+            shared.workspace.assistant.PushMessage('Orbit Response is missing BPMs.', 'Error')
             return False
         if len(self.correctors) == 0:
             print('No Correctors supplied! Backing out.')
-            shared.workspace.assistant.PushMessage('Orbit Response is missing correctors', 'Error')
+            shared.workspace.assistant.PushMessage('Orbit Response is missing correctors.', 'Error')
             return False
         # Check whether all PVs have been linked to lattice elements.
         for c in self.correctors.values():
@@ -105,7 +105,7 @@ class OrbitResponseAction(Action):
                             beamOut = lattice_pass(self.lattice, deepcopy(beam), nturns = 1, refpts = np.array([BPMIdx])) # has shape 6 x numParticles x numRefpts x nturns
                             centre = np.mean(beamOut[0, :, 0, 0]) if b['alignment'] == 'Horizontal' else np.mean(beamOut[2, :, 0, 0])
                             data[row, col, _, r] = centre
-                            print(f'On step {counter} / {totalSteps}', end = '\r', flush = True)
+                            # print(f'On step {counter} / {totalSteps}', end = '\r', flush = True)
                             counter += 1
                             # check for interrupts
                             while pause.is_set():
@@ -128,6 +128,7 @@ class OrbitResponseAction(Action):
         except Exception as e:
             sharedMemory.close()
             error.set()
+            print('An error occurred inside the ORM action, here it is:', f'{e}')
             return f'{e}; Is this is the correct lattice and have all correctors and BPMs been linked correctly?'
 
     def Fit(self, data, kicks, numCorrectors, numBPMs, postProcessedSharedMemoryName, postProcessedShape, postProcessedDType):

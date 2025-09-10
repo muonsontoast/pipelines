@@ -213,7 +213,7 @@ class Save(Draggable):
             entity = shared.entities[next(iter(self.linksIn))]
             self.entityNameIn = entity.name
             # Is the connected block already holding data?
-            if len(entity.data.shape) == 0:
+            if np.isinf(entity.data).all():
                 return
         # First time setup
         if self.firstPass:

@@ -28,17 +28,17 @@ class OrbitResponse(Draggable):
         self.settings['components'] = {
             'current': dict(name = 'Current', value = .5, min = .01, max = 5, default = .5, units = 'mrad', type = SliderComponent),
             'steps': dict(name = 'Steps', value = 3, min = 3, max = 9, default = 3, units = 'mrad', valueType = int, type = SliderComponent),
-            'repeats': dict(name = 'Repeats', value = 5, min = 1, max = 20, default = 5, units = '', valueType = int, type = SliderComponent)
+            'repeats': dict(name = 'Repeats', value = 1, min = 1, max = 20, default = 1, units = '', valueType = int, type = SliderComponent)
         }
         self.active = False
         self.hovering = False
         self.startPos = None
-        self.offlineAction = OrbitResponseAction()
+        self.offlineAction = OrbitResponseAction(self)
         self.runningCircle = RunningCircle()
         # Define orbit response streams
         # All streams contain a 'default' entry for the de facto use case.
         self.streams = {
-            'raw': lambda **kwargs: {
+            'raw': lambda: {
                 # Axis names
                 'ax': ['BPM', 'Corrector', 'Step (mrad)'],
                 # Names of each item in the respective axes
@@ -46,7 +46,20 @@ class OrbitResponse(Draggable):
                           [c.name for c in self.correctors.values()],
                           [str(s) for s in self.settings['components']['current']['value'] * (np.array(range(self.settings['components']['steps']['value'])) - int(self.settings['components']['steps']['value'] / 2))],
                           [f'Measurement {r + 1}' for r in range(self.settings['components']['repeats']['value'])]],
-                # Full raw data
+                'defaults': {
+                    c.ID: c.streams[self.streamTypesIn[c.ID]]()['default'] for c in self.correctors.values()
+                },
+                # limits of the correctors
+                'lims': {
+                    c.ID: c.streams[self.streamTypesIn[c.ID]]()['lims'] for c in self.correctors.values()
+                },
+                'linkedIdxs': {
+                    c.ID: c.streams[self.streamTypesIn[c.ID]]()['linkedIdx'] for c in self.correctors.values()
+                },
+                'alignments': {
+                    c.ID: c.streams[self.streamTypesIn[c.ID]]()['alignments'] for c in self.correctors.values()
+                },
+                # raw data
                 'data': self.data,
             },
             'default': lambda **kwargs: {
@@ -63,15 +76,6 @@ class OrbitResponse(Draggable):
                 'cmapLabel': r'$\Delta~$mm / mrad',
                 'data': self.ORM
             },
-            'corrector': lambda **kwargs: {
-                'xlabel': f'Corrector Kick Angle',
-                'ylabel': f'Beam Center in BPM',
-                'xunits': 'mrad',
-                'yunits': 'mm',
-                'plottype': 'scatter',
-                # testing ...
-                'data': np.array([(np.arange(0, self.settings['components']['steps']['value'], 1) - int(self.settings['components']['steps']['value'] / 2)) * self.settings['components']['current']['value'], 1e3 * np.mean(self.data, axis = 3)[0][0]])
-            }
         }
         shared.runnableBlocks[self.ID] = self
         self.Push()
@@ -145,7 +149,10 @@ class OrbitResponse(Draggable):
         # Update colors
         self.UpdateColors()
 
-    def Start(self):
+    def Start(self, setpoint:np.ndarray = None, **kwargs):
+        # The ORM is assumed fixed for a given beamline so passing a setpoint, sets all connected correctors.
+        self.offlineAction.resultsWritten = False
+        print('Starting ORM')
         # Sort the correctors and BPMs to produce a proper ORM (Index -> Alignment)
         self.correctors = dict(sorted(sorted(self.correctors.items(), key = lambda item: item[1].settings['linkedElement'].Index), key = lambda item: item[1].settings['alignment']))
         self.BPMs = dict(sorted(sorted(self.BPMs.items(), key = lambda item: item[1].settings['linkedElement'].Index), key = lambda item: item[1].settings['alignment']))
@@ -155,10 +162,11 @@ class OrbitResponse(Draggable):
             self.offlineAction.lattice = deepcopy(shared.lattice)
             if not self.offlineAction.CheckForValidInputs():
                 return
-            onlineText = 'online' if self.online else 'offline'
+            onlineText = 'offline'
             shared.workspace.assistant.PushMessage(f'Running orbit response measurement ({onlineText}).')
             numBPMs = len(self.BPMs.keys())
             numCorrectors = len(self.correctors.keys())
+            # Invoke Start() methods of children to generate data
             if not PerformAction(
                 self,
                 np.empty((numBPMs, numCorrectors,
@@ -184,35 +192,6 @@ class OrbitResponse(Draggable):
         # remove the data from memory to stop it persisting after closing the application.
         self.dataSharedMemory.unlink()
         self.ORMSharedMemory.unlink()
-
-    # def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
-    #     housing = QWidget()
-    #     housing.setLayout(QHBoxLayout())
-    #     housing.layout().setContentsMargins(15, 20, 15, 0)
-    #     title = QLabel(title)
-    #     title.setStyleSheet(style.LabelStyle(padding = 0, fontColor = '#c4c4c4'))
-    #     housing.layout().addWidget(title)
-    #     self.widget.layout().addWidget(housing, alignment = Qt.AlignLeft)
-    #     widget = QWidget()
-    #     widget.setFixedHeight(50)
-    #     widget.setLayout(QVBoxLayout())
-    #     widget.layout().setContentsMargins(15, 10, 15, 0)
-    #     setattr(self, name, QListWidget())
-    #     v = getattr(self, name)
-    #     widget.layout().addWidget(v)
-    #     v.setFocusPolicy(Qt.NoFocus)
-    #     v.setSelectionMode(QListWidget.NoSelection)
-    #     v.setStyleSheet(style.InspectorSectionStyle())
-    #     setattr(self, f'{name}Amount', SliderComponent(self, f'{name}', sliderSteps, floatdp, hideRange = True, paddingBottom = 5, sliderOffset = 0, sliderRowSpacing = 15))
-    #     amount = getattr(self, f'{name}Amount')
-    #     if disableValue:
-    #         amount.value.setEnabled(False)
-    #     amount.setMaximumWidth(320)
-    #     item = QListWidgetItem()
-    #     item.setSizeHint(amount.sizeHint())
-    #     v.addItem(item)
-    #     v.setItemWidget(item, amount)
-    #     self.widget.layout().addWidget(widget)
 
     def SwitchMode(self):
         if self.online:
@@ -263,7 +242,7 @@ class OrbitResponse(Draggable):
             self.correctors.pop(ID)
         super().RemoveLinkIn(ID)
 
-    def ToggleStyling(self):
+    def ToggleStyling(self, active = None):
         pass
 
     def BaseStyling(self):

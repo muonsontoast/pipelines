@@ -10,7 +10,12 @@ class Entity:
         super().__init__()
         self.name = kwargs.get('name', 'Entity')
         self.type = kwargs.get('type', 'Entity')
-        self.data = np.empty((0,))
+        # self.data = np.zeros((0,))
+        # self.data[:] = np.inf
+        self.data = np.full(1, np.inf)
+        if self.type == 'SVD':
+            print('At instantiation, SVD has this data:', self.data)
+        # self.data = np.inf((0,))
         self.sharingData = False
         self.settings = dict(name = self.name, type = self.type)
         for k, v in kwargs.items(): # Assign entity-specific attributes.
@@ -30,6 +35,7 @@ class Entity:
     
     def CleanUp(self):
         # remove the data from memory to stop it persisting after closing the application.
+        self.dataSharedMemory.close()
         self.dataSharedMemory.unlink()
 
     def Register(self, overrideID = None):
@@ -45,14 +51,14 @@ class Entity:
         shared.entities.pop(self.ID, None) # will not fail if the ID does not exist.
         del self # delete this object
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = ''
         s += '*' + self.name + '*\n'
         s += f'ID: {self.ID}\n'
         s += f'Type: {self.type}\n'
         return s
 
-def AssignEntityID():
+def AssignEntityID() -> int:
     '''Assign a unique gloabl ID.'''
     ID = 0
     for _ID in sorted(shared.entities):

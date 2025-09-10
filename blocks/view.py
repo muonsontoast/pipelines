@@ -36,6 +36,7 @@ class View(Draggable):
         self.liveUpdateCheckTimeInMilliseconds = 1 / self.liveUpdateCheckFrequency * 1e3
         self.runningCircle = RunningCircle()
         self.firstDraw = True
+        self.entityIn = None # only one entity can be connected as input at one time, so store a direct reference
         # Attrs relevant to plotting
         self.yline = None # 1d line plots
         self.Push()
@@ -95,7 +96,7 @@ class View(Draggable):
         self.widget.layout().addWidget(self.plot)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)) # for spacing
         self.main.layout().addWidget(self.widget)
-        self.AddSocket('data', 'F', acceptableTypes = ['PV', 'BPM', 'Single Task GP', 'Orbit Response', 'SVD'])
+        self.AddSocket('data', 'F', acceptableTypes = ['Single Task GP', 'Orbit Response', 'SVD', 'Add', 'Subtract'])
         self.AddSocket('out', 'M')
         super().Push()
         self.ClearCanvas()
@@ -105,10 +106,11 @@ class View(Draggable):
     def CheckData(self):
         # periodically calls itself until it detects liveUpdatesEnabled is False.
         if not self.liveUpdatesEnabled:
-            print('Stopping live updates')
             return
         if self.linksIn:
-            self.DrawCanvas('default')
+            # if shared.entities[next(iter(self.linksIn))].type in ['SVD']:
+            #     result = shared.entities[next(iter(self.linksIn))].Start()
+            self.DrawCanvas(next(iter(self.streamTypesIn.values())))
             QTimer.singleShot(self.liveUpdateCheckTimeInMilliseconds, self.CheckData)
 
     def ToggleLiveUpdates(self):
@@ -121,116 +123,133 @@ class View(Draggable):
         if not self.linksIn:
             return
         # access stream of first linked block (may hard restrict it to one block in at some point in the future).
-        entityIn = shared.entities[next(iter(self.linksIn))]
-        self.stream = entityIn.streams[stream](**kwargs)
-        dataShape = self.stream['data'].shape
+        # take the only item from streams if there is only one to take
+        self.stream = next(iter(self.entityIn.streams.values()))(**kwargs) if len(self.entityIn.streams) == 1 else self.entityIn.streams[stream](**kwargs)
+        dataShape = self.stream['data'].shape if type(self.stream) == dict else self.stream.shape
         if dataShape == (0,):
-            print('Returning out of view check')
             return
-        try: 
-            if not self.canvasHasBeenCleared:
-                self.canvasHasBeenCleared = True
-                self.ClearCanvas()
-                self.ToggleSpines(self.axes, True)
-                self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
-                self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
-            if self.stream['plottype'] == 'imshow':
-                if 'norm' in self.stream.keys():
-                    im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'], norm = TwoSlopeNorm(vcenter = self.stream['vcenter']))
-                else:
-                    im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
-                divider = make_axes_locatable(self.axes)
-                cax = divider.append_axes("right", size = "5%", pad = 0.075)
-                self.cb = self.figure.colorbar(im, cax = cax, ax = self.axes)
-                self.cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
-                self.cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
-                for spine in self.cb.ax.spines.values():
-                    spine.set_edgecolor("#c4c4c4")
-                    spine.set_linewidth(1)
-                self.axes.set_xticks(self.stream['xticks'])
-                self.axes.set_xticklabels(self.stream['xticklabels'], rotation = 90)
-                self.axes.set_yticks(self.stream['yticks'])
-                self.axes.set_yticklabels(self.stream['yticklabels'])
-                self.axes.set_aspect('auto')
-                self.figure.tight_layout()
-                # testing for now ... this draw call leads to terrible performance live, need to replace with blitting.
-                self.figure.canvas.draw() # I should look into whether blitting can be used to speed up 2D plots.
-            # line plots
-            elif self.stream['plottype'] == 'plot':
-                dimension = len(dataShape)
-                if dimension == 1:
-                        if self.firstDraw:
-                            self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
-                            self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
-                            xunits = f' ({self.stream['xunits']})' if self.stream['xunits'] != '' else ''
-                            self.axes.set_xlabel(f'{self.stream['xlabel']}{xunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
-                            yunits = f' ({self.stream['yunits']})' if self.stream['yunits'] != '' else ''
-                            self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
-                            self.x = np.array(list(range(0, dataShape[0])))
-                            self.ln, = self.axes.plot(self.x, self.stream['data'], color = 'tab:blue', animated = True)
-                            self.axes.set_xlim(self.stream['xlim'])
-                            self.axes.set_ylim(self.stream['ylim'])
-                            self.axes.set_xlabel(self.stream['xlabel'])
-                            self.axes.set_ylabel(self.stream['ylabel'])
-                            self.axes.grid(alpha = .35)
-                            self.figure.tight_layout()
-                            self.firstDraw = False
-                            self.figure.canvas.draw()
-                            self.bm = BlitManager(self.figure.canvas, [self.ln, ])
-                        else:
-                            self.ln.set_ydata(self.stream['data'])
-                        self.bm.update()
-            elif self.stream['plottype'] == 'SVD':
-                if self.firstDraw:
-                    print('View block is redrawing!')
-                    if np.isnan(self.stream['trajectory'][:, 0]).any():
-                        return
-                    self.figure.clear()
-                    # scree plot
-                    self.axes01 = self.figure.add_subplot(211)
-                    self.axes01.set_facecolor("none")
-                    self.ToggleSpines(self.axes01, True)
-                    # trajectory correction plot
-                    self.axes02 = self.figure.add_subplot(212)
-                    self.axes02.set_facecolor("none")
-                    self.ToggleSpines(self.axes02, True)
-                    self.axes01.tick_params(colors = '#c4c4c4', labelsize = self.fontsize, which = 'both')
-                    self.axes02.tick_params(colors = '#c4c4c4', labelsize = self.fontsize, which = 'both')
-                    # plotting of the data
-                    # scree plot
-                    self.scree = self.axes01.bar(self.stream['xticks01'], self.stream['data'])
-                    self.axes01.set_xticks(self.stream['xticks01'])
-                    self.axes01.set_xticklabels(self.stream['xticklabels01'])
-                    self.axes01.set_xlabel(self.stream['xlabel01'], color = '#c4c4c4', size = self.fontsize)
-                    self.axes01.set_ylabel(self.stream['ylabel01'], color = '#c4c4c4', size = self.fontsize)
-                    # draw truncation line
-                    self.axes01.axvline(entityIn.settings['components']['truncation']['value'] - 1 + .5, ls = '--', color = "#e3bd23", label = 'Truncation Boundary')
-                    self.axes01.legend(loc = 'upper right')
-                    self.axes02.axhline(y = 0, color = 'white', lw = 2, alpha = .35)
-                    # trajectory plot
-                    self.trajectory, = self.axes02.plot(
-                        self.stream['trajectory'][:, 0],
-                        self.stream['trajectory'][:, 1],
-                        marker = 'o',
-                        markersize = 5,
-                        label = 'PyAT Nominal'
-                    )
-                    self.axes02.set_xlabel(self.stream['xlabel02'], color = '#c4c4c4', size = self.fontsize)
-                    self.axes02.set_ylabel(self.stream['ylabel02'], color = '#c4c4c4', size = self.fontsize)
-                    self.axes02.grid(alpha = .35)
-                    self.axes02.minorticks_on()
-                    self.axes02.legend(loc = 'upper right')
+        # try: 
+        if not self.canvasHasBeenCleared:
+            self.canvasHasBeenCleared = True
+            self.ClearCanvas()
+            self.ToggleSpines(self.axes, True)
+            self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
+            self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
 
-                    self.figure.tight_layout()
-                    self.firstDraw = False
-                    self.figure.canvas.draw_idle()
-                    self.bm = BlitManager(self.figure.canvas, [self.trajectory, ])
-                else:
-                    self.trajectory.set_xdata(self.stream['trajectory'][:, 0])
-                    self.trajectory.set_ydata(self.stream['trajectory'][:, 1])
+        # data is all nan if nothing has been written yet, so ignore and wait until the next update to check again
+        if np.isinf(self.stream['data']).all():
+            return
+        
+        if self.stream['plottype'] == 'imshow':
+            if 'norm' in self.stream.keys():
+                im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'], norm = TwoSlopeNorm(vcenter = self.stream['vcenter']))
+            else:
+                im = self.axes.imshow(self.stream['data'], cmap = self.stream['cmap'])
+            divider = make_axes_locatable(self.axes)
+            cax = divider.append_axes("right", size = "5%", pad = 0.075)
+            self.cb = self.figure.colorbar(im, cax = cax, ax = self.axes)
+            self.cb.set_label(self.stream['cmapLabel'], rotation = 270, fontsize = self.fontsize, labelpad = 20, color = '#c4c4c4')
+            self.cb.ax.tick_params(colors = '#c4c4c4', labelsize = self.fontsize)
+            for spine in self.cb.ax.spines.values():
+                spine.set_edgecolor("#c4c4c4")
+                spine.set_linewidth(1)
+            self.axes.set_xticks(self.stream['xticks'])
+            self.axes.set_xticklabels(self.stream['xticklabels'], rotation = 90)
+            self.axes.set_yticks(self.stream['yticks'])
+            self.axes.set_yticklabels(self.stream['yticklabels'])
+            self.axes.set_aspect('auto')
+            self.figure.tight_layout()
+            # testing for now ... this draw call leads to terrible performance live, need to replace with blitting.
+            self.figure.canvas.draw() # I should look into whether blitting can be used to speed up 2D plots.
+        # line plots
+        elif self.stream['plottype'] == 'plot':
+            dimension = len(dataShape)
+            if dimension == 1:
+                    if self.firstDraw:
+                        self.axes.tick_params(axis='x', which='both', labelbottom = True, length = 5)
+                        self.axes.tick_params(axis='y', which='both', labelleft = True, length = 5)
+                        xunits = f' ({self.stream['xunits']})' if self.stream['xunits'] != '' else ''
+                        self.axes.set_xlabel(f'{self.stream['xlabel']}{xunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
+                        yunits = f' ({self.stream['yunits']})' if self.stream['yunits'] != '' else ''
+                        self.axes.set_ylabel(f'{self.stream['ylabel']}{yunits}', fontsize = self.fontsize, labelpad = 10, color = '#c4c4c4')
+                        self.x = np.array(list(range(0, dataShape[0])))
+                        self.ln, = self.axes.plot(self.x, self.stream['data'], color = 'tab:blue', animated = True)
+                        self.axes.set_xlim(self.stream['xlim'])
+                        self.axes.set_ylim(self.stream['ylim'])
+                        self.axes.set_xlabel(self.stream['xlabel'])
+                        self.axes.set_ylabel(self.stream['ylabel'])
+                        self.axes.grid(alpha = .35)
+                        self.figure.tight_layout()
+                        self.firstDraw = False
+                        self.figure.canvas.draw()
+                        self.bm = BlitManager(self.figure.canvas, [self.ln, ])
+                    else:
+                        self.ln.set_xdata(np.array(list(range(0, dataShape[0]))))
+                        self.ln.set_ydata(self.stream['data'])
+                    self.bm.update()
+        elif self.stream['plottype'] == 'SVD':
+            if self.firstDraw:
+                if 'xTrajectory' not in self.stream and 'yTrajectory' not in self.stream:
+                    return
+                self.figure.clear()
+                # scree plot
+                self.axes01 = self.figure.add_subplot(211)
+                self.axes01.set_facecolor("none")
+                self.ToggleSpines(self.axes01, True)
+                # trajectory correction plot
+                self.axes02 = self.figure.add_subplot(212)
+                self.axes02.set_facecolor("none")
+                self.ToggleSpines(self.axes02, True)
+                self.axes01.tick_params(colors = '#c4c4c4', labelsize = self.fontsize, which = 'both')
+                self.axes02.tick_params(colors = '#c4c4c4', labelsize = self.fontsize, which = 'both')
+                # plotting of the data
+                # scree plot
+                self.scree = self.axes01.bar(self.stream['xticks01'], self.stream['data'])
+                self.axes01.set_xticks(self.stream['xticks01'])
+                self.axes01.set_xticklabels(self.stream['xticklabels01'])
+                self.axes01.set_xlabel(self.stream['xlabel01'], color = '#c4c4c4', size = self.fontsize)
+                self.axes01.set_ylabel(self.stream['ylabel01'], color = '#c4c4c4', size = self.fontsize)
+                # draw truncation line
+                self.trunctationLine = self.axes01.axvline(self.entityIn.settings['components']['truncation']['value'] - 1 + .5, ls = '--', color = "#e3bd23", label = 'Truncation Boundary')
+                self.axes01.legend()
+                self.axes02.axhline(y = 0, color = 'white', lw = 2, alpha = .35)
+                # trajectory plot
+                self.xTrajectory, = self.axes02.plot(
+                    self.stream['xTrajectory'][:, 0],
+                    self.stream['xTrajectory'][:, 1],
+                    marker = 'o',
+                    markersize = 5,
+                    label = 'Horizontal (nominal)'
+                )
+                self.yTrajectory, = self.axes02.plot(
+                    self.stream['yTrajectory'][:, 0],
+                    self.stream['yTrajectory'][:, 1],
+                    marker = 'o',
+                    markersize = 5,
+                    label = 'Vertical (nominal)'
+                )
+                self.axes02.set_xlabel(self.stream['xlabel02'], color = '#c4c4c4', size = self.fontsize)
+                self.axes02.set_ylabel(self.stream['ylabel02'], color = '#c4c4c4', size = self.fontsize)
+                self.axes02.grid(alpha = .35)
+                self.axes02.minorticks_on()
+                self.axes02.legend()
+
+                self.firstDraw = False
+                self.figure.tight_layout()
+                self.figure.subplots_adjust(hspace = .35)
+                self.figure.canvas.draw_idle()
+                self.bm = BlitManager(self.figure.canvas, [self.xTrajectory, self.yTrajectory, self.trunctationLine])
+            else:
+                self.xTrajectory.set_xdata(self.stream['xTrajectory'][:, 0])
+                self.xTrajectory.set_ydata(self.stream['xTrajectory'][:, 1])
+                self.yTrajectory.set_xdata(self.stream['yTrajectory'][:, 0])
+                self.yTrajectory.set_ydata(self.stream['yTrajectory'][:, 1])
+                truncationX = self.entityIn.settings['components']['truncation']['value'] - 1 + .5
+                self.trunctationLine.set_xdata([truncationX, truncationX])
                 self.bm.update()
-        except:
-            pass
+        # except Exception as e:
+        #     print(f'Error drawing canvas: {e}')
+        #     pass
 
     def ClearCanvas(self):
         self.axes.tick_params(axis='x', which='both', labelbottom = False, length = 0)
@@ -254,6 +273,7 @@ class View(Draggable):
         if self.linksIn:
             super().RemoveLinkIn(next(iter(self.linksIn)))
         super().AddLinkIn(ID, socket)
+        self.entityIn = shared.entities[ID]
         self.title.setText('View (Connected)')
 
     def UpdateColors(self):

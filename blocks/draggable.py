@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QPushButton, QLabel, QGraphicsLineItem, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QGraphicsProxyWidget, QComboBox, QListWidget, QListWidgetItem, QWidget, QSpacerItem, QPushButton, QLabel, QGraphicsLineItem, QHBoxLayout, QVBoxLayout, QSizePolicy
 from PySide6.QtGui import QPen, QColor
-from PySide6.QtCore import Qt, QLineF, QPointF
+from PySide6.QtCore import Qt, QLineF, QPoint, QPointF
 import time
+import numpy as np
 from ..components.slider import SliderComponent
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
@@ -10,6 +11,10 @@ from .. import style
 from .. import shared
 
 class Draggable(Entity, QWidget):
+    # action block types - these trigger shared memory creation by downstream blocks when propagating up the heirarchy
+    actionBlockTypes = ['Single Task GP', 'ORM', 'SVD']
+    pvBlockTypes = ['PV', 'Corrector', 'BPM', 'BCM']
+
     def __init__(self, proxy, **kwargs):
         super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), **kwargs)
         self.proxy = proxy
@@ -29,8 +34,16 @@ class Draggable(Entity, QWidget):
         self.linksOut = dict()
         self.settings['linksIn'] = dict()
         self.settings['linksOut'] = dict()
+        # self.data = np.full(1, np.nan) # , np.zeros(1)
         self.online = False
-        self.streams = dict() # instructions on how to display different data streams, based on the data held in the block.
+        self.shouldUpdateValue = True # triggers block recalculation and any relevant upstream heirarchies during a run.
+        self.pollActionRate = kwargs.get('pollActionRate', 4) # Hz
+        self.timeBetweenPolls = 1 / self.pollActionRate * 1e3 # in ms
+        # instructions on how to display different data streams, based on the data held in the block.
+        self.streams = {
+            'default': lambda: {'data': self.data},
+        }
+        self.streamTypesIn = dict() # dict of ID: stream type for incoming blocks
         self.timer = None # cumulative time since last clock update.
         self.clock = None
         self.offlineAction = None
@@ -39,7 +52,7 @@ class Draggable(Entity, QWidget):
         self.hovering = False
         self.startPos = None
         self.linkedElementAttrs = dict() # A dict of functions that retrieve information exposed by the linked underlying PyAT element.
-        self.stream = None
+        # self.stream = None
         self.canRun = False # indicates that a block can run an action.
         self.editorWidgetsHaveBeenCached = False # ensures caching only happens once when this block is dragged at the start.
         self.FSocketWidgets = QWidget()
@@ -51,6 +64,42 @@ class Draggable(Entity, QWidget):
         self.main = QWidget()
         self.main.setLayout(QVBoxLayout())
         self.main.layout().setContentsMargins(0, 0, 0, 0)
+
+        # Every draggable has a popup box hidden until 'Alt' is pressed
+        self.popup = QGraphicsProxyWidget()
+        self.popup.setZValue(100)
+        self.popupContainer = QWidget()
+        self.popupContainer.setStyleSheet(style.WidgetStyle())
+        self.popupContainer.setFixedWidth(350)
+        self.popupContainer.setMaximumHeight(450)
+        self.popupContainer.setLayout(QVBoxLayout())
+        self.popupContainer.layout().setContentsMargins(0, 0, 0, 0)
+        self.popupContainer.layout().setSpacing(5)
+        # self.popupContainer.setWindowOpacity(.95)
+        self.popupHeader = QWidget()
+        self.popupHeader.setStyleSheet(style.WidgetStyle(color = "#ab4e34", borderRadiusTopLeft = 6, borderRadiusTopRight = 6))
+        self.popupHeader.setLayout(QHBoxLayout())
+        self.popupHeader.layout().setContentsMargins(5, 10, 10, 10)
+        self.popupTitle = QLabel('Input Links')
+        self.popupTitle.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4", fontSize = 14))
+        self.popupHeader.layout().addWidget(self.popupTitle)
+        self.popupContainer.layout().addWidget(self.popupHeader)
+        self.popupWidget = QWidget()
+        self.popupWidget.setLayout(QVBoxLayout())
+        self.popupWidget.setStyleSheet(style.WidgetStyle(color = '#ab4e34', borderRadiusBottomLeft = 6, borderRadiusBottomRight = 6))
+        # TODO: Add scroll area showing input blocks and their streams
+        self.popupList = QListWidget()
+        self.popupList.setFocusPolicy(Qt.NoFocus)
+        self.popupList.setSelectionMode(QListWidget.NoSelection)
+        self.popupList.setStyleSheet(style.InspectorSectionStyle())
+        self.popupList.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.popupList.setMaximumHeight(350)
+        self.popupWidget.layout().addWidget(self.popupList)
+
+        self.popupContainer.layout().addWidget(self.popupWidget)
+        self.popup.setWidget(self.popupContainer)
+        self.popup.hide()
+
         self.setStyleSheet(style.WidgetStyle())
         if kwargs.pop('addToShared', True):
             shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))
@@ -132,9 +181,6 @@ class Draggable(Entity, QWidget):
                 outputSocketPos = self.GetSocketPos('output')
                 self.linksOut['free']['link'].setLine(QLineF(outputSocketPos, mousePosInSceneCoords))
         elif buttons & Qt.LeftButton and self.startDragPos:
-            # delta = mousePosInSceneCoords - self.startDragPos
-            # if (delta.x() ** 2 + delta.y() ** 2) < shared.cursorTolerance ** 2:
-            #     return
             self.cursorMoved = True
             startDragPosInSceneCoords = self.proxy.mapToScene(self.startDragPos)
             newPos = self.proxy.pos() + mousePosInSceneCoords - startDragPosInSceneCoords
@@ -158,6 +204,8 @@ class Draggable(Entity, QWidget):
                 line.setP1(socketPos)
                 shared.entities[k].linksIn[self.ID]['link'].setLine(line)
             self.proxy.update()
+            if self.popup.isVisible():
+                self.popup.setPos(newPos + self.FSocketWidgets.pos() + QPoint(100, -30))
             shared.activeEditor.scene.blockSignals(False)
 
     def ToggleStyling(self, **kwargs):
@@ -268,19 +316,19 @@ class Draggable(Entity, QWidget):
             self.start = QPushButton('Start')
             self.start.setFixedHeight(buttonsHeight)
             self.start.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-            self.start.clicked.connect(self.Start)
+            self.start.clicked.connect(lambda: self.Start())
             self.buttons.layout().addWidget(self.start)
         if 'pause' not in args:
             self.pause = QPushButton('Pause')
             self.pause.setFixedHeight(buttonsHeight)
             self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-            self.pause.clicked.connect(self.Pause)
+            self.pause.clicked.connect(lambda: self.Pause())
             self.buttons.layout().addWidget(self.pause)
         if 'stop' not in args:
             self.stop = QPushButton('Stop')
             self.stop.setFixedHeight(buttonsHeight)
             self.stop.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-            self.stop.clicked.connect(self.Stop)
+            self.stop.clicked.connect(lambda: self.Stop())
             self.buttons.layout().addWidget(self.stop)
         if 'clear' not in args:
             self.clear = QPushButton('Clear')
@@ -289,7 +337,19 @@ class Draggable(Entity, QWidget):
             self.buttons.layout().addWidget(self.clear)
         self.main.layout().addWidget(self.buttons)
 
-    def Start(self):
+    def Start(self, **kwargs):
+        '''Pass the current set value in the inspector by default, assuming a value component exists.\n
+        Accepts a `setpoint` **int/float** to override the inspector value.'''
+        # if 'components' in self.settings:
+        #     if 'value' in self.settings['components']:
+        #         setpoint = kwargs.get('setpoint', None)
+        #         if setpoint is not None:
+        #             # pull the inspector setpoint
+        #             self.data = np.array([self.settings['components']['value']['value']])
+        #         else:
+        #             # This will only trigger for controllable PVs - others will override their Start methods
+        #             self.UpdateLinkedElement(override = setpoint)
+        #             self.data = np.array([setpoint])
         pass
 
     def Pause(self):
@@ -298,7 +358,7 @@ class Draggable(Entity, QWidget):
     def Stop(self):
         pass
 
-    def AddLinkIn(self, ID, socket):
+    def AddLinkIn(self, ID:int, socket, streamTypeIn:str = ''):
         '''`socket` the source is connected to and the `ID` of its parent.'''
         self.linksIn[ID] = dict(link = QGraphicsLineItem(), socket = socket)
         self.settings['linksIn'][ID] = socket
@@ -309,11 +369,42 @@ class Draggable(Entity, QWidget):
         self.linksIn[ID]['link'].setZValue(-20)
         self.linksIn[ID]['link'].setPen(QPen(QColor("#323232"), 12))
         shared.activeEditor.scene.addItem(self.linksIn[ID]['link'])
+        # update the link in detailed view widget
+        entity = shared.entities[ID]
+        item = QListWidgetItem(self.popupList)
+        content = QWidget()
+        content.setLayout(QHBoxLayout())
+        content.layout().setContentsMargins(0, 0, 0, 0)
+        source = QLabel(entity.name)
+        source.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
+        source.setWordWrap(True)
+        content.layout().addWidget(source)
+        content.layout().addItem(QSpacerItem(20, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
+        filterComponent = QWidget()
+        filterComponent.setLayout(QHBoxLayout())
+        filterComponent.layout().setContentsMargins(0, 0, 0, 0)
+        filterComponent.layout().setSpacing(2)
+        stream = QComboBox()
+        stream.setStyleSheet(style.ComboStyle(fontColor = '#c4c4c4', color = "#345cab"))
+        stream.addItems(entity.streams)
+        self.streamTypesIn[ID] = streamTypeIn if streamTypeIn != '' else next(iter(shared.entities[ID].streams))
+        stream.setCurrentIndex(stream.findText(self.streamTypesIn[ID]))
+        filterText = QLabel('stream:')
+        filterText.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
+        filterComponent.layout().addWidget(stream)
+        content.layout().addWidget(filterComponent)
+        content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        content.setFixedHeight(30)
+        item.setSizeHint(content.sizeHint())
+        self.popupList.addItem(item)
+        self.popupList.setItemWidget(item, content)
+        self.popupList.sortItems(Qt.AscendingOrder)
 
     # this can be overridden to trigger logic that should run when removing incoming links to a block.
     def RemoveLinkIn(self, ID):
         shared.editors[0].scene.removeItem(self.linksIn[ID]['link'])
         self.linksIn.pop(ID)
+        self.streamTypesIn.pop(ID)
         self.settings['linksIn'].pop(ID)
 
     def AddLinkOut(self, ID, socket):

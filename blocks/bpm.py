@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QLabel, QGraphicsProxyWidget
 from PySide6.QtCore import Qt
+import numpy as np
 from .pv import PV
 
 class BPM(PV):
@@ -16,6 +17,12 @@ class BPM(PV):
             'portait': None,
             'numParticles': None,
             # can add more later.
+        }
+        # default stream 
+        self.streams = {
+            'beamCentre': lambda: {
+                'data': self.data,
+            }
         }
         self.typeLabel.setText(f'{self.type} ({self.settings['alignment']})')
         self.UpdateColors()

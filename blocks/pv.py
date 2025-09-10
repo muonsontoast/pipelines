@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QHBoxLayout, QSizePolicy, QGraphicsLineItem, QGraphicsProxyWidget, QSpacerItem
 from PySide6.QtCore import Qt
-from .. import style
+from multiprocessing.shared_memory import SharedMemory
+import numpy as np
 from .draggable import Draggable
 from ..indicator import Indicator
 from ..clickablewidget import ClickableWidget
@@ -10,6 +11,7 @@ from ..components import link
 from ..components import kickangle
 from ..components import errors
 from .socket import Socket
+from .. import style
 
 class PV(Draggable):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
@@ -32,10 +34,26 @@ class PV(Draggable):
         self.indicatorStyle = style.IndicatorStyle(8, color = '#c4c4c4', borderColor = "#b7b7b7")
         self.indicatorSelectedStyle = style.IndicatorStyle(8, color = "#E0A159", borderColor = "#E7902D")
         self.indicatorStyleToUse = self.indicatorStyle
+        
+        # force a PV's scalar output to be shared at instantiation so modifications are seen by all connected blocks
+        self.CreateEmptySharedData(np.zeros(1))
+        self.data[:] = np.nan
+        # store the shared memory name and attrs which get copied across instances
+        self.dataSharedMemoryName = self.dataSharedMemory.name
+        self.dataSharedMemoryShape = self.data.shape
+        self.dataSharedMemoryDType = self.data.dtype
+
+        # self.streams = {
+        #     'default': lambda **kwargs: self.data,
+        # }
+
         self.Push()
 
+    def UpdateValue(self):
+        '''This only needs to be called when connected on shift.'''
+        pass # perform a caget
+
     def Push(self):
-        # self.ClearLayout()
         self.clickable = ClickableWidget(self)
         self.clickable.setLayout(QGridLayout())
         self.clickable.layout().setContentsMargins(0, 0, 0, 0)
@@ -76,11 +94,18 @@ class PV(Draggable):
                 shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = func(slider.value()) * 1e-3 # mrad -> rad
             else:
                 shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = override * 1e-3 # mrad -> rad
+            self.data[0] = shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx]
         elif linkedType == 'Quadrupole':
             if not override:
                 shared.lattice[self.settings['linkedElement'].Index].K = func(slider.value())
             else:
                 shared.lattice[self.settings['linkedElement'].Index].K = override
+            self.data[0] = shared.lattice[self.settings['linkedElement'].Index].K
+
+        # print(f'{self.name}\'s data has been set to: {self.data}')
+        # if not hasattr(self, 'sharedMemory'):
+        #     self.sharedMemory = SharedMemory(name = self.dataSharedMemoryName)
+        #     self.data = np.ndarray(self.dataSharedMemoryShape, self.dataSharedMemoryDType, buffer = self.sharedMemory.buf)
 
     def mouseReleaseEvent(self, event):
         # Store temporary values since Draggable overwrites them in its mouseReleaseEvent override.

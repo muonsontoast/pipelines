@@ -1,9 +1,14 @@
-from PySide6.QtWidgets import QFrame, QLabel, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem
-from PySide6.QtCore import Qt, QPoint
-from PySide6.QtGui import QPainter, QCursor
+from PySide6.QtWidgets import QFrame, QWidget, QLabel, QPushButton, QGraphicsProxyWidget, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem
+from PySide6.QtCore import Qt, QPoint, QRectF
+from PySide6.QtGui import QPainter, QCursor, QPixmap
 from .editormenu import EditorMenu
 from ..utils.entity import Entity
+from ..utils.transforms import MultiSceneBoundingRect
+from .boxselect import BoxSelect
+from .group import Group
+from ..utils.commands import DetailedView
 from .. import shared
+from .. import style
 
 class Editor(Entity, QGraphicsView):
     def __init__(self, window, minScale = 3, maxScale = .15):
@@ -15,7 +20,7 @@ class Editor(Entity, QGraphicsView):
         self.canDrag = False
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        self.setViewportUpdateMode(QGraphicsView.SmartViewportUpdate)
+        self.setViewportUpdateMode(QGraphicsView.BoundingRectViewportUpdate)
         self.setDragMode(QGraphicsView.NoDrag)
         self.setFrameStyle(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -27,10 +32,24 @@ class Editor(Entity, QGraphicsView):
         self.menu = EditorMenu(self)
         self.centerOn(1400, 1400)
 
+        # grab handle for performing group movement of selected items
+        self.grabHandle = QGraphicsProxyWidget()
+        self.grabWidget = QLabel()
+        pixmap = QPixmap(shared.cwd + '\\gfx\\drag.png')
+        pixmap = pixmap.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.grabWidget.setPixmap(pixmap)
+        self.grabWidget.setStyleSheet('background: transparent; background-color: #c4c4c4;')
+        self.grabHandle.setWidget(self.grabWidget)
+        self.scene.addItem(self.grabHandle)
+        self.grabHandle.hide() # hide by default
+
         self.startPos = None
         self.currentPos = None
         self.globalStartPos = None
-        self.mouseButtonPressed = None
+        self.mouseButtonPressed = None # to be deprecated
+        self.keysPressed:list[Qt.Key] = []
+        self.area:BoxSelect = BoxSelect()
+        self.areaEnabled:bool = False
 
         self.coordsTitle = QLabel()
         self.zoomTitle = QLabel()
@@ -67,21 +86,30 @@ class Editor(Entity, QGraphicsView):
             self.startPos = self.mapToScene(event.position().toPoint())
         self.globalStartPos = event.position()
         if not self.menu.hidden and shared.PVs[self.menu.ID]['rect'].contains(self.startPos):
-            super().mousePressEvent(event)
-            return
-            
-        for ID, p in shared.PVs.items():
-            if p['rect'].contains(self.startPos):
-                if ID != self.menu.ID:
-                    self.menu.Hide()
-                self.canDrag = False
-                super().mousePressEvent(event)
-                return
-        self.menu.Hide()
-        self.setDragMode(QGraphicsView.ScrollHandDrag)
+            return super().mousePressEvent(event)
+        
         self.canDrag = True
+
+        # fetch all selected proxies
+        intersectingWidgets = [
+            item for item in self.scene.items(QRectF(self.startPos.x(), self.startPos.y(), 1, 1), Qt.IntersectsItemBoundingRect)
+            if isinstance(item, QGraphicsProxyWidget) and item != self.area
+        ]
+        # check whether shift alone is being pressed
+        if self.keysPressed == [Qt.Key_Shift]:
+            self.area.setPos(self.startPos)
+            self.area.resize(0, 0)
+            self.scene.addItem(self.area)
+            self.areaEnabled = True
+        self.menu.Hide()
+        if not intersectingWidgets:
+            self.SetCacheMode()
+            self.setDragMode(QGraphicsView.ScrollHandDrag)
+        else:
+            self.canDrag = False
+            self.SetCacheMode('None')
+            self.setDragMode(QGraphicsView.NoDrag)
         self.mouseButtonPressed = event.button()
-        self.SetCacheMode()
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
@@ -89,38 +117,100 @@ class Editor(Entity, QGraphicsView):
         if self.mouseButtonPressed == Qt.LeftButton:
             self.positionInSceneCoords = self.mapToScene(self.viewport().rect().center())
             self.coordsTitle.setText(f'Editor centre: ({self.positionInSceneCoords.x():.0f}, {self.positionInSceneCoords.y():.0f})')
+            if self.areaEnabled:
+                # update box select size and position
+                ds = self.currentPos - self.startPos
+                self.area.setPos(self.startPos.x() + min(ds.x(), 0), self.startPos.y() + min(ds.y(), 0))
+                self.area.resize(abs(ds.x()), abs(ds.y()))
+
+                # fetch all selected proxies
+                intersectingWidgets = [
+                    item for item in self.scene.items(self.area.sceneBoundingRect(), Qt.IntersectsItemBoundingRect)
+                    if isinstance(item, QGraphicsProxyWidget) and item != self.area
+                ]
+
+                # remove newly deselected items
+                for item in self.area.selectedItems:
+                    if item not in intersectingWidgets:
+                        item.widget().ToggleStyling(active = False)
+                        self.area.selectedItems.remove(item)
+                
+                # add newly selected items
+                for item in intersectingWidgets:
+                    if item not in self.area.selectedItems:
+                        item.widget().ToggleStyling(active = True)
+                        self.area.selectedItems.append(item)
+
+                return event.ignore()
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         mousePos = self.mapToScene(event.position().toPoint())
+        # ds = mousePos - self.startPos
+        globalMousePos = event.position()
+        ds = globalMousePos - self.globalStartPos
+        # fetch all selected proxies
+        intersectingWidgets = [
+            item for item in self.scene.items(QRectF(mousePos.x(), mousePos.y(), 1, 1), Qt.IntersectsItemBoundingRect)
+            if isinstance(item, QGraphicsProxyWidget) and item != self.area
+        ]
+        # clean up area selection
+        if self.areaEnabled:
+            self.scene.removeItem(self.area)
+            self.areaEnabled = False
         if self.mouseButtonPressed == Qt.RightButton:
             if not self.menu.ID in shared.PVs.keys() or not shared.PVs[self.menu.ID]['rect'].contains(mousePos):
                 self.menu.Show(mousePos - shared.editorMenuOffset)
             event.accept()
             return
         elif not self.canDrag:
-            self.setDragMode(QGraphicsView.NoDrag)
             if not self.menu.hidden and shared.PVs[self.menu.ID]['rect'].contains(mousePos):
-                super().mouseReleaseEvent(event)
-                return
-            if self.mouseButtonPressed == Qt.LeftButton:
-                for pv in shared.PVs.values():
-                    if pv['rect'].contains(mousePos):
-                        if pv['pv'] != self.menu:
-                            self.menu.Hide()
-                        for p in shared.activePVs:
-                            if p != pv['pv'] and p.active:
-                                p.ToggleStyling(active = False)
+                return super().mouseReleaseEvent(event)
+            if ds.x() ** 2 + ds.y() ** 2 < shared.cursorTolerance ** 2:
+                item = intersectingWidgets[0]
+                # do another check to see if the user has clicked on a button etc.
+                mousePosInProxyCoords = item.mapFromScene(mousePos)
+                proxyChildUnderCursor = item.widget().childAt(mousePosInProxyCoords.toPoint())
+                # allow interactions with buttons without affecting selections
+                if type(proxyChildUnderCursor) not in [QPushButton]:
+                    # check for shift click
+                    if self.keysPressed == [Qt.Key_Shift]:
+                        item.widget().ToggleStyling()
+                        # remove if inactive after toggle, else add
+                        if item.widget().active:
+                            self.area.selectedItems.append(item)
+                            if type(item.widget().type) in ['BPM', 'Corrector', 'PV']:
+                                shared.inspector.Push(item.widget())
+                        else:
+                            if item in self.area.selectedItems:
+                                self.area.selectedItems.remove(item)
+                                shared.inspector.Push()
+                        self.SetCacheMode('None')
+                        return
+                    else:
+                        for _item in self.area.selectedItems:
+                            if _item != item:
+                                _item.widget().ToggleStyling(active = False)
+                        self.area.selectedItems = [item]
         else:
-            globalMousePos = event.position()
-            delta = globalMousePos - self.globalStartPos
-            if delta.x() ** 2 + delta.y() ** 2 < shared.cursorTolerance ** 2: # cursor has been moved.
-                for p in shared.activePVs:
-                    p.ToggleStyling(active = False)
+            if ds.x() ** 2 + ds.y() ** 2 < shared.cursorTolerance ** 2: # cursor has been moved.
+                for item in self.area.selectedItems:
+                    item.widget().ToggleStyling(active = False)
+                self.area.selectedItems = []
                 shared.inspector.Push()
+        # this will be added in later
+        # get bounding rect of selected items and place a draggable handle nearby
+        # if len(self.area.selectedItems) > 1:
+        #     selectionBoundingRect = MultiSceneBoundingRect()
+        #     self.grabHandle.setPos(selectionBoundingRect.topRight() + QPoint(10, -20))
+        #     self.grabHandle.show()
         self.SetCacheMode('None')
         super().mouseReleaseEvent(event) # the event needs to propagate beyond the editor to allow drag functionality.
-        self.setDragMode(QGraphicsView.NoDrag)
+
+    def MoveSelectionIcons(self, mousePos):
+        '''Places handles adjacent to selections for group actions.'''
+        for item in self.area.selectedItems:
+            item.widget().setPos()
 
     def wheelEvent(self, event):
         # Check if cursor is over quick menu
@@ -152,6 +242,8 @@ class Editor(Entity, QGraphicsView):
         event.accept()
 
     def keyPressEvent(self, event):
+        if not event.key() in self.keysPressed:
+            self.keysPressed.append(event.key())
         if event.key() in (Qt.Key_Up, Qt.Key_Down, Qt.Key_Left, Qt.Key_Right, Qt.Key_Return):
             if not self.menu.hidden:
                 shared.app.sendEvent(self.menu, event)
@@ -163,6 +255,17 @@ class Editor(Entity, QGraphicsView):
                     if p['pv'].type == 'Save':
                         if p['rect'].contains(cursorPos):
                             shared.app.sendEvent(p['pv'], event)
-                            event.accept()
-                            return
+                            return event.accept()
+        elif self.keysPressed == [Qt.Key_Alt]:
+            DetailedView()
+
         super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if event.isAutoRepeat():
+            return
+        if Qt.Key_Alt in self.keysPressed:
+            DetailedView(False)
+        if event.key() in self.keysPressed:
+            self.keysPressed.remove(event.key())
+        return super().keyReleaseEvent(event)

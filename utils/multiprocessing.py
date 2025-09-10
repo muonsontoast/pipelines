@@ -90,7 +90,7 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
     process.join()
     # Has an error occured to cause the stop?
     if runningActions[entity.ID][2].is_set():
-        print('A critical error occurred!')
+        print(f'A critical error occurred inside {entity.name}')
         shared.workspace.assistant.PushMessage(queue.get(), 'Critical Error')
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Corrupted)')
         entity.runningCircle.Stop()
@@ -136,7 +136,7 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             print('Post processing attribute name was supplied without also providing an empty numpy array!')
             return
     entity.CreateEmptySharedData(emptyDataArray) # share the data with the process.
-    entity.data[:] = np.nan # Initialise data array to NaNs.
+    entity.data[:] = np.inf # Initialise data array to NaNs.
         
     queue = Queue()
     action = entity.offlineAction if not entity.online else entity.onlineAction

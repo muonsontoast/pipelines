@@ -2,16 +2,20 @@
 
 from PySide6.QtWidgets import QGraphicsProxyWidget
 from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtCore import QPoint
+from PySide6.QtCore import QPoint, QPointF
+from ..blocks.draggable import Draggable
 from ..blocks.pv import PV
 from ..blocks.corrector import Corrector
+from ..blocks.bcm import BCM
 from ..blocks.bpm import BPM
 from ..blocks.orbitresponse import OrbitResponse
 from ..blocks.view import View
 from ..blocks.save import Save as SaveBlock
 from ..blocks.composition.add import Add
+from ..blocks.composition.subtract import Subtract
 from ..blocks.composition.svd import SVD
 from ..blocks.bayesian.singletaskgp import SingleTaskGP
+from ..ui.group import Group
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
 from .. import shared
@@ -22,13 +26,16 @@ autosave = True
 blockTypes = {
     'PV': PV,
     'Corrector': Corrector,
+    'BCM': BCM,
     'BPM': BPM,
     'Orbit Response': OrbitResponse,
     'View': View,
     'Save': SaveBlock,
     'Add': Add,
+    'Subtract': Subtract,
     'SVD': SVD,
     'Single Task GP': SingleTaskGP,
+    'Group': Group,
 }
 
 def Undo():
@@ -38,8 +45,6 @@ def Redo():
 def Copy():
     pass
 def Paste():
-    pass
-def BoxSelect(): # make an area selection
     pass
 def Snip(): # cut links
     pass
@@ -73,20 +78,46 @@ def ReusmeAllActions():
     for r in shared.runnableBlocks.values():
         TogglePause(r, False)
 
-def CreateBlock(blockType, name: str, pos: QPoint, overrideID = None):
+def DetailedView(active = True):
+    if active:
+        for entity in shared.entities.values():
+            if isinstance(entity, Draggable):
+                if len(entity.linksIn) > 0:
+                    if not entity.popup.scene():
+                        shared.activeEditor.scene.addItem(entity.popup)
+                    newPos = entity.proxy.scenePos() + entity.FSocketWidgets.pos() + QPoint(100, -30)
+                    entity.popup.setPos(newPos)
+                    entity.popup.show()
+    else:
+        for entity in shared.entities.values():
+            if isinstance(entity, Draggable):
+                    entity.popup.hide()
+
+def CreateBlock(blockType, name: str, pos: QPoint = None, overrideID = None, *args, **kwargs):
     '''Returns a proxy along with its widget.'''
-    proxy = QGraphicsProxyWidget()
-    w = blockType(editor, proxy, name = name, overrideID = overrideID)
-    print(f'Added {w.name} with ID: {w.ID}')
-    proxy.setWidget(w)
-    proxy.setPos(pos)
-    editor.scene.addItem(proxy)
-    w.SetRect()
-    w.settings['position'] = [pos.x(), pos.y()]
-    rectCenter = shared.PVs[w.ID]['rect'].center()
-    prefix = 'an' if w.name in ['Orbit Response'] else 'a'
-    shared.workspace.assistant.PushMessage(f'Created {prefix} {w.name} at ({rectCenter.x():.0f}, {rectCenter.y():.0f})')
-    return proxy, w
+    if blockType != blockTypes['Group']:
+        proxy = QGraphicsProxyWidget()
+        editor.scene.addItem(proxy)
+        w = blockType(editor, proxy, name = name, overrideID = overrideID, **kwargs)
+        print(f'Added {w.name} with ID: {w.ID}')
+        name = w.name
+        prefix = 'an' if w.name in ['Orbit Response'] else 'a'
+    else:
+        proxy = blockType(*args, **kwargs)
+        print(f'Added {proxy.name} with ID: {proxy.ID}')
+        prefix = 'a'
+        name = proxy.name
+    if pos:
+        proxy.setWidget(w)
+        proxy.setPos(pos)
+        w.SetRect()
+        w.settings['position'] = [pos.x(), pos.y()]
+    rectCenter = proxy.sceneBoundingRect().center()
+    # rectCenter = shared.PVs[w.ID]['rect'].center()
+    shared.workspace.assistant.PushMessage(f'Created {prefix} {name} at ({rectCenter.x():.0f}, {rectCenter.y():.0f})')
+    if pos:
+        return proxy, w
+    return proxy
 
 def CreatePV(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['PV'], 'PV', pos)
@@ -94,6 +125,10 @@ def CreatePV(pos: QPoint):
 def CreateCorrector(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Corrector'], 'Corrector', pos)
     
+def CreateBCM(pos: QPoint):
+    print('Created BCM')
+    proxy, widget = CreateBlock(blockTypes['BCM'], 'BCM', pos)
+
 def CreateBPM(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['BPM'], 'BPM', pos)
 
@@ -109,34 +144,50 @@ def CreateSave(pos: QPoint):
 def CreateAdd(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Add'], 'Add', pos)
 
+def CreateSubtract(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Subtract'], 'Subtract', pos)
+
 def CreateSVD(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['SVD'], 'SVD', pos)
 
 def CreateSingleTaskGP(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Single Task GP'], 'Single Task GP', pos)
 
+def CreateGroup():
+    if len(shared.activeEditor.area.selectedItems) < 2:
+        return print('Too few elements to create a group!')
+    proxy = CreateBlock(blockTypes['Group'], 'Group', None, None, *shared.activeEditor.area.selectedItems)
+
 def Delete():
-    if not shared.selectedPV:
+    selectedItems = shared.activeEditor.area.selectedItems
+    if not selectedItems:
         return
-    editor.scene.removeItem(shared.selectedPV.proxy)
-    for ID in shared.selectedPV.linksIn.keys():
-        shared.activeEditor.scene.removeItem(shared.selectedPV.linksIn[ID]['link'])
-        shared.entities[ID].RemoveLinkOut(shared.selectedPV.ID)
-    for ID in shared.selectedPV.linksOut.keys():
-        if ID == 'free':
-            continue
-        shared.entities[ID].RemoveLinkIn(shared.selectedPV.ID)
-    shared.entities.pop(shared.selectedPV.ID)
-    shared.PVs.pop(shared.selectedPV.ID)
-    shared.workspace.assistant.PushMessage(f'Deleted {shared.selectedPV.name} and removed its connections (if any).')
-    if shared.selectedPV in shared.activePVs:
-        shared.activePVs.remove(shared.selectedPV)
-    shared.selectedPV.deleteLater()
-    shared.selectedPV = None
+    for item in selectedItems:
+        widget = item.widget()
+        shared.activeEditor.scene.removeItem(item)
+        for ID in widget.linksIn:
+            shared.activeEditor.scene.removeItem(widget.linksIn[ID]['link'])
+            shared.entities[ID].RemoveLinkOut(widget.ID)
+        for ID in widget.linksOut:
+            if ID == 'free':
+                continue
+            shared.entities[ID].RemoveLinkIn(widget.ID)
+        shared.entities.pop(widget.ID)
+        shared.PVs.pop(widget.ID)
+        shared.selectedPV = None
+        if widget in shared.activePVs:
+            shared.activePVs.remove(widget)
+        message = f'Deleted {widget.name}.'
+        widget.deleteLater()
+    if len(selectedItems) > 1:
+        message = f'Deleted {len(selectedItems)} items.'
+    shared.activeEditor.area.selectedItems = []
+    print(f'There are now {len(shared.activeEditor.area.selectedItems)} selected items')
+    shared.workspace.assistant.PushMessage(message)
     shared.inspector.mainWindowTitle.setText('')
     shared.window.inspector.Push()
-    editor.scene.update()
-
+    shared.activeEditor.scene.update()
+        
 def SaveSettings():
     Save()
 
@@ -160,20 +211,24 @@ commands = {
     'Copy': dict(shortcut = ['Ctrl+C'], func = Copy, args = []),
     'Paste': dict(shortcut = ['Ctrl+V'], func = Paste, args = []),
     'Save': dict(shortcut = ['Ctrl+S'], func = SaveSettings, args = []),
-    'Area Select': dict(shortcut = ['Shift+A'], func = BoxSelect, args = []),
-    'Snip': dict(shortcut = ['Shift+C'], func = Snip, args = []),
-    'PV': dict(shortcut = ['Ctrl+Shift+P'], func = CreatePV, args = [GetMousePos]),
-    'Corrector': dict(shortcut = ['Ctrl+Shift+C'], func = CreateCorrector, args = [GetMousePos]),
-    'BPM': dict(shortcut = ['Ctrl+Shift+B'], func = CreateBPM, args = [GetMousePos]),
-    'Orbit Response': dict(shortcut = ['Ctrl+Shift+O'], func = CreateOrbitResponse, args = [GetMousePos]),
-    'View': dict(shortcut = ['Ctrl+Shift+V'], func = CreateView, args = [GetMousePos]),
-    'Save (Block)': dict(shortcut = ['Ctrl+Shift+S'], func = CreateSave, args = [GetMousePos]),
-    'Add (Composition)': dict(shortcut = ['Ctrl+Shift+A'], func = CreateAdd, args = [GetMousePos]),
+    # 'Area Select': dict(shortcut = ['Shift+LMB'], func = lambda: None, args = []),
+    'Group': dict(shortcut = ['Ctrl+G'], func = CreateGroup, args = []),
+    # 'Snip': dict(shortcut = ['Ctrl+S'], func = Snip, args = []),
+    'PV (Process Variable)': dict(shortcut = ['Shift+P'], func = CreatePV, args = [GetMousePos]),
+    'Corrector': dict(shortcut = ['Shift+C'], func = CreateCorrector, args = [GetMousePos]),
+    'BCM (Beam Current Monitor)': dict(shortcut = [], func = CreateBCM, args = [GetMousePos]),
+    'BPM (Beam Position Monitor)': dict(shortcut = ['Shift+B'], func = CreateBPM, args = [GetMousePos]),
+    'Orbit Response': dict(shortcut = ['Shift+O'], func = CreateOrbitResponse, args = [GetMousePos]),
+    'View': dict(shortcut = ['Shift+V'], func = CreateView, args = [GetMousePos]),
+    'Save (Block)': dict(shortcut = ['Shift+S'], func = CreateSave, args = [GetMousePos]),
+    'Add (Composition)': dict(shortcut = ['Shift+A'], func = CreateAdd, args = [GetMousePos]),
+    'Subtract (Composition)': dict(shortcut = [], func = CreateSubtract, args = [GetMousePos]),
     'SVD (Singular Value Decomposition)': dict(shortcut = [], func = CreateSVD, args = [GetMousePos]),
-    'Single Task Gaussian Process': dict(shortcut = ['Ctrl+Shift+G'], func = CreateSingleTaskGP, args = [GetMousePos]),
+    'Single Task Gaussian Process': dict(shortcut = ['Shift+G'], func = CreateSingleTaskGP, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),
+    'Detailed View': dict(shortcut = ['Alt+X'], func = DetailedView, args = []),
     'Quit': dict(shortcut = ['Ctrl+W'], func = Quit, args = []),
     'Show Menu': dict(shortcut = ['Ctrl+M'], func = ShowMenu, args = [GetMousePos]),
 }

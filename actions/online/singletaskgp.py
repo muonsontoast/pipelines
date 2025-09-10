@@ -10,8 +10,8 @@ from ..action import Action
 from ... import shared
 
 class SingleTaskGPAction(Action):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         self.decisions = None
         self.objectives = None
         self.constraints = None

@@ -1,0 +1,1089 @@
+0:
+  name: MainWindow
+  type: MainWindow
+1:
+  name: Workspace
+  type: Workspace
+2:
+  name: Editor
+  positionInSceneCoords:
+  - 3527.4174955471995
+  - 2209.641300100258
+  type: Editor
+  zoom: 0.5494104404841261
+3:
+  linksIn: {}
+  linksOut: {}
+  name: EditorMenu
+  size:
+  - 350
+  - 250
+  type: EditorMenu
+4:
+  name: Global Lattice
+  sceneHeight: 145
+  sceneWidth: 1200
+  type: Global Lattice
+5:
+  name: Inspector
+  size:
+  - 415
+  - -1
+  type: Inspector
+6:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 135
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-VSTR-06:SETI
+  position:
+  - 1813
+  - 1701
+  size:
+  - 325
+  - 75
+  type: Corrector
+7:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 148
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-VSTR-07:SETI
+  position:
+  - 1813
+  - 1782
+  size:
+  - 325
+  - 75
+  type: Corrector
+8:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 133
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-HSTR-06:SETI
+  position:
+  - 1398
+  - 1691
+  size:
+  - 325
+  - 75
+  type: Corrector
+9:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 146
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-HSTR-07:SETI
+  position:
+  - 1400
+  - 1772
+  size:
+  - 325
+  - 75
+  type: Corrector
+10:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 117
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-HSTR-05:SETI
+  position:
+  - 1398
+  - 1610
+  size:
+  - 325
+  - 75
+  type: Corrector
+11:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 82
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-HSTR-04:SETI
+  position:
+  - 1398
+  - 1530
+  size:
+  - 325
+  - 75
+  type: Corrector
+12:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 66
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-HSTR-03:SETI
+  position:
+  - 1395
+  - 1451
+  size:
+  - 325
+  - 75
+  type: Corrector
+13:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 56
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-HSTR-02:SETI
+  position:
+  - 1400
+  - 1368
+  size:
+  - 325
+  - 75
+  type: Corrector
+14:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Kick
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 42
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-HSTR-01:SETI
+  position:
+  - 1396
+  - 1287
+  size:
+  - 325
+  - 75
+  type: Corrector
+15:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 44
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-VSTR-01:SETI
+  position:
+  - 1817
+  - 1288
+  size:
+  - 325
+  - 75
+  type: Corrector
+16:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 58
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-VSTR-02:SETI
+  position:
+  - 1818
+  - 1372
+  size:
+  - 325
+  - 75
+  type: Corrector
+17:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 68
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-VSTR-03:SETI
+  position:
+  - 1814
+  - 1455
+  size:
+  - 325
+  - 75
+  type: Corrector
+18:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 84
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-VSTR-04:SETI
+  position:
+  - 1817
+  - 1538
+  size:
+  - 325
+  - 75
+  type: Corrector
+19:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100.0
+      min: -100.0
+      name: Slider
+      type: KickAngleComponent
+      units: mrad
+      value: 0.0
+      valueType: float
+  linkedElement: 119
+  linksIn: {}
+  linksOut:
+    32: corrector
+  name: BS-PC-VSTR-05:SETI
+  position:
+  - 1817
+  - 1619
+  size:
+  - 325
+  - 75
+  type: Corrector
+20:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 60
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-02:Y
+  position:
+  - 1814
+  - 1949
+  size:
+  - 325
+  - 75
+  type: BPM
+21:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 140
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-06:Y
+  position:
+  - 1809
+  - 2274
+  size:
+  - 325
+  - 75
+  type: BPM
+22:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 76
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-03:Y
+  position:
+  - 1813
+  - 2031
+  size:
+  - 325
+  - 75
+  type: BPM
+23:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 111
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-04:Y
+  position:
+  - 1812
+  - 2113
+  size:
+  - 325
+  - 75
+  type: BPM
+24:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 127
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-05:Y
+  position:
+  - 1811
+  - 2194
+  size:
+  - 325
+  - 75
+  type: BPM
+25:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 60
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-02:X
+  position:
+  - 1394
+  - 1938
+  size:
+  - 325
+  - 75
+  type: BPM
+26:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 76
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-03:X
+  position:
+  - 1396
+  - 2020
+  size:
+  - 325
+  - 75
+  type: BPM
+27:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 111
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-04:X
+  position:
+  - 1394
+  - 2101
+  size:
+  - 325
+  - 75
+  type: BPM
+28:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 155
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-07:X
+  position:
+  - 1389
+  - 2345
+  size:
+  - 325
+  - 75
+  type: BPM
+29:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 140
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-06:X
+  position:
+  - 1389
+  - 2264
+  size:
+  - 325
+  - 75
+  type: BPM
+30:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 127
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-05:X
+  position:
+  - 1391
+  - 2183
+  size:
+  - 325
+  - 75
+  type: BPM
+31:
+  alignment: Vertical
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 155
+  linksIn: {}
+  linksOut:
+    32: BPM
+  name: BS-DI-EBPM-07:Y
+  position:
+  - 1808
+  - 2355
+  size:
+  - 325
+  - 75
+  type: BPM
+32:
+  components:
+    current:
+      default: 0.5
+      max: 5
+      min: 0.01
+      name: Current
+      type: SliderComponent
+      units: mrad
+      value: 0.5
+    repeats:
+      default: 1
+      max: 20
+      min: 1
+      name: Repeats
+      type: SliderComponent
+      units: ''
+      value: 1
+      valueType: int
+    steps:
+      default: 3
+      max: 9
+      min: 3
+      name: Steps
+      type: SliderComponent
+      units: mrad
+      value: 3
+      valueType: int
+  linksIn:
+    6: corrector
+    7: corrector
+    8: corrector
+    9: corrector
+    10: corrector
+    11: corrector
+    12: corrector
+    13: corrector
+    14: corrector
+    15: corrector
+    16: corrector
+    17: corrector
+    18: corrector
+    19: corrector
+    20: BPM
+    21: BPM
+    22: BPM
+    23: BPM
+    24: BPM
+    25: BPM
+    26: BPM
+    27: BPM
+    28: BPM
+    29: BPM
+    30: BPM
+    31: BPM
+  linksOut:
+    34: in
+    47: data
+  name: Orbit Response
+  position:
+  - 2246
+  - 1570
+  size:
+  - 575
+  - 440
+  type: Orbit Response
+33:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 1.4195152
+      max: 100
+      min: 0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 1.4195152
+  linkedElement: 52
+  linksIn: {}
+  linksOut: {}
+  name: 'QDF #1'
+  position:
+  - 1332
+  - 2684
+  size:
+  - 325
+  - 75
+  type: PV
+34:
+  components:
+    truncation:
+      default: 12
+      max: 12
+      min: 1
+      name: truncation
+      type: SliderComponent
+      units: ''
+      value: 12
+      valueType: int
+  linksIn:
+    32: in
+  linksOut:
+    35: data
+    48: decision
+  name: SVD
+  position:
+  - 2999
+  - 1932
+  size:
+  - 500
+  - 200
+  type: SVD
+35:
+  linksIn:
+    34: data
+  linksOut: {}
+  name: View
+  position:
+  - 4268
+  - 1191
+  size:
+  - 1000
+  - 850
+  type: View
+36:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -1.3618727
+      max: 100
+      min: -1.3618727
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -1.3618727
+  linkedElement: 54
+  linksIn: {}
+  linksOut: {}
+  name: 'QF #1'
+  position:
+  - 1331
+  - 2773
+  size:
+  - 325
+  - 75
+  type: PV
+37:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.46136965
+      max: 100
+      min: -0.46136965
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -0.46136965
+  linkedElement: 62
+  linksIn: {}
+  linksOut: {}
+  name: 'QF #2'
+  position:
+  - 1327
+  - 2859
+  size:
+  - 325
+  - 75
+  type: PV
+38:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.34864665
+      max: 100
+      min: 0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 0.34864665
+  linkedElement: 80
+  linksIn: {}
+  linksOut: {}
+  name: 'QDF #3'
+  position:
+  - 1709
+  - 2878
+  size:
+  - 325
+  - 75
+  type: PV
+39:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.63592728
+      max: 100
+      min: 0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 0.63592728
+  linkedElement: 64
+  linksIn: {}
+  linksOut: {}
+  name: 'QDF #2'
+  position:
+  - 1710
+  - 2709
+  size:
+  - 325
+  - 75
+  type: PV
+40:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 1.0453633
+      max: 100
+      min: 0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 1.0453633
+  linkedElement: 115
+  linksIn: {}
+  linksOut: {}
+  name: 'QDF #4'
+  position:
+  - 1707
+  - 3050
+  size:
+  - 325
+  - 75
+  type: PV
+41:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.5461448
+      max: 100
+      min: -0.5461448
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -0.5461448
+  linkedElement: 78
+  linksIn: {}
+  linksOut: {}
+  name: 'QF #3'
+  position:
+  - 1710
+  - 2794
+  size:
+  - 325
+  - 75
+  type: PV
+42:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.89584231
+      max: 100
+      min: -0.89584231
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -0.89584231
+  linkedElement: 113
+  linksIn: {}
+  linksOut: {}
+  name: 'QF #4'
+  position:
+  - 1708
+  - 2964
+  size:
+  - 325
+  - 75
+  type: PV
+43:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 1.1245489
+      max: 100
+      min: 0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 1.1245489
+  linkedElement: 129
+  linksIn: {}
+  linksOut: {}
+  name: 'QDF #5'
+  position:
+  - 2091
+  - 2710
+  size:
+  - 325
+  - 75
+  type: PV
+44:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.88699216
+      max: 100
+      min: -0.88699216
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -0.88699216
+  linkedElement: 144
+  linksIn: {}
+  linksOut: {}
+  name: 'QF #6'
+  position:
+  - 2094
+  - 2966
+  size:
+  - 325
+  - 75
+  type: PV
+45:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 1.0861206
+      max: 100
+      min: 0
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: 1.0861206
+  linkedElement: 142
+  linksIn: {}
+  linksOut: {}
+  name: 'QDF #6'
+  position:
+  - 2094
+  - 2881
+  size:
+  - 325
+  - 75
+  type: PV
+46:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -1.0348828
+      max: 100
+      min: -1.0348828
+      name: Setpoint
+      type: SliderComponent
+      units: "m\u207B\xB2"
+      value: -1.0348828
+  linkedElement: 131
+  linksIn: {}
+  linksOut: {}
+  name: 'QF #5'
+  position:
+  - 2094
+  - 2793
+  size:
+  - 325
+  - 75
+  type: PV
+47:
+  linksIn:
+    32: data
+  linksOut: {}
+  name: View
+  position:
+  - 2767
+  - 499
+  size:
+  - 1000
+  - 850
+  type: View
+48:
+  linksIn:
+    34: decision
+    52: objective
+  linksOut: {}
+  name: Single Task GP
+  position:
+  - 3624
+  - 2041
+  size:
+  - 600
+  - 500
+  type: Single Task GP
+49:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 155
+  linksIn: {}
+  linksOut:
+    52: b
+  name: 'ICT #2'
+  position:
+  - 2855.419940846542
+  - 2324.2299496955975
+  size:
+  - 325
+  - 75
+  type: BCM
+50:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+  linkedElement: 60
+  linksIn: {}
+  linksOut:
+    52: a
+  name: 'ICT #1'
+  position:
+  - 2853.419940846542
+  - 2227.2299496955975
+  size:
+  - 325
+  - 75
+  type: BCM
+52:
+  linksIn:
+    49: b
+    50: a
+  linksOut:
+    48: objective
+  name: Subtract
+  position:
+  - 3266
+  - 2241
+  size:
+  - 300
+  - 150
+  type: Subtract

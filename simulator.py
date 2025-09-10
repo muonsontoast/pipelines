@@ -5,8 +5,9 @@ from . import shared
 
 class Simulator:
     '''Handles offline simulations with the lattice.'''
-    def __init__(self, numParticles = 10000, inputTwiss = None, window = None):
+    def __init__(self, numParticles = 10000, lattice = None, inputTwiss = None, window = None):
         self.parent = window
+        self.lattice = lattice if lattice is not None else shared.lattice
         self.numParticles = numParticles
         if inputTwiss is None:
             self.inputTwiss = {
@@ -29,7 +30,7 @@ class Simulator:
     def TrackBeam(self):
         sigmaMat = at.sigma_matrix(**self.inputTwiss)
         beam = at.beam(self.numParticles, sigmaMat)
-        pOut, *_ = shared.lattice.track(beam, refpts = np.arange(len(shared.lattice)), nturns = 1);
+        pOut, *_ = self.lattice.track(beam, refpts = np.arange(len(self.lattice)), nturns = 1);
         return pOut, _
 
     def CalculateSurvivingFraction(self, pOut, returnMask = False):
