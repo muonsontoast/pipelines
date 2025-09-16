@@ -90,22 +90,18 @@ class PV(Draggable):
         linkedType = self.settings['linkedElement'].Type
         if linkedType == 'Corrector':
             idx = 0 if self.settings['alignment'] == 'Horizontal' else 1
-            if not override:
+            print(f'Trying to set override to {override}')
+            if override is None:
                 shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = func(slider.value()) * 1e-3 # mrad -> rad
             else:
                 shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = override * 1e-3 # mrad -> rad
             self.data[0] = shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx]
         elif linkedType == 'Quadrupole':
-            if not override:
+            if override is None:
                 shared.lattice[self.settings['linkedElement'].Index].K = func(slider.value())
             else:
                 shared.lattice[self.settings['linkedElement'].Index].K = override
             self.data[0] = shared.lattice[self.settings['linkedElement'].Index].K
-
-        # print(f'{self.name}\'s data has been set to: {self.data}')
-        # if not hasattr(self, 'sharedMemory'):
-        #     self.sharedMemory = SharedMemory(name = self.dataSharedMemoryName)
-        #     self.data = np.ndarray(self.dataSharedMemoryShape, self.dataSharedMemoryDType, buffer = self.sharedMemory.buf)
 
     def mouseReleaseEvent(self, event):
         # Store temporary values since Draggable overwrites them in its mouseReleaseEvent override.

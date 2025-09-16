@@ -272,8 +272,12 @@ class View(Draggable):
         # Allow only one block to connect to a view block at any one time.
         if self.linksIn:
             super().RemoveLinkIn(next(iter(self.linksIn)))
-        super().AddLinkIn(ID, socket)
         self.entityIn = shared.entities[ID]
+        if self.entityIn.type == 'Orbit Response':
+            super().AddLinkIn(ID, socket, 'default')
+        else:
+            super().AddLinkIn(ID, socket)
+
         self.title.setText('View (Connected)')
 
     def UpdateColors(self):

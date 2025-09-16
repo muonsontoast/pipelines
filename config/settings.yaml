@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 4308.511981295413
-  - 2093.467166791006
+  - 3589.3273719840836
+  - 2129.372964410074
   type: Editor
-  zoom: 0.6004393190110576
+  zoom: 0.610977983540066
 3:
   linksIn: {}
   linksOut: {}
@@ -43,7 +43,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 62.771908150957245
+      value: 0.0
       valueType: float
   linkedElement: 135
   linksIn: {}
@@ -70,7 +70,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 25.616790484536892
+      value: 0.0
       valueType: float
   linkedElement: 148
   linksIn: {}
@@ -97,7 +97,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 32.56480802814332
+      value: -32.04482683595806
       valueType: float
   linkedElement: 133
   linksIn: {}
@@ -124,7 +124,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 10.084456857007325
+      value: -9.912361911422678
       valueType: float
   linkedElement: 146
   linksIn: {}
@@ -151,7 +151,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 5.521176075831605
+      value: -5.4265151812957555
       valueType: float
   linkedElement: 117
   linksIn: {}
@@ -178,7 +178,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -75.6427379983527
+      value: 74.9073754075637
       valueType: float
   linkedElement: 82
   linksIn: {}
@@ -205,7 +205,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -95.35328527704884
+      value: 95.05267466369042
       valueType: float
   linkedElement: 66
   linksIn: {}
@@ -232,7 +232,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -93.16936790136857
+      value: 92.7802806122051
       valueType: float
   linkedElement: 56
   linksIn: {}
@@ -259,7 +259,7 @@
       name: Kick
       type: KickAngleComponent
       units: mrad
-      value: -85.21868816896205
+      value: 84.61304355415047
       valueType: float
   linkedElement: 42
   linksIn: {}
@@ -286,7 +286,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -24.39245480669942
+      value: 0.0
       valueType: float
   linkedElement: 44
   linksIn: {}
@@ -313,7 +313,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -92.25782249930955
+      value: 0.0
       valueType: float
   linkedElement: 58
   linksIn: {}
@@ -340,7 +340,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -81.72050531715551
+      value: 0.0
       valueType: float
   linkedElement: 68
   linksIn: {}
@@ -367,7 +367,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -65.67276928060537
+      value: 0.0
       valueType: float
   linkedElement: 84
   linksIn: {}
@@ -394,7 +394,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 20.872015382083035
+      value: 0.0
       valueType: float
   linkedElement: 119
   linksIn: {}
@@ -723,7 +723,7 @@
       name: truncation
       type: SliderComponent
       units: ''
-      value: 2
+      value: 1
       valueType: int
   linksIn:
     32: in
@@ -1020,8 +1020,8 @@
   linksOut: {}
   name: View
   position:
-  - 2767
-  - 499
+  - 2946
+  - 917
   size:
   - 1000
   - 850
@@ -1033,8 +1033,8 @@
   linksOut: {}
   name: Single Task GP
   position:
-  - 3624
-  - 2041
+  - 3647
+  - 2060
   size:
   - 600
   - 500

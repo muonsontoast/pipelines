@@ -7,7 +7,7 @@ from xopt.evaluator import Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator
 from xopt import Xopt, AsynchronousXopt
 from concurrent.futures import ThreadPoolExecutor
-import threading
+import threading, multiprocessing
 from pandas import DataFrame as df
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
@@ -96,8 +96,8 @@ class SingleTaskGP(Draggable):
 
     def Start(self, **kwargs):
         print('Starting up a Single Task GP')
-        steps = kwargs.get('steps', 350)
-        initialSamples = kwargs.get('initialSamples', 10)
+        steps = kwargs.get('steps', 5)
+        initialSamples = kwargs.get('initialSamples', 1)
         numParticles = kwargs.get('numParticles', 100000)
         if self.online:
             self.onlineAction.decisions = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision'}
@@ -182,28 +182,24 @@ class SingleTaskGP(Draggable):
                         objectives = {'f': 'MINIMIZE'},
                     )
                     executor = ThreadPoolExecutor(max_workers = 1)
-                    evaluator = Evaluator(function = PerformActionAndWait, executor = executor, max_workers = 1)
-                    # evaluator = Evaluator(function = PerformActionAndWait)
+                    evaluator = Evaluator(function = PerformActionAndWait)
                     generator = UpperConfidenceBoundGenerator(vocs = vocs)
-                    self.X = AsynchronousXopt(evaluator = evaluator, generator = generator, vocs = vocs)
-                    self.X.strict = False
-                    # self.X = Xopt(evaluator = evaluator, generator = generator, vocs = vocs)
+                    self.X = Xopt(evaluator = evaluator, generator = generator, vocs = vocs)
 
-                    # Make an initial sample to allow XOpt to function
-                    self.X.random_evaluate(initialSamples)
-                    print('Finished generating initial samples')
-                    
-                    def Wait():
-                        if len(self.X.data) == 0:
-                            QTimer.singleShot(self.timeBetweenPolls, Wait)
+                    totalSamples = steps + initialSamples
+                    job = executor.submit(self.X.random_evaluate, initialSamples)
+
+                    def StepUntilComplete():
+                        '''Steps through optimisation steps until finish criterion satisfied.'''
+                        if len(self.X.data) < totalSamples:
+                            print(f'On step {len(self.X.data) - initialSamples + 1}/{steps}')
+                            job = executor.submit(self.X.step)
+                            job.add_done_callback(lambda _: StepUntilComplete())
                         else:
-                            for step in range(steps):
-                                self.X.step()
+                            print('GP Done!')
+                            QTimer.singleShot(0, lambda: executor.shutdown(wait = True))
 
-                            print('Optimisation finished - here is the output:')
-                            print(self.X.data)
-                            self.X.data.to_csv(f'{shared.cwd}\\GP-run.txt', sep = ' ', index = True, header = True)
-                    Wait()
+                    job.add_done_callback(lambda _: StepUntilComplete())
             WaitUntilInputsRead()
 
     def SwitchMode(self):

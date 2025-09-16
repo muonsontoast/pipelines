@@ -2,6 +2,7 @@ from PySide6.QtCore import QPoint, QTimer
 import os
 import yaml
 import time
+import multiprocessing
 from .commands import blockTypes, CreateBlock
 from ..lattice.latticeutils import LoadLattice, GetLatticeInfo
 from ..components import BPM, errors, kickangle, link, slider
@@ -27,6 +28,7 @@ def UpdateLinkedLatticeElements():
             if 'value' in entity.settings['components']:
                 if entity.settings['components']['value']['type'] == slider.SliderComponent:
                     entity.UpdateLinkedElement(override = entity.settings['components']['value']['value'])
+    
 
 # Have to loop over entities again as they won't all be added before the prior loop.
 def LinkBlocks():
@@ -38,6 +40,8 @@ def LinkBlocks():
             for targetID, socket in v['linksOut'].items():
                 shared.entities[ID].AddLinkOut(targetID, socket)
     UpdateLinkedLatticeElements()
+    numCPUs = multiprocessing.cpu_count()
+    print(f'There are {numCPUs} CPU cores available.')
 
 def Load(path):
     '''Populate entities from a settings file held inside the config folder.'''

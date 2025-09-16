@@ -15,37 +15,15 @@ class SingleTaskGPAction(Action):
     def __init__(self, parent):
         '''Accepts a `parent` block.'''
         super().__init__(parent)
-        # self.decisions = None
-        # self.objectives = None
-        # self.constraints = None
-        # self.streamTypesIn = dict()
 
     def __getstate__(self):
-        # decisions = []
-        # for d in self.decisions:
-        #     # the decision information such as min, max, default value, etc. is held by the stream from the upstream block
-        #     stream = d.streams[self.streamTypesIn[d.ID]]()
-        #     stream['ID'] = d.ID
-        #     decisions.append(stream)
-
-        # objectives = []
-        # for o in self.objectives:
-        #     print(f'Appending {o.name} to objectives list')
-        #     stream = o.streams[self.streamTypesIn[o.ID]]()
-        #     stream['ID'] = o.ID
-        #     objectives.append(stream)
-            
         return {
             'lattice': shared.lattice,
-            # 'decisions': decisions,
-            # 'objectives': objectives,
             'online': self.parent.online,
         }
 
     def __setstate__(self, state):
         self.lattice = state['lattice']
-        # self.decisions:dict = {d.pop('ID'): d for d in state['decisions']}
-        # self.objectives:list[dict] = state['objectives']
         self.online:bool = state['online']
         self.simulator = Simulator(lattice = self.lattice)
     
