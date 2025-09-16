@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 2030.1840000588259
-  - 1686.7773174855372
+  - 2051.102799894751
+  - 1655.6649627979252
   type: Editor
-  zoom: 0.6610238283629044
+  zoom: 0.5411722903683608
 3:
   linksIn: {}
   linksOut: {}
@@ -85,8 +85,8 @@
   linksOut: {}
   name: Single Task GP
   position:
-  - 2014
-  - 1406
+  - 1923.0
+  - 1367.0
   size:
   - 600
   - 500
