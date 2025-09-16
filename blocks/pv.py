@@ -43,9 +43,13 @@ class PV(Draggable):
         self.dataSharedMemoryShape = self.data.shape
         self.dataSharedMemoryDType = self.data.dtype
 
-        # self.streams = {
-        #     'default': lambda **kwargs: self.data,
-        # }
+        self.streams['default'] = lambda: {
+            'data': self.data,
+            'default': self.settings['components']['value']['default'],
+            'lims': [self.settings['components']['value']['min'], self.settings['components']['value']['max']],
+            'alignments': self.settings['alignment'] if 'alignment' in self.settings else None,
+            'linkedIdx': self.settings['linkedElement'].Index if 'linkedElement' in self.settings else None,
+        }
 
         self.Push()
 

@@ -70,7 +70,6 @@ def WaitForSaveToFinish(entity, saveProcess, deltaTime, lastTime):
     if not runningActions[entity.ID][3]:
         if deltaTime < .1:
             return threading.Timer(.1, WaitForSaveToFinish, args = (entity, saveProcess, deltaTime, lastTime))
-        print('Setting save STOP')
         runningActions[entity.ID][3].set()
         deltaTime = 0
 
@@ -79,7 +78,6 @@ def WaitForSaveToFinish(entity, saveProcess, deltaTime, lastTime):
             shared.workspace.assitant.PushMessage(f'It took too long to save {entity.name}\'s data. This was triggered to allow the app to safely exit the process without hanging. Either check for errors, or extend the *maxWait* in utils/multiprocessing.py')
         else:
             threading.Timer(.1, WaitForSaveToFinish, args = (entity, saveProcess, deltaTime, lastTime))
-            return
     else:
         saveProcess.join()
 
@@ -105,7 +103,6 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
             shared.workspace.assistant.PushMessage('Stopped action(s).')
 
     if saving:
-        # runningActions[entity.ID][3].set()
         WaitForSaveToFinish(entity, saveProcess, 0, time.time())
 
     runningActions.pop(entity.ID)
@@ -136,7 +133,7 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             print('Post processing attribute name was supplied without also providing an empty numpy array!')
             return
     entity.CreateEmptySharedData(emptyDataArray) # share the data with the process.
-    entity.data[:] = np.inf # Initialise data array to NaNs.
+    entity.data[:] = np.inf # Initialise data array to infs.
         
     queue = Queue()
     action = entity.offlineAction if not entity.online else entity.onlineAction

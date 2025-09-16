@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 3589.3273719840836
-  - 2129.372964410074
+  - 3374.360873551413
+  - 2775.1930746964554
   type: Editor
-  zoom: 0.610977983540066
+  zoom: 0.5257291873862082
 3:
   linksIn: {}
   linksOut: {}
@@ -49,6 +49,7 @@
   linksIn: {}
   linksOut:
     32: corrector
+    51: decision
   name: BS-PC-VSTR-06:SETI
   position:
   - 1813
@@ -97,7 +98,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -32.04482683595806
+      value: 0.0
       valueType: float
   linkedElement: 133
   linksIn: {}
@@ -124,7 +125,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -9.912361911422678
+      value: 0.0
       valueType: float
   linkedElement: 146
   linksIn: {}
@@ -151,7 +152,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: -5.4265151812957555
+      value: 0.0
       valueType: float
   linkedElement: 117
   linksIn: {}
@@ -178,7 +179,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 74.9073754075637
+      value: 0.0
       valueType: float
   linkedElement: 82
   linksIn: {}
@@ -205,7 +206,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 95.05267466369042
+      value: 0.0
       valueType: float
   linkedElement: 66
   linksIn: {}
@@ -232,7 +233,7 @@
       name: Slider
       type: KickAngleComponent
       units: mrad
-      value: 92.7802806122051
+      value: 0.0
       valueType: float
   linkedElement: 56
   linksIn: {}
@@ -259,7 +260,7 @@
       name: Kick
       type: KickAngleComponent
       units: mrad
-      value: 84.61304355415047
+      value: 0.0
       valueType: float
   linkedElement: 42
   linksIn: {}
@@ -723,7 +724,7 @@
       name: truncation
       type: SliderComponent
       units: ''
-      value: 1
+      value: 12
       valueType: int
   linksIn:
     32: in
@@ -1020,8 +1021,8 @@
   linksOut: {}
   name: View
   position:
-  - 2946
-  - 917
+  - 2767
+  - 499
   size:
   - 1000
   - 850
@@ -1033,8 +1034,8 @@
   linksOut: {}
   name: Single Task GP
   position:
-  - 3647
-  - 2060
+  - 3624
+  - 2041
   size:
   - 600
   - 500
@@ -1073,12 +1074,26 @@
   - 325
   - 75
   type: BCM
+51:
+  linksIn:
+    6: decision
+    52: objective
+  linksOut: {}
+  name: Single Task GP
+  position:
+  - 3661
+  - 2643
+  size:
+  - 600
+  - 500
+  type: Single Task GP
 52:
   linksIn:
     49: b
     50: a
   linksOut:
     48: objective
+    51: objective
   name: Subtract
   position:
   - 3266

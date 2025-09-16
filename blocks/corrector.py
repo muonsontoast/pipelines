@@ -24,7 +24,7 @@ class Corrector(PV):
             'default': self.settings['components']['value']['default'],
             'lims': [self.settings['components']['value']['min'], self.settings['components']['value']['max']],
             'alignments': self.settings['alignment'],
-            'linkedIdx': self.settings['linkedElement'].Index if 'linkedElement' in self.settings else np.nan,
+            'linkedIdx': self.settings['linkedElement'].Index if 'linkedElement' in self.settings else None,
         }
         # Add labels to layout
         self.typeLabel.setText(f'{self.type} ({self.settings['alignment']})')

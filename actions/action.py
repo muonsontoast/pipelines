@@ -36,9 +36,10 @@ class Action:
         if `online` is True, PV names are used instead of linked idxs.'''
         self.resultsWritten = False
         for ID, stream in independents.items():
+            print(f'Setting {shared.entities[ID].name}')
             # each row in a data is considered as another input
             setpoints = (np.array([targets[f'{ID}-{dim}'] for dim in range(stream['data'].shape[0])]) @ stream['data'])
-            lims = np.array(list(stream['lims'].values()))
+            lims = np.array(list(stream['lims'].values())) if type(stream['lims']) == dict else np.array([stream['lims']])
             rng = lims[:, 1] - lims[:, 0]
             # transform the setpoints to respect the limits of the decision variables
             setpoints = lims[:, 0] + rng * .5 * (1 + np.tanh(setpoints))

@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 3527.4174955471995
-  - 2209.641300100258
+  - 4117
+  - 2858
   type: Editor
-  zoom: 0.5494104404841261
+  zoom: 0.5020418019578332
 3:
   linksIn: {}
   linksOut: {}
@@ -49,6 +49,7 @@
   linksIn: {}
   linksOut:
     32: corrector
+    51: decision
   name: BS-PC-VSTR-06:SETI
   position:
   - 1813
@@ -76,6 +77,7 @@
   linksIn: {}
   linksOut:
     32: corrector
+    51: decision
   name: BS-PC-VSTR-07:SETI
   position:
   - 1813
@@ -400,6 +402,7 @@
   linksIn: {}
   linksOut:
     32: corrector
+    51: decision
   name: BS-PC-VSTR-05:SETI
   position:
   - 1817
@@ -1050,8 +1053,8 @@
     52: b
   name: 'ICT #2'
   position:
-  - 2855.419940846542
-  - 2324.2299496955975
+  - 2855
+  - 2324
   size:
   - 325
   - 75
@@ -1067,18 +1070,34 @@
     52: a
   name: 'ICT #1'
   position:
-  - 2853.419940846542
-  - 2227.2299496955975
+  - 2853
+  - 2227
   size:
   - 325
   - 75
   type: BCM
+51:
+  linksIn:
+    6: decision
+    7: decision
+    19: decision
+    52: objective
+  linksOut: {}
+  name: Single Task GP
+  position:
+  - 3718
+  - 2613
+  size:
+  - 600
+  - 500
+  type: Single Task GP
 52:
   linksIn:
     49: b
     50: a
   linksOut:
     48: objective
+    51: objective
   name: Subtract
   position:
   - 3266

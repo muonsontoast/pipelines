@@ -5,10 +5,8 @@ import time
 from xopt.vocs import VOCS
 from xopt.evaluator import Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator
-from xopt import Xopt, AsynchronousXopt
+from xopt import Xopt
 from concurrent.futures import ThreadPoolExecutor
-import threading, multiprocessing
-from pandas import DataFrame as df
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
 from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
@@ -48,6 +46,16 @@ class SingleTaskGP(Draggable):
         self.content.layout().setSpacing(0)
 
         self.streams = {
+            'raw': lambda: {
+                'ax': ['Decisions'],
+                'names': [[d.name for d in self.decisions],
+                          [f'Measurement {r + 1}' for r in range(len(self.X.data))]],
+                'data': self.X.data[:, :len(self.decisions) + 1].to_numpy(),
+            } if hasattr(self, 'X') and self.X.data is not None else {
+                'ax': [],
+                'names': [],
+                'data': np.zeros(0,),
+            },
             'default': lambda **kwargs: {
                 'xlabel': 'Step',
                 'xlim': [0, len(self.data) - 1],
@@ -96,7 +104,7 @@ class SingleTaskGP(Draggable):
 
     def Start(self, **kwargs):
         print('Starting up a Single Task GP')
-        steps = kwargs.get('steps', 5)
+        steps = kwargs.get('steps', 10)
         initialSamples = kwargs.get('initialSamples', 1)
         numParticles = kwargs.get('numParticles', 100000)
         if self.online:
@@ -169,7 +177,8 @@ class SingleTaskGP(Draggable):
                         while not self.offlineAction.resultsWritten:
                             time.sleep(self.timeBetweenPolls / 1e3)
 
-                        return {'f': self.objectives[0].streams[self.streamTypesIn[self.objectives[0].ID]]()['data']}
+                        # return {'f': self.objectives[0].streams[self.streamTypesIn[self.objectives[0].ID]]()['data']}
+                        return {'f': np.sin(list(inDict.values())[0])}
                         
                     variables = dict()
                     for d in self.decisions:
@@ -193,10 +202,13 @@ class SingleTaskGP(Draggable):
                         '''Steps through optimisation steps until finish criterion satisfied.'''
                         if len(self.X.data) < totalSamples:
                             print(f'On step {len(self.X.data) - initialSamples + 1}/{steps}')
+                            self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
                             job = executor.submit(self.X.step)
                             job.add_done_callback(lambda _: StepUntilComplete())
                         else:
                             print('GP Done!')
+                            # temporarily save the data automatically here
+                            self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
                             QTimer.singleShot(0, lambda: executor.shutdown(wait = True))
 
                     job.add_done_callback(lambda _: StepUntilComplete())
