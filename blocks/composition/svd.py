@@ -55,6 +55,7 @@ class SVD(Composition):
             d['lims'] = ORMData['lims']
             d['alignments'] = ORMData['alignments']
             d['linkedIdxs'] = ORMData['linkedIdxs']
+            d['names'] = ORMData['names']
             return d
 
         self.streams = {

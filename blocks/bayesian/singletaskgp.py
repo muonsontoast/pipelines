@@ -13,6 +13,7 @@ from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
 from ...actions.online.singletaskgp import SingleTaskGPAction as OnlineAction
 from ... import style
 from ... import shared
+from ...utils import cothread
 from ...utils.multiprocessing import PerformAction, TogglePause, StopAction
 
 class SingleTaskGP(Draggable):
@@ -107,119 +108,119 @@ class SingleTaskGP(Draggable):
         steps = kwargs.get('steps', 10)
         initialSamples = kwargs.get('initialSamples', 1)
         numParticles = kwargs.get('numParticles', 100000)
-        if self.online:
-            self.onlineAction.decisions = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision'}
-            self.onlineAction.objectives = {shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective'}
-            if not self.onlineAction.CheckForValidInputs():
-                return
-            PerformAction(
-                self,
-                np.empty(steps + 1),
-                numSteps = steps,
-                initialSamples = initialSamples,
-            )
-            shared.workspace.assistant.PushMessage(f'Running single objective optimisation with {len(self.onlineAction.decisions)} decision variable(s) (online).')
-        else:
-            self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
-            self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
-            # this will be deprecated soon
-            independents = [
-                {'ID': d.ID, 'stream': self.streamTypesIn[d.ID]} for d in self.decisions
-            ]
-            
-            waiting = False
-            for decision in self.decisions:
-                if decision.type not in self.pvBlockTypes and np.isinf(decision.streams[self.streamTypesIn[decision.ID]]()['data']).any():
-                    waiting = True
-                    self.title.setText(f'{self.title.text().split(' (')[0]} (Waiting)')
-                    self.offlineAction.ReadDependents(independents)
-                    break
+        self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
+        self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
+        # this will be deprecated soon
+        independents = [
+            {'ID': d.ID, 'stream': self.streamTypesIn[d.ID]} for d in self.decisions
+        ]
+        waiting = False
+        actionToRun = self.offlineAction if not self.online else self.onlineAction
+        for decision in self.decisions:
+            if decision.type not in self.pvBlockTypes and np.isinf(decision.streams[self.streamTypesIn[decision.ID]]()['data']).any():
+                waiting = True
+                self.title.setText(f'{self.title.text().split(' (')[0]} (Waiting)')
+                # self.offlineAction.ReadDependents(independents)
+                actionToRun.ReadDependents(independents)
+                break
 
-            def WaitUntilInputsRead():
-                nonlocal initialSamples, numParticles, waiting
-                if waiting:
-                    if not self.offlineAction.resultsWritten:
-                        return QTimer.singleShot(self.offlineAction.timeBetweenPolls, WaitUntilInputsRead)
-                    waiting = False
-                    return QTimer.singleShot(self.offlineAction.timeBetweenPolls, WaitUntilInputsRead)
-                else:
-                    if not self.offlineAction.CheckForValidInputs():
-                        return
+        def WaitUntilInputsRead():
+            nonlocal initialSamples, numParticles, waiting
+            if waiting:
+                # if not self.offlineAction.resultsWritten:
+                #     return QTimer.singleShot(self.offlineAction.timeBetweenPolls, WaitUntilInputsRead)
+                if not actionToRun.resultsWritten:
+                    return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
+                waiting = False
+                # return QTimer.singleShot(self.offlineAction.timeBetweenPolls, WaitUntilInputsRead)
+                return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
+            else:
+                # if not self.offlineAction.CheckForValidInputs():
+                #     return
+                if not actionToRun.CheckForValidInputs():
+                    return
 
-                    independentsToSet = {
-                        d.ID: d.streams[self.streamTypesIn[d.ID]]() for d in self.decisions
-                    }
+                independentsToSet = {
+                    d.ID: d.streams[self.streamTypesIn[d.ID]]() for d in self.decisions
+                }
+                
+                counter = 0
                     
-                    counter = 0
-                        
-                    def PerformActionAndWait(inDict:dict):
-                        '''Called on a separate worker thread so will not block the UI thread.'''
-                        nonlocal counter
-                        # Set the values of the decisions
-                        self.offlineAction.SetIndependents(independentsToSet, inDict)
-                        # crank the handle
-                        PerformAction(
-                            self,
-                            # Raw data held by the GP block will be output from tracking simulations
-                            np.empty((6, numParticles, len(shared.lattice), 1)),
-                            numSteps = steps,
-                            currentStep = counter,
-                            numParticles = numParticles,
-                        )
-                        while np.isinf(self.data).any():
-                            print(f'({counter}) Waiting...')
-                            time.sleep(self.timeBetweenPolls / 1e3)
-
-                        counter += 1
-                        # Read the value of the objective by feeding this GP's data upstream
-                        self.offlineAction.ReadDependents([{'ID': self.objectives[0].ID, 'stream': self.streamTypesIn[self.objectives[0].ID]}], self.data)
-
-                        while not self.offlineAction.resultsWritten:
-                            time.sleep(self.timeBetweenPolls / 1e3)
-
-                        # return {'f': self.objectives[0].streams[self.streamTypesIn[self.objectives[0].ID]]()['data']}
-                        return {'f': np.sin(list(inDict.values())[0])}
-                        
-                    variables = dict()
-                    for d in self.decisions:
-                        stream = d.streams[self.streamTypesIn[d.ID]]()
-                        for dim in range(stream['data'].shape[0]): # each row is a new singular vector for SVD, otherwise a 1x1 for a PV.
-                            variables[f'{d.ID}-{dim}'] = [-3, 3] # values get sent through tanh so restrict to sensible domain
-
-                    vocs = VOCS(
-                        variables = variables,
-                        objectives = {'f': 'MINIMIZE'},
+                def PerformActionAndWait(inDict:dict):
+                    '''Called on a separate worker thread so will not block the UI thread.'''
+                    nonlocal counter, actionToRun
+                    # Set the values of the decisions
+                    # self.offlineAction.SetIndependents(independentsToSet, inDict)
+                    actionToRun.SetIndependents(independentsToSet, inDict)
+                    # crank the handle
+                    PerformAction(
+                        self,
+                        # Raw data held by the GP block will be output from tracking simulations
+                        np.empty((6, numParticles, len(shared.lattice), 1)),
+                        numSteps = steps,
+                        currentStep = counter,
+                        numParticles = numParticles,
                     )
-                    executor = ThreadPoolExecutor(max_workers = 1)
-                    evaluator = Evaluator(function = PerformActionAndWait)
-                    generator = UpperConfidenceBoundGenerator(vocs = vocs)
-                    self.X = Xopt(evaluator = evaluator, generator = generator, vocs = vocs)
+                    while np.isinf(self.data).any():
+                        print(f'({counter}) Waiting...')
+                        time.sleep(self.timeBetweenPolls / 1e3)
 
-                    totalSamples = steps + initialSamples
-                    job = executor.submit(self.X.random_evaluate, initialSamples)
+                    counter += 1
+                    # Read the value of the objective by feeding this GP's data upstream
+                    # self.offlineAction.ReadDependents([{'ID': self.objectives[0].ID, 'stream': self.streamTypesIn[self.objectives[0].ID]}], self.data)
+                    actionToRun.ReadDependents([{'ID': self.objectives[0].ID, 'stream': self.streamTypesIn[self.objectives[0].ID]}], self.data)
 
-                    def StepUntilComplete():
-                        '''Steps through optimisation steps until finish criterion satisfied.'''
-                        if len(self.X.data) < totalSamples:
-                            print(f'On step {len(self.X.data) - initialSamples + 1}/{steps}')
-                            self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
-                            job = executor.submit(self.X.step)
-                            job.add_done_callback(lambda _: StepUntilComplete())
-                        else:
-                            print('GP Done!')
-                            # temporarily save the data automatically here
-                            self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
-                            QTimer.singleShot(0, lambda: executor.shutdown(wait = True))
+                    # while not self.offlineAction.resultsWritten:
+                    #     time.sleep(self.timeBetweenPolls / 1e3)
+                    while not actionToRun.resultsWritten:
+                        time.sleep(self.timeBetweenPolls / 1e3)
 
-                    job.add_done_callback(lambda _: StepUntilComplete())
-            WaitUntilInputsRead()
+                    return {'f': self.objectives[0].streams[self.streamTypesIn[self.objectives[0].ID]]()['data']}
+                    
+                variables = dict()
+                for d in self.decisions:
+                    stream = d.streams[self.streamTypesIn[d.ID]]()
+                    for dim in range(stream['data'].shape[0]): # each row is a new singular vector for SVD, otherwise a 1x1 for a PV.
+                        variables[f'{d.ID}-{dim}'] = [-3, 3] # values get sent through tanh so restrict to sensible domain
+
+                vocs = VOCS(
+                    variables = variables,
+                    objectives = {'f': 'MINIMIZE'},
+                )
+                executor = ThreadPoolExecutor(max_workers = 1)
+                evaluator = Evaluator(function = PerformActionAndWait)
+                generator = UpperConfidenceBoundGenerator(vocs = vocs)
+                self.X = Xopt(evaluator = evaluator, generator = generator, vocs = vocs)
+
+                totalSamples = steps + initialSamples
+                job = executor.submit(self.X.random_evaluate, initialSamples)
+
+                def StepUntilComplete():
+                    '''Steps through optimisation steps until finish criterion satisfied.'''
+                    if len(self.X.data) < totalSamples:
+                        print(f'On step {len(self.X.data) - initialSamples + 1}/{steps}')
+                        self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
+                        job = executor.submit(self.X.step)
+                        job.add_done_callback(lambda _: StepUntilComplete())
+                    else:
+                        print('GP Done!')
+                        # temporarily save the data automatically here
+                        self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
+                        QTimer.singleShot(0, lambda: executor.shutdown(wait = True))
+
+                job.add_done_callback(lambda _: StepUntilComplete())
+        WaitUntilInputsRead()
 
     def SwitchMode(self):
-        if self.online:
-            self.modeTitle.setText('Mode: <u><span style = "color: #C74343">Offline</span></u>')
+        if cothread.AVAILABLE:
+            if self.online:
+                self.modeTitle.setText('Mode: <u><span style = "color: #C74343">Offline</span></u>')
+            else:
+                self.modeTitle.setText('Mode: <u><span style = "color: #3C9C29">Online</span></u>')
+            self.online = not self.online
+            shared.workspace.assistant.PushMessage(f'{self.name} mode is set to {'Online' if self.online else 'Offline'}')
         else:
-            self.modeTitle.setText('Mode: <u><span style = "color: #3C9C29">Online</span></u>')
-        self.online = not self.online
+            shared.workspace.assistant.PushMessage(f'Online mode has been disabled because cothread is not available on your machine.', 'Warning')
 
     def AddLinkIn(self, ID, socket):
         if shared.entities[ID].type == 'SVD':

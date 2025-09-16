@@ -12,6 +12,7 @@ import sys
 import os
 import time
 from pathlib import Path
+from .utils import cothread
 from .inspector import Inspector
 from .ui.workspace import Workspace
 from .lattice.latticeglobal import LatticeGlobal

@@ -8,6 +8,7 @@ from .. import style
 from ..components.slider import SliderComponent
 from ..actions.offline.orbitresponse import OrbitResponseAction
 from ..ui.runningcircle import RunningCircle
+from ..utils import cothread
 from ..utils.multiprocessing import PerformAction, TogglePause, StopAction
 
 '''
@@ -35,8 +36,6 @@ class OrbitResponse(Draggable):
         self.startPos = None
         self.offlineAction = OrbitResponseAction(self)
         self.runningCircle = RunningCircle()
-        # Define orbit response streams
-        # All streams contain a 'default' entry for the de facto use case.
         self.streams = {
             'raw': lambda: {
                 # Axis names
@@ -49,7 +48,6 @@ class OrbitResponse(Draggable):
                 'defaults': {
                     c.ID: c.streams[self.streamTypesIn[c.ID]]()['default'] for c in self.correctors.values()
                 },
-                # limits of the correctors
                 'lims': {
                     c.ID: c.streams[self.streamTypesIn[c.ID]]()['lims'] for c in self.correctors.values()
                 },
@@ -59,10 +57,9 @@ class OrbitResponse(Draggable):
                 'alignments': {
                     c.ID: c.streams[self.streamTypesIn[c.ID]]()['alignments'] for c in self.correctors.values()
                 },
-                # raw data
                 'data': self.data,
             },
-            'default': lambda **kwargs: {
+            'default': lambda: {
                 'xlabel': 'Corrector Number',
                 'ylabel': 'BPM Number',
                 'xticks': np.arange(len(self.correctors)),
@@ -194,11 +191,15 @@ class OrbitResponse(Draggable):
         self.ORMSharedMemory.unlink()
 
     def SwitchMode(self):
-        if self.online:
-            self.modeTitle.setText('Mode: <u><span style = "color: #C74343">Offline</span></u>')
+        if cothread.AVAILABLE:
+            if self.online:
+                self.modeTitle.setText('Mode: <u><span style = "color: #C74343">Offline</span></u>')
+            else:
+                self.modeTitle.setText('Mode: <u><span style = "color: #3C9C29">Online</span></u>')
+            self.online = not self.online
+            shared.workspace.assistant.PushMessage(f'{self.name} mode is set to {'Online' if self.online else 'Offline'}')
         else:
-            self.modeTitle.setText('Mode: <u><span style = "color: #3C9C29">Online</span></u>')
-        self.online = not self.online
+            shared.workspace.assistant.PushMessage(f'Online mode has been disabled because cothread is not available on your machine.', 'Warning')
 
     def SetOrderLinear(self):
         self.orderOptions.setText('Linear        \u25BC')

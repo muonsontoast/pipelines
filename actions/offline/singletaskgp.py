@@ -1,12 +1,6 @@
-# from xopt.vocs import VOCS
-# from xopt.evaluator import Evaluator
-# from xopt.generators.bayesian import UpperConfidenceBoundGenerator
-# from xopt import Xopt
-import math
 import time
 import numpy as np
 from multiprocessing.shared_memory import SharedMemory
-from PySide6.QtCore import QTimer
 from ..action import Action
 from ...simulator import Simulator
 from ... import shared
