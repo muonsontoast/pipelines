@@ -6,6 +6,7 @@ from .pv import PV
 from ..components import kickangle
 from .. import shared
 from .. import style
+from ..utils import cothread
 
 class Corrector(PV):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
@@ -25,6 +26,9 @@ class Corrector(PV):
             'lims': [self.settings['components']['value']['min'], self.settings['components']['value']['max']],
             'alignments': self.settings['alignment'],
             'linkedIdx': self.settings['linkedElement'].Index if 'linkedElement' in self.settings else None,
+            'plottype': 'plot',
+            'xunits': '',
+            'yunits': '',
         }
         # Add labels to layout
         self.typeLabel.setText(f'{self.type} ({self.settings['alignment']})')

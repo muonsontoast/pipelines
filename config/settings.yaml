@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 2051.102799894751
-  - 1655.6649627979252
+  - 969.2536110597832
+  - 1093.9529060499308
   type: Editor
-  zoom: 0.5411722903683608
+  zoom: 0.7056976545613418
 3:
   linksIn: {}
   linksOut: {}
@@ -44,15 +44,14 @@
       units: mrad
       value: 0
   linksIn: {}
-  linksOut:
-    8: decision
-  name: BS-PC-VSTR-01:SETI
+  linksOut: {}
+  name: asvsajsabdasjhasd
   position:
-  - 1475
-  - 1469
+  - 482
+  - 857
   size:
   - 325
-  - 75
+  - 115
   type: PV
 7:
   components:
@@ -68,26 +67,35 @@
       units: mrad
       value: 0
   linksIn: {}
-  linksOut:
-    8: objective
-  name: BS-DI-ICT-03:SIGNAL
+  linksOut: {}
+  name: PV
   position:
-  - 1475
-  - 1618
+  - 503
+  - 1033
   size:
   - 325
-  - 75
+  - 115
   type: PV
 8:
-  linksIn:
-    6: decision
-    7: objective
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Slider
+      type: SliderComponent
+      units: mrad
+      value: 0
+  linksIn: {}
   linksOut: {}
-  name: Single Task GP
+  name: PV
   position:
-  - 1923.0
-  - 1367.0
+  - 651
+  - 1197
   size:
-  - 600
-  - 500
-  type: Single Task GP
+  - 325
+  - 115
+  type: PV

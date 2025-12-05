@@ -106,6 +106,12 @@ class Draggable(Entity, QWidget):
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
 
+    def __setattr__(self, name, value):
+        if name == 'name' and hasattr(self, 'ID'):
+            print(f'Entity {self.ID} name changed to {value}.')
+            shared.workspace.assistant.PushMessage(f'Entity {self.ID} name changed to: {value}')
+        super().__setattr__(name, value)
+
     def Push(self):
         # Add widget sections to the layout.
         self.layout().addWidget(self.FSocketWidgets)

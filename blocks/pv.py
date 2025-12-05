@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QHBoxLayout, QSizePolicy, QGraphicsLineItem, QGraphicsProxyWidget, QSpacerItem
+from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QSpacerItem
 from PySide6.QtCore import Qt
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
@@ -20,7 +20,7 @@ class PV(Draggable):
             proxy,
             name = kwargs.pop('name', 'PV'),
             type = kwargs.pop('type', 'PV'),
-            size = kwargs.pop('size', [325, 75]),
+            size = kwargs.pop('size', [325, 115]),
             components = {
                 'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
                 'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
@@ -59,7 +59,7 @@ class PV(Draggable):
 
     def Push(self):
         self.clickable = ClickableWidget(self)
-        self.clickable.setLayout(QGridLayout())
+        self.clickable.setLayout(QVBoxLayout())
         self.clickable.layout().setContentsMargins(0, 0, 0, 0)
         self.clickable.setObjectName('PV')
         self.widget = QWidget()
@@ -80,9 +80,36 @@ class PV(Draggable):
         self.header.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
         self.widget.layout().addWidget(self.header, 0, 0, 1, 3)
         self.clickable.layout().addWidget(self.widget)
+        self.setget = QWidget()
+        self.setget.setLayout(QHBoxLayout())
+        self.setget.layout().setContentsMargins(0, 2, 0, 0)
+        self.setget.layout().setSpacing(25)
+        self.setget.setFixedSize(150, 45)
+        self.setWidget = QWidget()
+        self.setWidget.setLayout(QVBoxLayout())
+        self.setWidget.layout().setContentsMargins(0, 0, 0, 0)
+        self.set = QLineEdit('0.000')
+        self.set.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.set.setAlignment(Qt.AlignCenter)
+        self.setWidget.layout().addWidget(self.set)
+        self.setWidget.layout().addWidget(QLabel('SET', alignment = Qt.AlignCenter))
+        self.getWidget = QWidget()
+        self.getWidget.setLayout(QVBoxLayout())
+        self.getWidget.layout().setContentsMargins(0, 0, 0, 0)
+        self.get = QLineEdit('0.000')
+        self.get.setReadOnly(True)
+        self.get.setFocusPolicy(Qt.NoFocus)
+        self.get.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.get.setAlignment(Qt.AlignCenter)
+        self.getWidget.layout().addWidget(self.get)
+        self.getWidget.layout().addWidget(QLabel('READ', alignment = Qt.AlignCenter))
+        self.setget.layout().addWidget(self.setWidget, alignment = Qt.AlignLeft)
+        self.setget.layout().addWidget(self.getWidget, alignment = Qt.AlignRight)
+        self.clickable.layout().addWidget(self.setget, alignment = Qt.AlignHCenter)
         self.outSocket = Socket(self, 'M', 50, 25, 'right', 'out')
+        self.outSocket.setFixedHeight(65)
         self.layout().addWidget(self.clickable)
-        self.layout().addWidget(self.outSocket)
+        self.layout().addWidget(self.outSocket, alignment = Qt.AlignTop)
         self.ToggleStyling(active = False)
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
@@ -129,6 +156,8 @@ class PV(Draggable):
             self.widget.setStyleSheet(self.widgetStyle + self.indicatorStyleToUse)
             self.outSocket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
             self.title.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
+            self.set.setStyleSheet(style.LineEditStyle(color = "#2e2e2e"))
+            self.get.setStyleSheet(style.LineEditStyle(color = "#1e1e1e"))
 
     def SelectedStyling(self):
         if shared.lightModeOn:
