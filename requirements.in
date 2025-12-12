@@ -1,0 +1,9 @@
+numpy
+scipy
+matplotlib
+PySide6
+qasync
+accelerator-toolbox
+PyYAML
+xopt
+pandas

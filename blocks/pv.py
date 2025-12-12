@@ -168,14 +168,15 @@ class PV(Draggable):
                     if 'STR' in PVName:
                         self.settings['components']['value']['units'] = 'Amps'
                         shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + ' (Amps)'
-                        shared.inspector.expandables['value'].header.setText(f'\u25BA    {shared.inspector.expandables['value'].name}')
+                        shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0] + '    (Amps)')
                     await self.UpdateInspectorLimits(PVName)
             except:
                 self.data[1] = np.nan
                 self.get.setText('N/A')
                 self.settings['components']['value']['units'] = ''
-                shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
-                shared.inspector.expandables['value'].header.setText(f'\u25BA    {shared.inspector.expandables['value'].name}')
+                if self.active:
+                    shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
+                    shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
                 await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
             lastMatch = PVName
             await asyncio.sleep(.2)
