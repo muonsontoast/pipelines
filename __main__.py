@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtCore import Qt
+import qasync
+import asyncio
 import matplotlib.pyplot as plt
 import signal
 import sys
@@ -196,6 +198,15 @@ class MainWindow(Entity, QMainWindow):
         
         self.showMaximized() # This throws a known but harmless error in PySide 6.9.1, to be corrected in the next version.
     
+    async def ConfigureLoop(self):
+        # Setup an event loop to handle asynchronous PV I/O without blocking the UI thread.
+        loop = asyncio.get_running_loop()
+        self.future = loop.create_future() # store a reference that can be cancelled later.
+        try:
+            await self.future
+        except asyncio.CancelledError: # gracefully close the event loop when the app is exited.
+            pass
+    
     def ToggleDisplayMode(self):
         if shared.lightModeOn:
             self.page.setStyleSheet(style.Dark01())
@@ -209,6 +220,8 @@ class MainWindow(Entity, QMainWindow):
         StopAllActions()
         if not self.quitShortcutPressed:
             Save()
+        if hasattr(self, 'future') and self.future and not self.future.done():
+            self.future.cancel()
         event.accept()
 
 def GetMainWindow():
@@ -217,9 +230,8 @@ def GetMainWindow():
 if __name__ == "__main__":
     shared.app = QApplication(sys.argv)
     shared.app.setStyle(QStyleFactory.create('Fusion'))
-    window = MainWindow(*sys.argv[1:]) # skip first arg which is app name.
+    # skip first arg which is app name.
+    window = MainWindow(*sys.argv[1:])
     window.show()
-    sys.exit(shared.app.exec())
-    w = Workspace(None)
-    w.show()
-    sys.exit(shared.app.exec())
+    # sys.exit(shared.app.exec())
+    qasync.run(window.ConfigureLoop())

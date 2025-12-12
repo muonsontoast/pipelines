@@ -34,7 +34,6 @@ class Draggable(Entity, QWidget):
         self.linksOut = dict()
         self.settings['linksIn'] = dict()
         self.settings['linksOut'] = dict()
-        # self.data = np.full(1, np.nan) # , np.zeros(1)
         self.online = False
         self.shouldUpdateValue = True # triggers block recalculation and any relevant upstream heirarchies during a run.
         self.pollActionRate = kwargs.get('pollActionRate', 4) # Hz
@@ -64,7 +63,6 @@ class Draggable(Entity, QWidget):
         self.main = QWidget()
         self.main.setLayout(QVBoxLayout())
         self.main.layout().setContentsMargins(0, 0, 0, 0)
-
         # Every draggable has a popup box hidden until 'Alt' is pressed
         self.popup = QGraphicsProxyWidget()
         self.popup.setZValue(100)
@@ -75,7 +73,6 @@ class Draggable(Entity, QWidget):
         self.popupContainer.setLayout(QVBoxLayout())
         self.popupContainer.layout().setContentsMargins(0, 0, 0, 0)
         self.popupContainer.layout().setSpacing(5)
-        # self.popupContainer.setWindowOpacity(.95)
         self.popupHeader = QWidget()
         self.popupHeader.setStyleSheet(style.WidgetStyle(color = "#ab4e34", borderRadiusTopLeft = 6, borderRadiusTopRight = 6))
         self.popupHeader.setLayout(QHBoxLayout())
@@ -87,7 +84,7 @@ class Draggable(Entity, QWidget):
         self.popupWidget = QWidget()
         self.popupWidget.setLayout(QVBoxLayout())
         self.popupWidget.setStyleSheet(style.WidgetStyle(color = '#ab4e34', borderRadiusBottomLeft = 6, borderRadiusBottomRight = 6))
-        # TODO: Add scroll area showing input blocks and their streams
+        # TODO: Add scroll area showing input blocks and their streams.
         self.popupList = QListWidget()
         self.popupList.setFocusPolicy(Qt.NoFocus)
         self.popupList.setSelectionMode(QListWidget.NoSelection)
@@ -95,7 +92,6 @@ class Draggable(Entity, QWidget):
         self.popupList.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.popupList.setMaximumHeight(350)
         self.popupWidget.layout().addWidget(self.popupList)
-
         self.popupContainer.layout().addWidget(self.popupWidget)
         self.popup.setWidget(self.popupContainer)
         self.popup.hide()

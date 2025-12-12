@@ -2,6 +2,9 @@ from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QHBoxLa
 from PySide6.QtCore import Qt
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
+import aioca
+import asyncio
+from qasync import QEventLoop
 from .draggable import Draggable
 from ..indicator import Indicator
 from ..clickablewidget import ClickableWidget
@@ -22,7 +25,7 @@ class PV(Draggable):
             type = kwargs.pop('type', 'PV'),
             size = kwargs.pop('size', [325, 115]),
             components = {
-                'value': dict(name = 'Slider', value = 0, min = 0, max = 100, default = 0, units = 'mrad', type = slider.SliderComponent),
+                'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', type = slider.SliderComponent),
                 'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
             },
             **kwargs
@@ -36,7 +39,7 @@ class PV(Draggable):
         self.indicatorStyleToUse = self.indicatorStyle
         
         # force a PV's scalar output to be shared at instantiation so modifications are seen by all connected blocks
-        self.CreateEmptySharedData(np.zeros(1))
+        self.CreateEmptySharedData(np.zeros(2)) # a SET value and a READ value
         self.data[:] = np.nan
         # store the shared memory name and attrs which get copied across instances
         self.dataSharedMemoryName = self.dataSharedMemory.name
@@ -51,11 +54,14 @@ class PV(Draggable):
             'linkedIdx': self.settings['linkedElement'].Index if 'linkedElement' in self.settings else None,
         }
 
+        self.PVMatch = False
         self.Push()
 
-    def UpdateValue(self):
-        '''This only needs to be called when connected on shift.'''
-        pass # perform a caget
+        try:
+            asyncio.get_event_loop().create_task(self.FetchReadValue())
+        except RuntimeError:
+            # loop not installed yet — schedule for next Qt tick
+            QTimer.singleShot(0, lambda: asyncio.get_event_loop().create_task(self.FetchReadValue()))
 
     def Push(self):
         self.clickable = ClickableWidget(self)
@@ -84,7 +90,7 @@ class PV(Draggable):
         self.setget.setLayout(QHBoxLayout())
         self.setget.layout().setContentsMargins(0, 2, 0, 0)
         self.setget.layout().setSpacing(25)
-        self.setget.setFixedSize(150, 45)
+        self.setget.setFixedSize(165, 45)
         self.setWidget = QWidget()
         self.setWidget.setLayout(QVBoxLayout())
         self.setWidget.layout().setContentsMargins(0, 0, 0, 0)
@@ -96,7 +102,7 @@ class PV(Draggable):
         self.getWidget = QWidget()
         self.getWidget.setLayout(QVBoxLayout())
         self.getWidget.layout().setContentsMargins(0, 0, 0, 0)
-        self.get = QLineEdit('0.000')
+        self.get = QLineEdit('N/A')
         self.get.setReadOnly(True)
         self.get.setFocusPolicy(Qt.NoFocus)
         self.get.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -111,6 +117,68 @@ class PV(Draggable):
         self.layout().addWidget(self.clickable)
         self.layout().addWidget(self.outSocket, alignment = Qt.AlignTop)
         self.ToggleStyling(active = False)
+
+    async def UpdateInspectorLimits(self, PVName, timeout = 1, makeReadOnly = True):
+        '''Attempts to update limits inside the inspector, if they are defined for the PV.'''
+        if not makeReadOnly:
+            # Make fields editable if there are no strict PV limits.
+            if self.active:
+                shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
+                shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
+        else:
+            try:
+                mn = await aioca.caget(PVName + ':IMIN', timeout = timeout)
+                mx = await aioca.caget(PVName + ':IMAX', timeout = timeout)
+                if mx > mn:
+                    if self.active:
+                        shared.inspector.expandables['value'].widget.minimum.setText(f'{mn}')
+                        shared.inspector.expandables['value'].widget.SetMinimum()
+                        shared.inspector.expandables['value'].widget.minimum.setReadOnly(True)
+                        shared.inspector.expandables['value'].widget.maximum.setText(f'{mx}')
+                        shared.inspector.expandables['value'].widget.SetMaximum()
+                        shared.inspector.expandables['value'].widget.maximum.setReadOnly(True)
+                        shared.inspector.expandables['value'].widget.Reset()
+                    else:
+                        self.settings['components']['value']['min'] = mn
+                        self.settings['components']['value']['max'] = mx
+                        self.settings['components']['value']['default'] = max(min(self.settings['components']['value']['default'], mx), mn)
+            except:
+                # Make fields editable if there are no strict PV limits.
+                if self.active:
+                    shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
+                    shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
+
+    async def Start(self):
+        '''Unlike more complex blocks, a PV just returns its current value, indicating the end of a graph.'''
+        return self.data[1]
+
+    async def FetchReadValue(self, timeout = 1):
+        '''Asynchronously fetch and update current value, without blocking the UI thread.'''
+        lastMatch = ''
+        while True:
+            # check whether the current name is a valid PV.
+            PVName = self.name.split(':')[0]
+            try: 
+                self.data[1] = await aioca.caget(PVName + ':I', timeout = timeout)
+                self.settings['components']['value']['default'] = self.data[1]
+                self.get.setText(f'{self.data[1]:.3f}')
+                if PVName != lastMatch:
+                    shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
+                    # Update units if this is a corrector / steerer.
+                    if 'STR' in PVName:
+                        self.settings['components']['value']['units'] = 'Amps'
+                        shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + ' (Amps)'
+                        shared.inspector.expandables['value'].header.setText(f'\u25BA    {shared.inspector.expandables['value'].name}')
+                    await self.UpdateInspectorLimits(PVName)
+            except:
+                self.data[1] = np.nan
+                self.get.setText('N/A')
+                self.settings['components']['value']['units'] = ''
+                shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
+                shared.inspector.expandables['value'].header.setText(f'\u25BA    {shared.inspector.expandables['value'].name}')
+                await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
+            lastMatch = PVName
+            await asyncio.sleep(.2)
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
         '''`event` should be a mouseReleaseEvent if it needs to be called.'''

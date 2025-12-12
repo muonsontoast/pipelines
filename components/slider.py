@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt
+import numpy as np
 from .. import shared
 from .. import style
 
@@ -10,28 +11,15 @@ class SliderBar(QSlider):
     def __init__(self, orientation, parent):
         super().__init__(orientation)
         self.parent = parent
-        # self.oldValue = None
 
     def mousePressEvent(self, event):
-        # self.oldValue = self.value()
         super().mousePressEvent(event)
     
     def mouseReleaseEvent(self, event):
-        print(f'Released {self.parent.pv.name} slider inside the inspector')
-        # if not self.oldValue:
-        #     return super().mouseReleaseEvent(event)
-        # if 'linkedElement' not in self.parent.pv.settings:
-        #     return super().mouseReleaseEvent(event)
-        # if 'linkedElement' in self.parent.pv.settings:
-        #     print('About to update it\'s linked element')
-        #     self.parent.pv.UpdateLinkedElement(self, self.parent.ToAbsolute, event)
-        # else:
-        #     self.parent.pv.data[0] = self.parent.ToAbsolute(self.value())
-        # self.oldValue = None
         super().mouseReleaseEvent(event)
 
 class SliderComponent(QWidget):
-    def __init__(self, pv, component, sliderSteps = 1000000, floatdp = 3, **kwargs):
+    def __init__(self, pv, component, sliderSteps = 10000000, floatdp = 3, **kwargs):
         '''Leave `sliderSteps` at 1e6 for smooth sliding, or restrict to a low number for discrete applications.\n
         `floatdp` is the decimal precision of the line edit elements.\n
         `hideRange` allows you to supress the min and max widgets.\n
@@ -64,6 +52,7 @@ class SliderComponent(QWidget):
         self.slider.setRange(0, sliderSteps)
         self.slider.setValue(self.ToSliderValue(pv.settings['components'][component]['value']))
         self.slider.valueChanged.connect(self.UpdateSliderValue)
+        self.slider.valueChanged.connect(self.UpdatePVSetValueCheck)
         self.sliderRow.layout().addWidget(self.slider)
         self.sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
         # Value
@@ -127,6 +116,12 @@ class SliderComponent(QWidget):
         # Apply colors
         self.UpdateColors()
 
+    def UpdatePVSetValueCheck(self):
+        # If this block has a SET value, it will automatically update it as the slider value changes
+        if self.pv is not None:
+            if hasattr(self.pv, 'set'):
+                self.pv.set.setText(self.value.text())
+
     def ToAbsolute(self, v):
         self.range = 1 if self.range == 0 else self.range
         return self.pv.settings['components'][self.component]['min'] + v / self.steps * self.range
@@ -183,6 +178,7 @@ class SliderComponent(QWidget):
             self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
         else:
             self.pv.data[0] = self.ToAbsolute(self.slider.value())
+        self.UpdatePVSetValueCheck()
 
     def SetDefault(self, override = False):
         if not override:
@@ -205,12 +201,15 @@ class SliderComponent(QWidget):
             shared.app.processEvents()
             self.default = default
             self.UpdateColors()
+        self.UpdatePVSetValueCheck()
 
     def SetMinimum(self, override = False):
         '''`override` is a bool. Component should be updated before calling this override. '''
         if not override:
             self.minimum.clearFocus()
             v = float(self.minimum.text())
+            if v >= self.pv.settings['components'][self.component]['max']:
+                return
             self.pv.settings['components'][self.component]['min'] = v
             self.pv.settings['components'][self.component]['default'] = max(v, self.pv.settings['components'][self.component]['default'])
             self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
@@ -220,7 +219,6 @@ class SliderComponent(QWidget):
             newSliderValue = max(float(self.value.text()), v)
             self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
         else:
-            # self.range = self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min']
             self.range = 1
             self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min'] - 1)
             newSliderValue = max(self.pv.settings['components'][self.component]['value'], self.pv.settings['components'][self.component]['min'])
@@ -239,12 +237,15 @@ class SliderComponent(QWidget):
             shared.app.processEvents()
             self.minimum = minimum
             self.UpdateColors()
+        self.UpdatePVSetValueCheck()
     
     def SetMaximum(self, override = False):
         '''`override` is a bool. Component should be updated before calling this override. '''
         if not override:
             self.maximum.clearFocus()
             v = float(self.maximum.text())
+            if v <= self.pv.settings['components'][self.component]['min']:
+                return
             self.pv.settings['components'][self.component]['max'] = v
             self.pv.settings['components'][self.component]['default'] = min(v, self.pv.settings['components'][self.component]['default'])
             self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
@@ -253,7 +254,6 @@ class SliderComponent(QWidget):
             newSliderValue = min(float(self.value.text()), v)
             self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
         else:
-            # self.range = self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min']
             self.range = 1
             self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - 1)
             newSliderValue = min(self.pv.settings['components'][self.component]['value'], self.pv.settings['components'][self.component]['max'])
@@ -272,6 +272,7 @@ class SliderComponent(QWidget):
             shared.app.processEvents()
             self.maximum = maximum
             self.UpdateColors()
+        self.UpdatePVSetValueCheck()
 
     def UpdateColors(self, **kwargs):
         '''Override `fillColorLight` and `fillColorDark` with a #ABCDEF color string.'''

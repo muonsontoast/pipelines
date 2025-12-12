@@ -26,6 +26,7 @@ class Inspector(Entity, QTabWidget):
         self.mainWindowTitleWidget.setLayout(QHBoxLayout())
         self.mainWindowTitleWidget.layout().setContentsMargins(10, 5, 10, 5)
         self.mainWindowTitle = QLineEdit()
+        self.ignoreTextChange = False
         self.mainWindowTitle.textChanged.connect(self.TextChanged)
         self.mainWindowTitle.returnPressed.connect(self.TextSet)
         self.mainWindowTitle.setFixedHeight(35)
@@ -68,7 +69,9 @@ class Inspector(Entity, QTabWidget):
         self.main.show()
         # Add a row for PV generic information.
         pvName = pv.settings['name']
+        self.ignoreTextChange = True
         self.mainWindowTitle.setText(pvName)
+        self.ignoreTextChange = False
 
         self.items = dict()
         self.expandables = dict()
@@ -98,7 +101,7 @@ class Inspector(Entity, QTabWidget):
             return key == 'linkedLatticeElement'
 
         for k, c in sorted(pv.settings['components'].items(), key = SortName):
-            if 'units' in c.keys():
+            if 'units' in c.keys() and c['units'] != '':
                 name = c['name'] + f' ({c['units']})'
             else:
                 name = c['name']
@@ -123,7 +126,7 @@ class Inspector(Entity, QTabWidget):
         QTimer.singleShot(0, AllowUpdates)
 
     def TextChanged(self):
-        if shared.selectedPV is None:
+        if shared.selectedPV is None or self.ignoreTextChange:
             return
         shared.selectedPV.name = self.mainWindowTitle.text()
         shared.selectedPV.settings['name'] = shared.selectedPV.name
