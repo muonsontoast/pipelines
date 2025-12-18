@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 2071.0
-  - 1702.0
+  - 2359.0088330787557
+  - 1804.5874022630114
   type: Editor
-  zoom: 1
+  zoom: 0.91987786123205
 3:
   linksIn: {}
   linksOut: {}
@@ -36,36 +36,19 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: !!python/object/apply:numpy._core.multiarray.scalar
-      - !!python/object/apply:numpy.dtype
-        args:
-        - f8
-        - false
-        - true
-        state: !!python/tuple
-        - 3
-        - <
-        - null
-        - null
-        - null
-        - -1
-        - -1
-        - 0
-      - !!binary |
-        AAAAIC4zEEA=
-      max: 5.0
-      min: -5.0
+      default: 0
+      max: 100
+      min: 0
       name: Value
       type: SliderComponent
-      units: Amps
-      value: 4.05002
-      valueType: float
+      units: ''
+      value: 0
   linksIn: {}
   linksOut: {}
-  name: BS-PC-HSTR-07
+  name: PV
   position:
-  - 1505.0
-  - 1521.0
+  - 1708
+  - 1499
   size:
   - 325
   - 115

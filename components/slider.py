@@ -3,7 +3,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt
-import numpy as np
 from .. import shared
 from .. import style
 
@@ -19,7 +18,7 @@ class SliderBar(QSlider):
         super().mouseReleaseEvent(event)
 
 class SliderComponent(QWidget):
-    def __init__(self, pv, component, sliderSteps = 10000000, floatdp = 3, **kwargs):
+    def __init__(self, pv, component, sliderSteps = 1000000, floatdp = 3, **kwargs):
         '''Leave `sliderSteps` at 1e6 for smooth sliding, or restrict to a low number for discrete applications.\n
         `floatdp` is the decimal precision of the line edit elements.\n
         `hideRange` allows you to supress the min and max widgets.\n
@@ -56,6 +55,7 @@ class SliderComponent(QWidget):
         self.sliderRow.layout().addWidget(self.slider)
         self.sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
         # Value
+        print(f'The attached PV is {pv.name} with value {pv.settings['components'][component]['value']}')
         self.value = QLineEdit(f'{pv.settings['components'][component]['value']:.{self.floatdp}f}')
         self.value.setAlignment(Qt.AlignCenter)
         self.value.setFixedSize(75, 25)

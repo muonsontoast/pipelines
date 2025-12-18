@@ -57,6 +57,10 @@ def Load(path):
                     break
             def PopulateScene():
                 for ID, v in settings.items():
+                    ### TESTING
+                    if ID == 6: 
+                        print(v)
+                        print('++-----++')
                     # Populate scene blocks
                     if v['type'] in blockTypes.keys():
                         '''Block type, name, position, size, (optional) override ID.'''

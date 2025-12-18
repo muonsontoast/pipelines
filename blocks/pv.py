@@ -174,10 +174,13 @@ class PV(Draggable):
                 self.data[1] = np.nan
                 self.get.setText('N/A')
                 self.settings['components']['value']['units'] = ''
-                if self.active:
-                    shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
-                    shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
-                await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
+                try: # this can fail when the app is closed, so wrap in a try-except
+                    if self.active:
+                        shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
+                        shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
+                    await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
+                except:
+                    pass
             lastMatch = PVName
             await asyncio.sleep(.2)
 

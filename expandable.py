@@ -14,7 +14,6 @@ class Expandable(QWidget):
         super().__init__()
         self.list = listWidget
         self.parent = item
-        # self.setFixedWidth(self.list.viewport().width() - 5)
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 10, 0)
         self.layout().setSpacing(0)
