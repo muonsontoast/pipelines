@@ -29,6 +29,10 @@ def Save():
 def FormatComponents(components: dict):
     newComponents = dict()
     for k, c in components.items():
+        print(f'Checking {k}!')
+        print('It looks like:')
+        print(c)
+        print('********')
         newComponents[k] = c
         newComponents[k]['type'] = f'{newComponents[k]['type']}'.split('.')[-1][:-2]
         if 'valueType' in c.keys():
