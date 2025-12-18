@@ -28,7 +28,6 @@ from . import style
 from . import shared
 
 plt.rcParams['font.size'] = 10 # Define the font size for plots.
-
 cwd = str(Path.cwd().resolve()) # Get the current working directory.
 signal.signal(signal.SIGINT, signal.SIG_DFL) # Allow Ctrl+C interrupt from terminal.
 
