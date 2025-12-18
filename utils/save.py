@@ -30,12 +30,7 @@ def Save():
 def FormatComponents(components: dict):
     newComponents = dict()
     for k, c in components.items():
-        print(f'Checking {k}!')
-        print('It looks like:')
-        print(c)
-        print('********')
         # go through and convert any numpy types to native python types for serialization.
-        print(f'-- Checking attributes of {k}:')
         for attr, v in c.items():
             if isinstance(v, np.floating):
                 print(f'Converting {attr} from numpy float to native float.')

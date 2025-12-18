@@ -55,7 +55,6 @@ class SliderComponent(QWidget):
         self.sliderRow.layout().addWidget(self.slider)
         self.sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
         # Value
-        print(f'The attached PV is {pv.name} with value {pv.settings['components'][component]['value']}')
         self.value = QLineEdit(f'{pv.settings['components'][component]['value']:.{self.floatdp}f}')
         self.value.setAlignment(Qt.AlignCenter)
         self.value.setFixedSize(75, 25)

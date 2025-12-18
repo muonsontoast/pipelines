@@ -57,10 +57,6 @@ def Load(path):
                     break
             def PopulateScene():
                 for ID, v in settings.items():
-                    ### TESTING
-                    if ID == 6: 
-                        print(v)
-                        print('++-----++')
                     # Populate scene blocks
                     if v['type'] in blockTypes.keys():
                         '''Block type, name, position, size, (optional) override ID.'''
@@ -80,12 +76,14 @@ def Load(path):
                                 shared.elements = GetLatticeInfo(shared.lattice)
                                 shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
                             entity.settings['linkedElement'] = shared.elements.iloc[v['linkedElement']]
-                            # Assign the correct components
-                            for componentName, c in v['components'].items():
-                                v['components'][componentName]['type'] = componentsLookup[c['type']]
-                                if 'valueType' in v['components'][componentName]:
-                                    v['components'][componentName]['valueType'] = valueTypeLookup[v['components'][componentName]['valueType']]
-                            entity.settings['components'] = v['components']
+                        # Assign the correct components
+                        for componentName, c in v['components'].items():
+                            v['components'][componentName]['type'] = componentsLookup[c['type']]
+                            if 'valueType' in v['components'][componentName]:
+                                v['components'][componentName]['valueType'] = valueTypeLookup[v['components'][componentName]['valueType']]
+                        entity.settings['components'] = v['components']
+                        if hasattr(entity, 'set'):
+                            entity.set.setText(f'{v['components']['value']['value']:.3f}')
                 LinkBlocks()
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')
                 shared.workspace.assistant.PushMessage(f'Loaded saved session from {path}')
