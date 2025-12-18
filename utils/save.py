@@ -1,5 +1,6 @@
 import os
 import yaml
+import numpy as np
 from copy import deepcopy
 from .. import shared
 
@@ -36,9 +37,9 @@ def FormatComponents(components: dict):
         newComponents[k] = c
         newComponents[k]['type'] = f'{newComponents[k]['type']}'.split('.')[-1][:-2]
         if 'valueType' in c.keys():
-            if newComponents[k]['valueType'] == int:
+            if newComponents[k]['valueType'] in [int, np.integer]:
                 newComponents[k]['valueType'] = 'int'
-            elif newComponents[k]['valueType'] == float:
+            elif newComponents[k]['valueType'] in [float, np.floating]:
                 newComponents[k]['valueType'] = 'float'
             elif newComponents[k]['valueType'] == str:
                 newComponents[k]['valueType'] = 'str'
