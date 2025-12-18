@@ -34,6 +34,15 @@ def FormatComponents(components: dict):
         print('It looks like:')
         print(c)
         print('********')
+        # go through and convert any numpy types to native python types for serialization.
+        print(f'-- Checking attributes of {k}:')
+        for attr, v in c.items():
+            if isinstance(v, np.floating):
+                print(f'Converting {attr} from numpy float to native float.')
+                c[attr] = float(v)
+            elif isinstance(v, np.integer):
+                print(f'Converting {attr} from numpy int to native int.')
+                c[attr] = int(v)
         newComponents[k] = c
         newComponents[k]['type'] = f'{newComponents[k]['type']}'.split('.')[-1][:-2]
         if 'valueType' in c.keys():
