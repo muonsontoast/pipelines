@@ -8,7 +8,7 @@
   name: Editor
   positionInSceneCoords:
   - 1973.0
-  - 1700.0
+  - 1699.0
   type: Editor
   zoom: 1
 3:
@@ -46,7 +46,7 @@
       valueType: float
   linksIn: {}
   linksOut: {}
-  name: PV
+  name: BS-PC-VSTR-01
   position:
   - 1632
   - 1572
