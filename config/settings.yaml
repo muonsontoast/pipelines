@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 2359.0088330787557
-  - 1804.5874022630114
+  - 1861
+  - 1546
   type: Editor
-  zoom: 0.91987786123205
+  zoom: 2.9501729188605967
 3:
   linksIn: {}
   linksOut: {}

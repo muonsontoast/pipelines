@@ -34,7 +34,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL) # Allow Ctrl+C interrupt from termi
 class MainWindow(Entity, QMainWindow):
     def __init__(self, latticeName = 'dls_ltb'):
         super().__init__(name = 'MainWindow', type = 'MainWindow')
-        settingsPath = os.path.join(shared.cwd, 'config\\settings.yaml')
+        settingsPath = os.path.join(shared.cwd, 'config', 'settings.yaml')
         shared.window = self
         self.setWindowTitle(f'{shared.windowTitle} - Early Prototype')
         self.setWindowIcon(QIcon(f'{cwd}\\pipelines\\\\gfx\\icon.png'))
