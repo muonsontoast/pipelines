@@ -7,10 +7,10 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 1973.0
-  - 1699.0
+  - 1873
+  - 1584
   type: Editor
-  zoom: 1
+  zoom: 1.1910160000000003
 3:
   linksIn: {}
   linksOut: {}
@@ -48,8 +48,8 @@
   linksOut: {}
   name: BS-PC-VSTR-01
   position:
-  - 1632
-  - 1572
+  - 1410
+  - 1370
   size:
   - 325
   - 115

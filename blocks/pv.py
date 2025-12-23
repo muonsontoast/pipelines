@@ -157,12 +157,13 @@ class PV(Draggable):
         lastMatch = ''
         while True:
             # check whether the current name is a valid PV.
-            PVName = self.name.split(':')[0]
             try:
                 # will attempt to find a match on the full name first, before splitting
+                PVName = self.name
                 try:
-                    self.data[1] = await aioca.caget(PVName, timeout = timeout)
+                    self.data[1] = await aioca.caget(self.name, timeout = timeout)
                 except:
+                    PVName = self.name.split(':')[0]
                     self.data[1] = await aioca.caget(PVName + ':I', timeout = timeout)
                 self.settings['components']['value']['default'] = self.data[1]
                 self.get.setText(f'{self.data[1]:.3f}')
