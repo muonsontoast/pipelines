@@ -139,8 +139,8 @@ class PV(Draggable):
                         shared.inspector.expandables['value'].widget.maximum.setReadOnly(True)
                         shared.inspector.expandables['value'].widget.Reset()
                     else:
-                        self.settings['components']['value']['min'] = mn
-                        self.settings['components']['value']['max'] = mx
+                        self.settings['components']['value']['min'] = float(mn)
+                        self.settings['components']['value']['max'] = float(mx)
                         self.settings['components']['value']['default'] = max(min(self.settings['components']['value']['default'], mx), mn)
             except:
                 # Make fields editable if there are no strict PV limits.
@@ -166,29 +166,33 @@ class PV(Draggable):
                     PVName = self.name.split(':')[0]
                     self.data[1] = await aioca.caget(PVName + ':I', timeout = timeout)
                 self.settings['components']['value']['default'] = self.data[1]
-                self.get.setText(f'{self.data[1]:.3f}')
                 if PVName != lastMatch:
                     shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
-                    print(f'Changing the SET value of {PVName}!')
+                    self.get.setText(f'{self.data[1]:.3f}')
+                    self.set.setText(f'{self.data[1]:.3f}')
+                    self.data[0] = self.data[1] # set the READ and SET values to be the same if the new PV name is valid
                     # Update units if this is a corrector / steerer.
                     if 'STR' in PVName:
                         self.settings['components']['value']['units'] = 'Amps'
-                        shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + ' (Amps)'
-                        shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0] + '    (Amps)')
+                        if self.active:
+                            shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + ' (Amps)'
+                            shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
                     await self.UpdateInspectorLimits(PVName)
             except:
-                self.data[1] = np.nan
-                self.get.setText('N/A')
-                self.settings['components']['value']['units'] = ''
-                try: # this can fail when the app is closed, so wrap in a try-except
+                if not np.isnan(self.data[1]):
+                    print('Changin!!!!!')
+                    self.data[1] = np.nan
+                    self.get.setText('N/A')
+                    self.settings['components']['value']['units'] = ''
                     if self.active:
-                        shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
-                        shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
-                    await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
-                except:
-                    pass
+                        try: # this can fail when the app is closed, so wrap in a try-except
+                            shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
+                            shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
+                            await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
+                        except:
+                            pass
             lastMatch = PVName
-            await asyncio.sleep(.2)
+            await asyncio.sleep(.1)
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
         '''`event` should be a mouseReleaseEvent if it needs to be called.'''

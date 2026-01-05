@@ -20,3 +20,6 @@ Thumbs.db
 # Data files (optional)
 *.csv
 *.xlsx
+
+# Settings file
+config/settings.yaml
