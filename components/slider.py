@@ -26,6 +26,7 @@ class SliderComponent(QWidget):
         `sliderRowSpacing` (int) controls width of SpacerItem between the slider and slider value.\n
         `paddingLeft` and `paddingBottom` (int) are padding for text inside line edit elements.'''
         super().__init__()
+        self.eps = 9e-4
         self.hideRange = kwargs.get('hideRange', False)
         self.sliderOffset = kwargs.get('sliderOffset', 0)
         self.paddingLeft = kwargs.get('paddingLeft', 5)
@@ -55,7 +56,8 @@ class SliderComponent(QWidget):
         self.sliderRow.layout().addWidget(self.slider)
         self.sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
         # Value
-        self.value = QLineEdit(f'{pv.settings['components'][component]['value']:.{self.floatdp}f}')
+        v = f'{pv.settings['components'][component]['value']:.{self.floatdp}f}' if pv.settings['components'][component]['value'] > self.eps else '0.000'
+        self.value = QLineEdit(v)
         self.value.setAlignment(Qt.AlignCenter)
         self.value.setFixedSize(75, 25)
         self.value.returnPressed.connect(self.SetSliderValue)
@@ -119,7 +121,8 @@ class SliderComponent(QWidget):
         # If this block has a SET value, it will automatically update it as the slider value changes
         if self.pv is not None:
             if hasattr(self.pv, 'set'):
-                self.pv.set.setText(self.value.text())
+                v = self.value.text() if float(self.value.text()) > self.eps else '0.000'
+                self.pv.set.setText(v)
 
     def ToAbsolute(self, v):
         self.range = 1 if self.range == 0 else self.range
@@ -131,6 +134,7 @@ class SliderComponent(QWidget):
 
     def UpdateSliderValue(self):
         v = self.ToAbsolute(self.slider.value())
+        v = v if v > self.eps else 0
         self.value.setText(f'{v:.{self.floatdp}f}')
         if 'valueType' not in self.pv.settings['components'][self.component].keys():
             self.pv.settings['components'][self.component]['valueType'] = float
@@ -144,7 +148,8 @@ class SliderComponent(QWidget):
 
     def SetSliderValue(self):
         self.value.clearFocus()
-        self.value.setText(f'{float(self.value.text()):.{self.floatdp}f}')
+        v = self.value.text() if float(self.value.text()) > self.eps else '0.000'
+        self.value.setText(v)
         if 'valueType' not in self.pv.settings['components'][self.component].keys():
             self.pv.settings['components'][self.component]['valueType'] = float
         self.pv.settings['components'][self.component]['value'] = self.pv.settings['components'][self.component]['valueType'](self.value.text())
@@ -183,7 +188,8 @@ class SliderComponent(QWidget):
         if not override:
             self.default.clearFocus()
             default = max(self.pv.settings['components'][self.component]['min'], min(self.pv.settings['components'][self.component]['max'], float(self.default.text())))
-            self.default.setText(f'{default:.{self.floatdp}f}')
+            v = default if default > self.eps else 0
+            self.default.setText(f'{v:.{self.floatdp}f}')
         else:
             default = max(self.pv.settings['components'][self.component]['min'], min(self.pv.settings['components'][self.component]['max'], self.pv.settings['components'][self.component]['default']))
         
@@ -211,12 +217,15 @@ class SliderComponent(QWidget):
                 return
             self.pv.settings['components'][self.component]['min'] = v
             self.pv.settings['components'][self.component]['default'] = max(v, self.pv.settings['components'][self.component]['default'])
-            self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
+            formattedDefault = self.pv.settings['components'][self.component]['default'] if self.pv.settings['components'][self.component]['default'] > self.eps else 0
+            self.default.setText(f'{formattedDefault:.{self.floatdp}f}')
             self.range = self.pv.settings['components'][self.component]['max'] - v
-            self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
-            self.minimum.setText(f'{v:.{self.floatdp}f}')
+            # self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
+            formattedMin = v if v > self.eps else 0
+            self.minimum.setText(f'{formattedMin:.{self.floatdp}f}')
             newSliderValue = max(float(self.value.text()), v)
-            self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
+            formattedValue = newSliderValue if newSliderValue > self.eps else 0
+            self.value.setText(f'{formattedValue:.{self.floatdp}f}')
         else:
             self.range = 1
             self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min'] - 1)
