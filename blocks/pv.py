@@ -169,6 +169,7 @@ class PV(Draggable):
                 self.get.setText(f'{self.data[1]:.3f}')
                 if PVName != lastMatch:
                     shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
+                    print(f'Changing the SET value of {PVName}!')
                     # Update units if this is a corrector / steerer.
                     if 'STR' in PVName:
                         self.settings['components']['value']['units'] = 'Amps'
