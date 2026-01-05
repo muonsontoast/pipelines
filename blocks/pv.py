@@ -180,7 +180,6 @@ class PV(Draggable):
                     await self.UpdateInspectorLimits(PVName)
             except:
                 if not np.isnan(self.data[1]):
-                    print('Changin!!!!!')
                     self.data[1] = np.nan
                     self.get.setText('N/A')
                     self.settings['components']['value']['units'] = ''
