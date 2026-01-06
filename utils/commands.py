@@ -15,6 +15,8 @@ from ..blocks.composition.add import Add
 from ..blocks.composition.subtract import Subtract
 from ..blocks.composition.svd import SVD
 from ..blocks.bayesian.singletaskgp import SingleTaskGP
+# kernels
+from ..blocks.kernels.linear import LinearKernel
 from ..ui.group import Group
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
@@ -36,6 +38,7 @@ blockTypes = {
     'SVD': SVD,
     'Single Task GP': SingleTaskGP,
     'Group': Group,
+    'Linear Kernel': LinearKernel,
 }
 
 def Undo():
@@ -153,6 +156,9 @@ def CreateSVD(pos: QPoint):
 def CreateSingleTaskGP(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Single Task GP'], 'Single Task GP', pos)
 
+def CreateLinearKernel(pos:QPoint):
+    proxy, widget = CreateBlock(blockTypes['Linear Kernel'], 'Linear Kernel', pos)
+
 def CreateGroup():
     if len(shared.activeEditor.area.selectedItems) < 2:
         return print('Too few elements to create a group!')
@@ -225,6 +231,7 @@ commands = {
     'Subtract (Composition)': dict(shortcut = [], func = CreateSubtract, args = [GetMousePos]),
     'SVD (Singular Value Decomposition)': dict(shortcut = [], func = CreateSVD, args = [GetMousePos]),
     'Single Task Gaussian Process': dict(shortcut = ['Shift+G'], func = CreateSingleTaskGP, args = [GetMousePos]),
+    'Linear Kernel': dict(shortcut = ['Shift+K+L'], func = CreateLinearKernel, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),

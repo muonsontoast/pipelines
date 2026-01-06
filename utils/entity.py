@@ -18,10 +18,16 @@ class Entity:
         # self.data = np.inf((0,))
         self.sharingData = False
         self.settings = dict(name = self.name, type = self.type)
+        componentsSpecified = False
         for k, v in kwargs.items(): # Assign entity-specific attributes.
             if k == 'overrideID':
                 continue
+            elif k == 'components':
+                componentsSpecified = True
             self.settings[k] = v
+        # define an empty component dict if none is specified.
+        if not componentsSpecified:
+            self.settings['components'] = dict()
         # Some special widgets like the inspector are exempt as they should have expanding size policies.
         if self.type not in ['Inspector'] and 'size' in kwargs.keys():
             self.setFixedSize(*kwargs.get('size'))
