@@ -86,13 +86,12 @@ class MainWindow(Entity, QMainWindow):
             os.mkdir(dataDumpPath)
         # Load lattice
         shared.latticePath = os.path.join(shared.cwd, 'lattice-saves')
-        print('***', shared.latticePath, '***')
-        print(os.path.exists(shared.latticePath))
         # create a lattice-saves folder if one doesn't already exist.
         if not os.path.exists(shared.latticePath):
             print(f'Lattice save folder \'lattice-saves\' does not exist, creating one. Any custom lattice files should be stored here.')
             os.mkdir(shared.latticePath)
-            Path(os.path.join(shared.latticePath, '.gitignore')).touch()
+            # Path(os.path.join(shared.latticePath, '.gitignore')).touch()
+            (Path(shared.latticePath) / '.gitignore').write_text('# Store any custom .mat lattice files in this folder.')
         if shared.elements is None:
             formattedLatticePath = Path(shared.latticePath)
             fullPathName = ''
