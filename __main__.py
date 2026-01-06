@@ -96,20 +96,25 @@ class MainWindow(Entity, QMainWindow):
 
         if shared.elements is None:
             formattedLatticePath = Path(shared.latticePath)
+            fullPathName = ''
             files = sorted(list(formattedLatticePath.glob('*.mat')))
             if files:
                 print('Found saved lattice(s):', files)
                 if latticeName == '':
                     print(f'A lattice name was not specified as an additional argument in the CLI. Loading the first alphabetical lattice \'{files[0]}\'.')
                     shared.lattice = latticeutils.LoadLattice(files[0])
+                    fullPathName = files[0]
                 else:
                     latticeName = latticeName.split('.')[0] + '.mat' # ensure correct file extension
                     try:
                         print(f'Attempting to load saved lattice \'{latticeName}\'.')
-                        shared.lattice = latticeutils.LoadLattice(os.path.join(formattedLatticePath, latticeName))
+                        fullPathName = os.path.join(formattedLatticePath, latticeName)
+                        shared.lattice = latticeutils.LoadLattice(fullPathName)
                     except:
                         print(f'No saved lattices were found with the name \'{latticeName}\'. Defaulting to first alphabetical lattice \'{files[0]}\'.')
                         shared.lattice = latticeutils.LoadLattice(files[0])
+                        fullPathName = files[0]
+                shared.latticePath = fullPathName
                 shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
                 shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
             else:
