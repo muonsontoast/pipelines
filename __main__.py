@@ -92,8 +92,7 @@ class MainWindow(Entity, QMainWindow):
         if not os.path.exists(shared.latticePath):
             print(f'Lattice save folder \'lattice-saves\' does not exist, creating one. Any custom lattice files should be stored here.')
             os.mkdir(shared.latticePath)
-
-
+            Path(os.path.join(shared.latticePath, '.gitignore')).touch()
         if shared.elements is None:
             formattedLatticePath = Path(shared.latticePath)
             fullPathName = ''
