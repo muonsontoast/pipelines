@@ -51,12 +51,8 @@ def Load(path):
         shared.workspace.assistant.PushMessage(f'Loading saved session from {path}')
         with open(path, 'r') as f:
             gitignore = Path(shared.cwd) / 'config' / '.gitignore'
-            print('((( ', gitignore)
             if not gitignore.exists():
-                print('gitignore in config does not exist')
                 gitignore.write_text('# Store any settings files in this folder.')
-            else:
-                print('gitignore in config exists')
             settings = yaml.safe_load(f)
             # Force an update to the editor before drawing anything to the scene.
             for v in settings.values():
