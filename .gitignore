@@ -25,4 +25,4 @@ Thumbs.db
 config/settings.yaml
 
 # lattice files
-lattice-saves/
+lattice-saves/*
