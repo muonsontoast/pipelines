@@ -3,6 +3,7 @@ scipy
 matplotlib
 PySide6
 qasync
+aioca
 accelerator-toolbox
 PyYAML
 xopt
