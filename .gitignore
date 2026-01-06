@@ -23,6 +23,7 @@ Thumbs.db
 
 # Settings file
 config/*
+!config/.gitignore
 
 # lattice files
 lattice-saves/*

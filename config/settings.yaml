@@ -7,8 +7,8 @@
 2:
   name: Editor
   positionInSceneCoords:
-  - 1362.0
-  - 1403.0
+  - 1399.0
+  - 1399.0
   type: Editor
   zoom: 1
 3:
@@ -30,27 +30,3 @@
   - 415
   - -1
   type: Inspector
-6:
-  components:
-    linkedLatticeElement:
-      name: Linked Lattice Element
-      type: LinkComponent
-    value:
-      default: 0
-      max: 100
-      min: 0
-      name: Value
-      type: SliderComponent
-      units: ''
-      value: 0.0
-      valueType: float
-  linksIn: {}
-  linksOut: {}
-  name: PV
-  position:
-  - 663
-  - 1020
-  size:
-  - 325
-  - 115
-  type: PV

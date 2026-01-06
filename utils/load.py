@@ -3,6 +3,7 @@ import os
 import yaml
 import time
 import multiprocessing
+from pathlib import Path
 from .commands import blockTypes, CreateBlock
 from ..lattice.latticeutils import LoadLattice, GetLatticeInfo
 from ..components import BPM, errors, kickangle, link, slider
@@ -49,6 +50,13 @@ def Load(path):
     if os.path.exists(path):
         shared.workspace.assistant.PushMessage(f'Loading saved session from {path}')
         with open(path, 'r') as f:
+            gitignore = Path(shared.cwd) / 'config' / '.gitignore'
+            print('((( ', gitignore)
+            if not gitignore.exists():
+                print('gitignore in config does not exist')
+                gitignore.write_text('# Store any settings files in this folder.')
+            else:
+                print('gitignore in config exists')
             settings = yaml.safe_load(f)
             # Force an update to the editor before drawing anything to the scene.
             for v in settings.values():
@@ -100,4 +108,8 @@ def Load(path):
             t = time.time()
             QTimer.singleShot(0, ScaleEditor)
     else:
+        configPath = Path(shared.cwd) / 'config'
+        if not os.path.exists(configPath):
+            os.mkdir(configPath)
+        (configPath / '.gitignore').write_text('# Store any custom YAML settings files in this folder.')
         shared.workspace.assistant.PushMessage(f'No saved session found.')

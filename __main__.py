@@ -35,7 +35,6 @@ class MainWindow(Entity, QMainWindow):
     def __init__(self, latticeName = ''):
         super().__init__(name = 'MainWindow', type = 'MainWindow')
         settingsPath = os.path.join(shared.cwd, 'config', 'settings.yaml')
-        print('&&&', settingsPath)
         shared.window = self
         self.setWindowTitle(f'{shared.windowTitle} - Early Prototype')
         self.setWindowIcon(QIcon(f'{cwd}\\pipelines\\\\gfx\\icon.png'))
