@@ -27,18 +27,19 @@ class LatticeGlobal(Entity, QWidget):
         # Beam axis
         axis = QGraphicsLineItem(0, self.verticalCenter, 1250, self.verticalCenter)
         axis.setPen(QPen(QColor('#3e3e3e'), 3))
-        self.scene.addItem(axis)
         # Add some elements
         self.labels = []
-        for _, e in shared.elements.iterrows():
-            if e.Type == 'Quadrupole':
-                self.AddQuadrupole(e)
-            elif e.Type == 'Dipole':
-                self.AddDipole(e)
-            elif e.Type == 'Corrector':
-                self.AddCorrector(e)
-            elif e.Type == 'Marker' and 'BPM' in e.Name:
-                self.AddBPM(e)
+        if shared.elements is not None:
+            self.scene.addItem(axis)
+            for _, e in shared.elements.iterrows():
+                if e.Type == 'Quadrupole':
+                    self.AddQuadrupole(e)
+                elif e.Type == 'Dipole':
+                    self.AddDipole(e)
+                elif e.Type == 'Corrector':
+                    self.AddCorrector(e)
+                elif e.Type == 'Marker' and 'BPM' in e.Name:
+                    self.AddBPM(e)
         # Add legend
         self.AddLegend()
         # Configure view

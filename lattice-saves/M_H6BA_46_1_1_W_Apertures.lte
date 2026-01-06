@@ -1,0 +1,430 @@
+dsm_01 : edrift, l = 2.314880
+dsm_02 : edrift, l = "0.186500 0.030 -"
+dsm_03 : edrift, l = "0.031000 0.030 +"
+dsm_04 : edrift, l = 0.075000
+dsm_05 : edrift, l = 0.080000
+dsm_06 : edrift, l = 0.075000
+dsm_07 : edrift, l = 0.075000
+dsm_08 : edrift, l = 0.075000
+dsm_09 : edrift, l = "0.254300 0.0153 -"
+dsm_10 : edrift, l = "0.071200 0.0153 +"
+dsm_11 : edrift, l = 0.075000
+dsm_12 : edrift, l = 0.075000
+dsm_13 : edrift, l = 0.075000
+dsm_14 : edrift, l = 0.104900
+dsm_15 : edrift, l = "0.028700 0.000038 +"
+dsm_16 : edrift, l = "0.086900 0.000038 -"
+dsm_17 : edrift, l = 0.085000
+dsm_18 : edrift, l = 0.075000
+dsm_19 : edrift, l = 0.100000
+dsm_20 : edrift, l = "0.187200 0.006 -"
+dsm_21 : edrift, l = "0.041500 0.013976 -"
+dsm_22 : edrift, l = "0.048300 0.019976 +"
+dsm_23 : edrift, l = 0.090000
+dsm_24 : edrift, l = 0.090000
+dsm_25 : edrift, l = 0.075000
+dsm_26 : edrift, l = 0.217500
+dsm_27 : edrift, l = 1.240473
+
+dms_01 : edrift, l = 2.314880
+dms_02 : edrift, l = 0.217500
+dms_03 : edrift, l = 0.075000
+dms_04 : edrift, l = 0.080000
+dms_05 : edrift, l = 0.075000
+dms_06 : edrift, l = 0.075000
+dms_07 : edrift, l = 0.075000
+dms_08 : edrift, l = 0.077500
+dms_09 : edrift, l = 0.027000
+dms_10 : edrift, l = 0.221000
+dms_11 : edrift, l = 0.075000
+dms_12 : edrift, l = 0.075000
+dms_13 : edrift, l = 0.075000
+dms_14 : edrift, l = 0.103600
+dms_15 : edrift, l = 0.028200
+dms_16 : edrift, l = 0.088700
+dms_17 : edrift, l = 0.085000
+dms_18 : edrift, l = 0.075000
+dms_19 : edrift, l = 0.100000
+dms_20 : edrift, l = "0.067000 0.0153 +"
+dms_21 : edrift, l = "0.210000 0.0153 -"
+dms_22 : edrift, l = 0.090000
+dms_23 : edrift, l = 0.090000
+dms_24 : edrift, l = 0.075000
+dms_25 : edrift, l = 0.044000
+dms_26 : edrift, l = 0.173500
+dms_27 : edrift, l = 1.240473
+
+dlm_30 : edrift, l = 3.589880
+dlm_29 : edrift, l = 0.182500
+dlm_28 : edrift, l = "0.045000 0.010765 -"
+dlm_27 : edrift, l = "0.045000 0.010765 -"
+dlm_26 : edrift, l = 0.075000
+dlm_25 : edrift, l = 0.088700
+dlm_24 : edrift, l = "0.028900 0.00059 -"
+dlm_23 : edrift, l = "0.037400 0.00059 +"
+dlm_22 : edrift, l = 0.075000
+dlm_21 : edrift, l = 0.075000
+dlm_20 : edrift, l = 0.075000
+dlm_19 : edrift, l = "0.254300 0.0153 -"
+dlm_18 : edrift, l = "0.071200 0.0153 +"
+dlm_17 : edrift, l = 0.075000
+dlm_16 : edrift, l = 0.075000
+dlm_15 : edrift, l = 0.075000
+dlm_14 : edrift, l = 0.104900
+dlm_13 : edrift, l = "0.028700 0.000038 +"
+dlm_12 : edrift, l = "0.086900 0.000038 -"
+dlm_11 : edrift, l = 0.085000
+dlm_10 : edrift, l = 0.075000
+dlm_09 : edrift, l = 0.100000
+dlm_08 : edrift, l = "0.187200 0.006 -"
+dlm_07 : edrift, l = "0.041500 0.013976 - 0.018924145 -"
+dlm_06 : edrift, l = "0.048300 0.019976 + 0.018924145 +"
+dlm_05 : edrift, l = 0.090000
+dlm_04 : edrift, l = 0.090000
+dlm_03 : edrift, l = 0.075000
+dlm_02 : edrift, l = 0.217500
+dlm_01 : edrift, l = 1.240473
+
+dml_30 : edrift, l = 3.589880
+dml_29 : edrift, l = 0.182500
+dml_28 : edrift, l = "0.045000 0.010765 -"
+dml_27 : edrift, l = "0.045000 0.010765 -"
+dml_26 : edrift, l = 0.075000
+dml_25 : edrift, l = "0.099000 0.02050338 -"
+dml_24 : edrift, l = "0.056000 0.02050338 +"
+dml_23 : edrift, l = 0.075000
+dml_22 : edrift, l = 0.075000
+dml_21 : edrift, l = 0.075000
+dml_20 : edrift, l = 0.077500
+dml_19 : edrift, l = 0.027000
+dml_18 : edrift, l = 0.221000
+dml_17 : edrift, l = 0.075000
+dml_16 : edrift, l = 0.075000
+dml_15 : edrift, l = 0.075000
+dml_14 : edrift, l = 0.103600
+dml_13 : edrift, l = 0.028200
+dml_12 : edrift, l = 0.088700
+dml_11 : edrift, l = 0.085000
+dml_10 : edrift, l = 0.075000
+dml_09 : edrift, l = 0.100000
+dml_08 : edrift, l = "0.067000 0.0153 +"
+dml_07 : edrift, l = "0.210000 0.0153 -"
+dml_06 : edrift, l = 0.090000
+dml_05 : edrift, l = 0.090000
+dml_04 : edrift, l = 0.075000
+dml_03 : edrift, l = "0.044000 0.0018 -"
+dml_02 : edrift, l = "0.173500 0.0018 +"
+dml_01 : edrift, l = 1.240473
+
+q1n    : KQUAD, l = 0.250000, k1 =  4.028478, N_KICKS=40, SYNCH_RAD=0
+q2n    : KQUAD, l = 0.185000, k1 = -4.277712, N_KICKS=40, SYNCH_RAD=0
+q3n    : KQUAD, l = 0.150000, k1 = -3.972031, N_KICKS=40, SYNCH_RAD=0
+q4n    : KQUAD, l = 0.115000, k1 = -5.319869, N_KICKS=40, SYNCH_RAD=0
+q5n    : KQUAD, l = 0.360000, k1 =  5.956115, N_KICKS=40, SYNCH_RAD=0
+q6n    : KQUAD, l = 0.250000, k1 =  7.325756, N_KICKS=40, SYNCH_RAD=0
+q0l    : KQUAD, l = 0.185000, k1 =  4.780447, N_KICKS=40, SYNCH_RAD=0
+q1l    : KQUAD, l = 0.150000, k1 = -2.226528, N_KICKS=40, SYNCH_RAD=0
+q2l    : KQUAD, l = 0.115000, k1 = -4.219359, N_KICKS=40, SYNCH_RAD=0
+q3l    : KQUAD, l = 0.150000, k1 = -2.604480, N_KICKS=40, SYNCH_RAD=0
+
+DL1_5  : csbend, l = 0.200000, angle = 0.014286, k1 = 0.000000,e1 =  0.021433, e2 =-0.007147, N_KICKS=40, SYNCH_RAD=0
+DL1_4  : csbend, l = 0.200000, angle = 0.009068, k1 = 0.000000,e1 =  0.007147, e2 = 0.001920, N_KICKS=40, SYNCH_RAD=0
+DL1_3  : csbend, l = 0.200000, angle = 0.007435, k1 = 0.000000,e1 = -0.001920, e2 = 0.009355, N_KICKS=40, SYNCH_RAD=0
+DL1_2  : csbend, l = 0.200000, angle = 0.006427, k1 = 0.000000,e1 = -0.009355, e2 = 0.015781, N_KICKS=40, SYNCH_RAD=0
+DL1_1  : csbend, l = 0.200000, angle = 0.005652, k1 = 0.000000,e1 = -0.015781, e2 = 0.021433, N_KICKS=40, SYNCH_RAD=0
+
+DL2_5  : csbend, l = 0.200000, angle = 0.012890, k1 = 0.000000, e1 = -0.007846, e2 =  0.020735, N_KICKS=40, SYNCH_RAD=0
+DL2_4  : csbend, l = 0.200000, angle = 0.009068, k1 = 0.000000, e1 =  0.001222, e2 =  0.007846, N_KICKS=40, SYNCH_RAD=0
+DL2_3  : csbend, l = 0.200000, angle = 0.007435, k1 = 0.000000, e1 =  0.008656, e2 = -0.001222, N_KICKS=40, SYNCH_RAD=0
+DL2_2  : csbend, l = 0.200000, angle = 0.006427, k1 = 0.000000, e1 =  0.015083, e2 = -0.008656, N_KICKS=40, SYNCH_RAD=0
+DL2_1  : csbend, l = 0.200000, angle = 0.005652, k1 = 0.000000, e1 =  0.020735, e2 = -0.015083, N_KICKS=40, SYNCH_RAD=0
+
+DL3_5  : csbend, l = 0.200000, angle = 0.012890, k1 = 0.000000, e1 =  0.020735, e2 = -0.007846, N_KICKS=40, SYNCH_RAD=0
+DL3_4  : csbend, l = 0.200000, angle = 0.009068, k1 = 0.000000, e1 =  0.007846, e2 =  0.001222, N_KICKS=40, SYNCH_RAD=0
+DL3_3  : csbend, l = 0.200000, angle = 0.007435, k1 = 0.000000, e1 = -0.001222, e2 =  0.008656, N_KICKS=40, SYNCH_RAD=0
+DL3_2  : csbend, l = 0.200000, angle = 0.006427, k1 = 0.000000, e1 = -0.008656, e2 =  0.015083, N_KICKS=40, SYNCH_RAD=0
+DL3_1  : csbend, l = 0.200000, angle = 0.005652, k1 = 0.000000, e1 = -0.015083, e2 =  0.020735, N_KICKS=40, SYNCH_RAD=0
+
+DL4_5  : csbend, l = 0.200000, angle = 0.014286, k1 = 0.000000, e1 = -0.007147, e2 =  0.021433, N_KICKS=40, SYNCH_RAD=0
+DL4_4  : csbend, l = 0.200000, angle = 0.009068, k1 = 0.000000, e1 =  0.001920, e2 =  0.007147, N_KICKS=40, SYNCH_RAD=0
+DL4_3  : csbend, l = 0.200000, angle = 0.007435, k1 = 0.000000, e1 =  0.009355, e2 = -0.001920, N_KICKS=40, SYNCH_RAD=0
+DL4_2  : csbend, l = 0.200000, angle = 0.006427, k1 = 0.000000, e1 =  0.015781, e2 = -0.009355, N_KICKS=40, SYNCH_RAD=0
+DL4_1  : csbend, l = 0.200000, angle = 0.005652, k1 = 0.000000, e1 =  0.021433, e2 = -0.015781, N_KICKS=40, SYNCH_RAD=0
+
+s1x    : ksext, l = 0.100000, k2 =  74.8446740, N_KICKS=40, SYNCH_RAD=0, hsteering=1, vsteering=1
+s2a    : ksext, l = 0.220000, k2 = -347.512034, N_KICKS=40, SYNCH_RAD=0, hsteering=1, vsteering=1
+s3a    : ksext, l = 0.140000, k2 =  748.340362, N_KICKS=40, SYNCH_RAD=0, hsteering=0, vsteering=0
+s4a    : ksext, l = 0.140000, k2 = -446.909096, N_KICKS=40, SYNCH_RAD=0, hsteering=1, vsteering=1
+s5x    : ksext, l = 0.100000, k2 = -157.148520, N_KICKS=40, SYNCH_RAD=0, hsteering=1, vsteering=1
+s6x    : ksext, l = 0.100000, k2 = -28.0000000, N_KICKS=40, SYNCH_RAD=0, hsteering=1, vsteering=1
+
+DQ1   : csbend, l = 0.870000, angle =  0.051795693899583, k1 = -2.775000, e1 = 0.025900, e2 = 0.025900, N_KICKS=40, SYNCH_RAD=0
+
+a1n    : csbend, l = 0.150000, angle = -0.002618, k1 = 4.803960, e1 = -0.001309, e2 = -0.001309, N_KICKS=40, SYNCH_RAD=0
+a2n    : csbend, l = 0.150000, angle = -0.002618, k1 = 4.863826, e1 = -0.001309, e2 = -0.001309, N_KICKS=40, SYNCH_RAD=0
+a1l    : csbend, l = 0.150000, angle = -0.002618, k1 = 2.854470, e1 = -0.001309, e2 = -0.001309, N_KICKS=40, SYNCH_RAD=0
+a2l    : csbend, l = 0.150000, angle = -0.002618, k1 = 6.308257, e1 = -0.001309, e2 = -0.001309, N_KICKS=40, SYNCH_RAD=0
+
+O0X    : KOCT,   L= 0.10153, K3=1477.3958435930267, N_KICKS=40, SYNCH_RAD=0
+O1X    : KOCT,   L= 0.09, K3=-23333.3333333333, N_KICKS=40, SYNCH_RAD=0
+
+
+BPM    : moni
+COR_11 : KICKER, l=0.0
+
+HSTR   : HKICK
+VSTR   : VKICK
+
+HFCM   : HKICK
+VFCM   : VKICK
+
+Htrim   : HKICK
+Vtrim   : VKICK
+
+GS     : mark
+GE     : mark
+GM     : mark
+LS     : mark
+SS     : mark
+MS     : mark
+SE     : mark
+SOURCE : mark
+
+CAV: RFCA,VOLT=1420000,PHASE=149.3705824908528,FREQ=499510634.4542405,CHANGE_T=0
+!CAV: RFCA,VOLT=2520000,PHASE=140.2624498808717,FREQ=499510634.4542405, CHANGE_T=0
+RAD : SREFFECTS
+TC      : line=(Htrim, Vtrim)
+
+!I02   : WIGGLER,L=1.98880,K=2.200,POLES=226
+!K02   : WIGGLER,L=1.49600,K=2.300,POLES=170
+!I03   : WIGGLER,L=1.98880,K=2.300,POLES=226
+!I04   : WIGGLER,L=1.98880,K=2.240,POLES=226
+!K04   : WIGGLER,L=1.54645,K=2.240,POLES=157
+!I05   : WIGGLER,L=5.00000,K=10.70,POLES=50
+!I06_1 : WIGGLER,L=1.84800,K=3.820,POLES=66
+!I06_2 : WIGGLER,L=1.56000,K=1.610,POLES=48
+!I07   : WIGGLER,L=2.00010,K=1.700,POLES=226
+!K07   : WIGGLER,L=1.79200,K=5.200,POLES=56
+!I08   : WIGGLER,L=3.92000,K=3.820,POLES=140
+!I09_1 : WIGGLER,L=2.00100,K=2.100,POLES=174
+!I09_2 : WIGGLER,L=2.28000,K=6.100,POLES=76
+!I10   : WIGGLER,L=3.92000,K=3.100,POLES=140
+!I11   : WIGGLER,L=1.98880,K=2.300,POLES=226
+!K11   : WIGGLER,L=0.69600,K=16.90,POLES=12
+!I12   : WIGGLER,L=1.10400,K=18.80,POLES=46
+!I13_1 : WIGGLER,L=2.70000,K=1.900,POLES=216
+!I13_2 : WIGGLER,L=1.99020,K=2.340,POLES=186				
+!I14   : WIGGLER,L=1.99020,K=2.340,POLES=186
+!K14   : WIGGLER,L=0.75400,K=14.10,POLES=13
+!I15   : WIGGLER,L=1.38000,K=19.50,POLES=46
+!I16   : WIGGLER,L=1.94400,K=2.520,POLES=144
+!K16   : WIGGLER,L=1.49600,K=2.100,POLES=160
+!I17   : WIGGLER,L=4.88800,K=3.990,POLES=188
+!I18   : WIGGLER,L=1.95300,K=2.500,POLES=186
+!I19   : WIGGLER,L=1.98220,K=2.000,POLES=212
+!I20   : WIGGLER,L=1.99200,K=14.90,POLES=48
+!I21   : WIGGLER,L=4.87200,K=3.800,POLES=174
+!K21   : WIGGLER,L=1.49600,K=2.100,POLES=160
+!I22   : WIGGLER,L=1.98220,K=2.000,POLES=212
+!I23   : WIGGLER,L=1.99800,K=2.500,POLES=148
+!I24   : WIGGLER,L=1.98880,K=2.300,POLES=226
+
+AP      : MAXAMP,X_MAX=0.01,Y_MAX=0.01000
+
+AP_I02  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_K02  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_I03  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_I04  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_K04  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_I05  : MAXAMP,X_MAX=0.037,Y_MAX=0.01050
+AP_I06_1: MAXAMP,X_MAX=0.010,Y_MAX=0.00975
+AP_I06_2: MAXAMP,X_MAX=0.010,Y_MAX=0.00625
+AP_I07  : MAXAMP,X_MAX=0.010,Y_MAX=0.00230
+AP_K07  : MAXAMP,X_MAX=0.010,Y_MAX=0.00900
+AP_I08  : MAXAMP,X_MAX=0.010,Y_MAX=0.00975
+AP_I09_1: MAXAMP,X_MAX=0.010,Y_MAX=0.00320
+AP_I09_2: MAXAMP,X_MAX=0.010,Y_MAX=0.00650
+AP_I10  : MAXAMP,X_MAX=0.010,Y_MAX=0.01150
+AP_I11  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_K11  : MAXAMP,X_MAX=0.010,Y_MAX=0.01100
+AP_I12  : MAXAMP,X_MAX=0.010,Y_MAX=0.00250
+AP_I13_1: MAXAMP,X_MAX=0.010,Y_MAX=0.00300
+AP_I13_2: MAXAMP,X_MAX=0.010,Y_MAX=0.00250
+AP_I14  : MAXAMP,X_MAX=0.010,Y_MAX=0.00250
+AP_K14  : MAXAMP,X_MAX=0.010,Y_MAX=0.00750
+AP_I15  : MAXAMP,X_MAX=0.010,Y_MAX=0.00250
+AP_I16  : MAXAMP,X_MAX=0.010,Y_MAX=0.00250
+AP_K16  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_I17  : MAXAMP,X_MAX=0.010,Y_MAX=0.00825
+AP_I18  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_I19  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_I20  : MAXAMP,X_MAX=0.010,Y_MAX=0.00550
+AP_I21  : MAXAMP,X_MAX=0.037,Y_MAX=0.00880
+AP_K21  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_I22  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+AP_I23  : MAXAMP,X_MAX=0.010,Y_MAX=0.00250
+AP_I24  : MAXAMP,X_MAX=0.010,Y_MAX=0.00200
+
+I02   : EDRIFT,L="1.98880"
+K02   : EDRIFT,L="1.49600"
+I03   : EDRIFT,L="1.98880"
+I04   : EDRIFT,L="1.98880"
+K04   : EDRIFT,L="1.54645"
+I05   : EDRIFT,L="5.00000"
+I06_1 : EDRIFT,L=1.84800
+I06_2 : EDRIFT,L=1.56000
+I07   : EDRIFT,L="2.00010"
+K07   : EDRIFT,L="1.79200"
+I08   : EDRIFT,L="3.92000"
+I09_1 : EDRIFT,L=2.00100
+I09_2 : EDRIFT,L=2.28000
+I10   : EDRIFT,L="3.92000"
+I11   : EDRIFT,L="1.98880"
+K11   : EDRIFT,L="0.69600"
+I12   : EDRIFT,L="1.10400"
+I13_1 : EDRIFT,L=2.70000
+I13_2 : EDRIFT,L=1.990200			
+I14   : EDRIFT,L="1.99020"
+K14   : EDRIFT,L="0.75400"
+I15   : EDRIFT,L="1.38000"
+I16   : EDRIFT,L="1.94400"
+K16   : EDRIFT,L="1.49600"
+I17   : EDRIFT,L="4.88800"
+I18   : EDRIFT,L="1.95300"
+I19   : EDRIFT,L="1.98220"
+I20   : EDRIFT,L="1.99200"
+I21   : EDRIFT,L="4.87200"
+K21   : EDRIFT,L="1.49600"
+I22   : EDRIFT,L="1.98220"
+I23   : EDRIFT,L="1.99800"
+I24   : EDRIFT,L="1.98880"
+
+
+!DLS : 3.589880 -- length of Out Vac. vessel in LSS is assumed to be 6.006 m  (3.589880 - 3.003 = 0.586880)
+!DMS : 1.240473 -- length of Out Vac. vessel in MSS is assumed to be 1.964 m  (1.240473 - 0.982 = 0.258473)
+!DSS : 2.314880 -- length of Out Vac. vessel in SSS is assumed to be 4.112 m  (2.314880 - 2.056 = 0.258880)
+
+DLS_Ves   : EDRIFT,L= 0.586880
+DMS_Ves   : EDRIFT,L= 0.258473
+DSS_Ves   : EDRIFT,L= 0.258880
+!----- In-Vac -------------------------------------
+I02drift   : EDRIFT,L="2.314880 2 * 1.98880 - 2 /"
+K02drift   : EDRIFT,L="1.240473 2 * 1.49600 - 2 /"
+I03drift   : EDRIFT,L="2.314880 2 * 1.98880 - 2 /"
+I04drift   : EDRIFT,L="2.314880 2 * 1.98880 - 2 /"
+K04drift   : EDRIFT,L="1.240473 2 * 1.54645 - 2 /"
+I07drift   : EDRIFT,L="2.314880 2 * 2.00010 - 2 /"
+I11drift   : EDRIFT,L="2.314880 2 * 1.98880 - 2 /"
+I12drift   : EDRIFT,L="2.314880 2 * 1.10400 - 2 /"
+I14drift   : EDRIFT,L="2.314880 2 * 1.99020 - 2 /"
+I15drift   : EDRIFT,L="2.314880 2 * 1.38000 - 2 /"
+I16drift   : EDRIFT,L="2.314880 2 * 1.94400 - 2 /"
+K16drift   : EDRIFT,L="1.240473 2 * 1.49600 - 2 /"
+I18drift   : EDRIFT,L="2.314880 2 * 1.95300 - 2 /"
+I19drift   : EDRIFT,L="2.314880 2 * 1.98220 - 2 /"
+K21drift   : EDRIFT,L="1.240473 2 * 1.49600 - 2 /"
+I22drift   : EDRIFT,L="2.314880 2 * 1.98220 - 2 /"
+I23drift   : EDRIFT,L="2.314880 2 * 1.99800 - 2 /"
+I24drift   : EDRIFT,L="2.314880 2 * 1.98880 - 2 /"
+
+ID_I02   : line=(AP, I02drift, AP, AP_I02, TC, I02, AP_I02, AP, I02drift, AP)
+ID_K02   : line=(AP, K02drift, AP, AP_K02, TC, K02, AP_K02, AP, K02drift, AP)
+ID_I03   : line=(AP, I03drift, AP, AP_I03, TC, I03, AP_I03, AP, I03drift, AP)
+ID_I04   : line=(AP, I04drift, AP, AP_I04, TC, I04, AP_I04, AP, I04drift, AP)
+ID_K04   : line=(AP, K04drift, AP, AP_K04, TC, K04, AP_K04, AP, K04drift, AP)
+ID_I07   : line=(AP, I07drift, AP, AP_I07, TC, I07, AP_I07, AP, I07drift, AP)
+ID_I11   : line=(AP, I11drift, AP, AP_I11, TC, I11, AP_I11, AP, I11drift, AP)
+ID_I12   : line=(AP, I12drift, AP, AP_I12, TC, I12, AP_I12, AP, I12drift, AP)
+ID_I14   : line=(AP, I14drift, AP, AP_I14, TC, I14, AP_I14, AP, I14drift, AP)
+ID_I15   : line=(AP, I15drift, AP, AP_I15, TC, I15, AP_I15, AP, I15drift, AP)
+ID_I16   : line=(AP, I16drift, AP, AP_I16, TC, I16, AP_I16, AP, I16drift, AP)
+ID_K16   : line=(AP, K16drift, AP, AP_K16, TC, K16, AP_K16, AP, K16drift, AP)
+ID_I18   : line=(AP, I18drift, AP, AP_I18, TC, I18, AP_I18, AP, I18drift, AP)
+ID_I19   : line=(AP, I19drift, AP, AP_I19, TC, I19, AP_I19, AP, I19drift, AP)
+ID_K21   : line=(AP, K21drift, AP, AP_K21, TC, K21, AP_K21, AP, K21drift, AP)
+ID_I22   : line=(AP, I22drift, AP, AP_I22, TC, I22, AP_I22, AP, I22drift, AP)
+ID_I23   : line=(AP, I23drift, AP, AP_I23, TC, I23, AP_I23, AP, I23drift, AP)
+ID_I24   : line=(AP, I24drift, AP, AP_I24, TC, I24, AP_I24, AP, I24drift, AP)
+
+!--------------------------------------------------
+!----- Out-Vac ------------------------------------
+I05drift   : EDRIFT,L="3.003000 2 * 5.00000 - 2 /"
+I06_1drift : EDRIFT,L="2.056000 1.84800 -"
+I06_2drift : EDRIFT,L="2.056000 1.56000 -"
+
+ID_I05   : line=(AP, DLS_Ves, AP, AP_I05, I05drift, TC, I05, I05drift, AP_I05, AP, DLS_Ves, AP)
+ID_I06   : line=(AP, DSS_Ves, AP, AP_I06_1, I06_1drift, TC, I06_1, AP_I06_1, AP, SOURCE, SS, AP, AP_I06_2, I06_2, TC, I06_2drift, AP_I06_2, AP, DSS_Ves, AP)
+!--------------------------------------------------
+!----- Out-Vac ------------------------------------
+K07drift   : EDRIFT,L="0.982000 2 * 1.79200 - 2 /"
+I08drift   : EDRIFT,L="2.056000 2 * 3.92000 - 2 /"
+I10drift   : EDRIFT,L="2.056000 2 * 3.92000 - 2 /"
+K11drift   : EDRIFT,L="0.982000 2 * 0.69600 - 2 /"
+K14drift   : EDRIFT,L="0.982000 2 * 0.75400 - 2 /"
+I17drift   : EDRIFT,L="3.003000 2 * 4.88800 - 2 /"
+I20drift   : EDRIFT,L="2.056000 2 * 1.99200 - 2 /"
+I21drift   : EDRIFT,L="3.003000 2 * 4.87200 - 2 /"
+
+ID_K07   : line=(AP, DMS_Ves, AP, AP_K07, k07drift, TC, K07, k07drift, AP_K07, AP, DMS_Ves, AP)
+ID_I08   : line=(AP, DSS_Ves, AP, AP_I08, I08drift, TC, I08, I08drift, AP_I08, AP, DSS_Ves, AP)
+ID_I10   : line=(AP, DSS_Ves, AP, AP_I10, I10drift, TC, I10, I10drift, AP_I10, AP, DSS_Ves, AP)
+ID_K11   : line=(AP, DMS_Ves, AP, AP_K11, k11drift, TC, K11, k11drift, AP_K11, AP, DMS_Ves, AP)
+ID_K14   : line=(AP, DMS_Ves, AP, AP_K14, k14drift, TC, K14, k14drift, AP_K14, AP, DMS_Ves, AP)
+ID_I17   : line=(AP, DLS_Ves, AP, AP_I17, I17drift, TC, I17, I17drift, AP_I17, AP, DLS_Ves, AP)
+ID_I20   : line=(AP, DSS_Ves, AP, AP_I20, I20drift, TC, I20, I20drift, AP_I20, AP, DSS_Ves, AP)
+ID_I21   : line=(AP, DLS_Ves, AP, AP_I21, I21drift, TC, I21, I21drift, AP_I21, AP, DLS_Ves, AP)
+!--------------------------------------------------
+
+I09_1drift   : EDRIFT,L="3.589880 2.00100 -"
+I09_2drift   : EDRIFT,L="3.003000 2.2800 -"
+ID_I09   : line=(AP, I09_1drift, AP, AP_I09_1, TC, I09_1, SOURCE, AP_I09_1, AP, LS, AP, AP_I09_2, I09_2, TC, I09_2drift, AP_I09_2, AP, DLS_Ves, AP)
+
+I13_1drift : EDRIFT,L="3.589880 2.70000 -"
+I13_2drift : EDRIFT,L="3.589880 1.99020 -"
+ID_I13   : line=(AP, I13_1drift, AP, AP_I13_1, TC, I13_1, AP_I13_1, AP, SOURCE, LS, AP, AP_I13_2, I13_2, TC, AP_I13_2, AP, I13_2drift, AP)
+
+AP_Hcoll: MAXAMP,X_MAX=0.0035,Y_MAX=0.010
+AP_Vcoll: MAXAMP,X_MAX=0.010,Y_MAX=0.0015
+
+L_coll      : edrift, l = 0.035000
+D_coll      : edrift, l = "0.22100 0.035 - 2 /"
+
+H_COLL : line=(AP, D_coll, AP, AP_Hcoll, L_coll, AP_Hcoll, AP, D_coll, AP)
+V_COLL : line=(AP, D_coll, AP, AP_Vcoll, L_coll, AP_Vcoll, AP, D_coll, AP)
+
+!----- table of segments ----------------------------------------------------
+
+DL1     : line=(DL1_5, DL1_4, DL1_3, DL1_2, DL1_1)
+DL2     : line=(DL2_1, DL2_2, DL2_3, DL2_4, DL2_5)
+DL3     : line=(DL3_5, DL3_4, DL3_3, DL3_2, DL3_1)
+DL4     : line=(DL4_1, DL4_2, DL4_3, DL4_4, DL4_5)
+
+arca_ms : line=(SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, dms_01, SE)
+
+arca_sm : line=(SE, dsm_01, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE)
+
+arca_ml : line=(SE, dml_01, bpm, dml_02, HFCM, VFCM, dml_03, GS, S6X, HSTR, VSTR, dml_04, Q6N, dml_05, DQ1, dml_06, Q5N, dml_07, bpm, dml_08, S5X, HSTR, VSTR, dml_09, DL3, dml_10, Q4N, dml_11, S4A, HSTR, VSTR, dml_12, bpm, dml_13, HFCM, VFCM, dml_14, O1X, dml_15, A2L, dml_16, S3A, dml_17, A1L, dml_18, HFCM, VFCM, dml_19, bpm, dml_20, S2A, HSTR, VSTR, dml_21, Q3L, dml_22, DL4, dml_23, Q2L, dml_24, bpm, dml_25, S1X, HSTR, VSTR, dml_26, Q1L, dml_27, COR_11, O0X, dml_28, Q0L, GE, dml_29, bpm, dml_30, SE)
+
+arca_lm : line=(SE, dlm_30, bpm, dlm_29, GS, Q0L, dlm_28, O0X, COR_11, dlm_27, Q1L, dlm_26, S1X, HSTR, VSTR, dlm_25, bpm, dlm_24, HFCM, VFCM, dlm_23, Q2L, dlm_22, DL1, dlm_21, Q3L, dlm_20, S2A, HSTR, VSTR, dlm_19, bpm, dlm_18, A1L, dlm_17, S3A, dlm_16, A2L, dlm_15, O1X, dlm_14, bpm, dlm_13, HFCM, VFCM, dlm_12, HSTR, VSTR, S4A, dlm_11, Q4N, dlm_10, DL2, dlm_09, S5X, HSTR, VSTR, dlm_08, HFCM, VFCM, dlm_07, bpm, dlm_06, Q5N, dlm_05, DQ1, dlm_04, Q6N, dlm_03, S6X, HSTR, VSTR, GE, dlm_02, bpm, dlm_01, SE)
+
+sp       : line=(LS, arca_lm, MS, arca_ms, SS, arca_sm, MS, arca_ms, SS, arca_sm, MS, arca_ms, SS, arca_sm, MS, arca_ml)
+
+sp1      : line=(LS, SE, dlm_30, bpm, dlm_29, GS, Q0L, dlm_28, O0X, COR_11, dlm_27, Q1L, dlm_26, S1X, HSTR, VSTR, dlm_25, bpm, dlm_24, HFCM, VFCM, dlm_23, Q2L, dlm_22, DL1, dlm_21, Q3L, dlm_20, S2A, HSTR, VSTR, dlm_19, bpm, dlm_18, A1L, dlm_17, S3A, dlm_16, A2L, dlm_15, O1X, dlm_14, bpm, dlm_13, HFCM, VFCM, dlm_12, HSTR, VSTR, S4A, dlm_11, Q4N, dlm_10, DL2, dlm_09, S5X, HSTR, VSTR, dlm_08, HFCM, VFCM, dlm_07, bpm, dlm_06, Q5N, dlm_05, DQ1, dlm_04, Q6N, dlm_03, S6X, HSTR, VSTR, GE, dlm_02, bpm, dlm_01, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, H_COLL, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I02, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, ID_K02, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I03, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I04, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, ID_K04, bpm, dml_02, HFCM, VFCM, dml_03, GS, S6X, HSTR, VSTR, dml_04, Q6N, dml_05, DQ1, dml_06, Q5N, dml_07, bpm, dml_08, S5X, HSTR, VSTR, dml_09, DL3, dml_10, Q4N, dml_11, S4A, HSTR, VSTR, dml_12, bpm, dml_13, HFCM, VFCM, dml_14, O1X, dml_15, A2L, dml_16, S3A, dml_17, A1L, dml_18, HFCM, VFCM, dml_19, bpm, dml_20, S2A, HSTR, VSTR, dml_21, Q3L, dml_22, DL4, dml_23, Q2L, dml_24, bpm, dml_25, S1X, HSTR, VSTR, dml_26, Q1L, dml_27, COR_11, O0X, dml_28, Q0L, GE, dml_29, bpm, ID_I05)
+
+sp2      : line=(bpm, dlm_29, GS, Q0L, dlm_28, O0X, COR_11, dlm_27, Q1L, dlm_26, S1X, HSTR, VSTR, dlm_25, bpm, dlm_24, HFCM, VFCM, dlm_23, Q2L, dlm_22, DL1, dlm_21, Q3L, dlm_20, S2A, HSTR, VSTR, dlm_19, bpm, dlm_18, A1L, dlm_17, S3A, dlm_16, A2L, dlm_15, O1X, dlm_14, bpm, dlm_13, HFCM, VFCM, dlm_12, HSTR, VSTR, S4A, dlm_11, Q4N, dlm_10, DL2, dlm_09, S5X, HSTR, VSTR, dlm_08, HFCM, VFCM, dlm_07, bpm, dlm_06, Q5N, dlm_05, DQ1, dlm_04, Q6N, dlm_03, S6X, HSTR, VSTR, GE, dlm_02, bpm, dlm_01, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I06, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I07, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, ID_K07, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, V_COLL, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I08, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dml_01, bpm, dml_02, HFCM, VFCM, dml_03, GS, S6X, HSTR, VSTR, dml_04, Q6N, dml_05, DQ1, dml_06, Q5N, dml_07, bpm, dml_08, S5X, HSTR, VSTR, dml_09, DL3, dml_10, Q4N, dml_11, S4A, HSTR, VSTR, dml_12, bpm, dml_13, HFCM, VFCM, dml_14, O1X, dml_15, A2L, dml_16, S3A, dml_17, A1L, dml_18, HFCM, VFCM, dml_19, bpm, dml_20, S2A, HSTR, VSTR, dml_21, Q3L, dml_22, DL4, dml_23, Q2L, dml_24, bpm, dml_25, S1X, HSTR, VSTR, dml_26, Q1L, dml_27, COR_11, O0X, dml_28, Q0L, GE, dml_29, bpm, ID_I09)
+
+sp3      : line=(bpm, dlm_29, GS, Q0L, dlm_28, O0X, COR_11, dlm_27, Q1L, dlm_26, S1X, HSTR, VSTR, dlm_25, bpm, dlm_24, HFCM, VFCM, dlm_23, Q2L, dlm_22, DL1, dlm_21, Q3L, dlm_20, S2A, HSTR, VSTR, dlm_19, bpm, dlm_18, A1L, dlm_17, S3A, dlm_16, A2L, dlm_15, O1X, dlm_14, bpm, dlm_13, HFCM, VFCM, dlm_12, HSTR, VSTR, S4A, dlm_11, Q4N, dlm_10, DL2, dlm_09, S5X, HSTR, VSTR, dlm_08, HFCM, VFCM, dlm_07, bpm, dlm_06, Q5N, dlm_05, DQ1, dlm_04, Q6N, dlm_03, S6X, HSTR, VSTR, GE, dlm_02, bpm, dlm_01, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, H_COLL, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I10, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I11, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, ID_K11, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I12, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dml_01, bpm, dml_02, HFCM, VFCM, dml_03, GS, S6X, HSTR, VSTR, dml_04, Q6N, dml_05, DQ1, dml_06, Q5N, dml_07, bpm, dml_08, S5X, HSTR, VSTR, dml_09, DL3, dml_10, Q4N, dml_11, S4A, HSTR, VSTR, dml_12, bpm, dml_13, HFCM, VFCM, dml_14, O1X, dml_15, A2L, dml_16, S3A, dml_17, A1L, V_COLL, HFCM, VFCM, dml_19, bpm, dml_20, S2A, HSTR, VSTR, dml_21, Q3L, dml_22, DL4, dml_23, Q2L, dml_24, bpm, dml_25, S1X, HSTR, VSTR, dml_26, Q1L, dml_27, COR_11, O0X, dml_28, Q0L, GE, dml_29, bpm, ID_I13)
+
+sp4      : line=(bpm, dlm_29, GS, Q0L, dlm_28, O0X, COR_11, dlm_27, Q1L, dlm_26, S1X, HSTR, VSTR, dlm_25, bpm, dlm_24, HFCM, VFCM, dlm_23, Q2L, dlm_22, DL1, dlm_21, Q3L, dlm_20, S2A, HSTR, VSTR, dlm_19, bpm, dlm_18, A1L, dlm_17, S3A, dlm_16, A2L, dlm_15, O1X, dlm_14, bpm, dlm_13, HFCM, VFCM, dlm_12, HSTR, VSTR, S4A, dlm_11, Q4N, dlm_10, DL2, dlm_09, S5X, HSTR, VSTR, dlm_08, HFCM, VFCM, dlm_07, bpm, dlm_06, Q5N, dlm_05, DQ1, dlm_04, Q6N, dlm_03, S6X, HSTR, VSTR, GE, dlm_02, bpm, dlm_01, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I14, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, ID_K14, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I15, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, H_COLL, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I16, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, ID_K16, bpm, dml_02, HFCM, VFCM, dml_03, GS, S6X, HSTR, VSTR, dml_04, Q6N, dml_05, DQ1, dml_06, Q5N, dml_07, bpm, dml_08, S5X, HSTR, VSTR, dml_09, DL3, dml_10, Q4N, dml_11, S4A, HSTR, VSTR, dml_12, bpm, dml_13, HFCM, VFCM, dml_14, O1X, dml_15, A2L, dml_16, S3A, dml_17, A1L, dml_18, HFCM, VFCM, dml_19, bpm, dml_20, S2A, HSTR, VSTR, dml_21, Q3L, dml_22, DL4, dml_23, Q2L, dml_24, bpm, dml_25, S1X, HSTR, VSTR, dml_26, Q1L, dml_27, COR_11, O0X, dml_28, Q0L, GE, dml_29, bpm, ID_I17)
+
+sp5      : line=(bpm, dlm_29, GS, Q0L, dlm_28, O0X, COR_11, dlm_27, Q1L, dlm_26, S1X, HSTR, VSTR, dlm_25, bpm, dlm_24, HFCM, VFCM, dlm_23, Q2L, dlm_22, DL1, dlm_21, Q3L, dlm_20, S2A, HSTR, VSTR, dlm_19, bpm, dlm_18, A1L, dlm_17, S3A, dlm_16, A2L, dlm_15, O1X, dlm_14, bpm, dlm_13, HFCM, VFCM, dlm_12, HSTR, VSTR, S4A, dlm_11, Q4N, dlm_10, DL2, dlm_09, S5X, HSTR, VSTR, dlm_08, HFCM, VFCM, dlm_07, bpm, dlm_06, Q5N, dlm_05, DQ1, dlm_04, Q6N, dlm_03, S6X, HSTR, VSTR, GE, dlm_02, bpm, dlm_01, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I18, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I19, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, V_COLL, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I20, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dml_01, bpm, dml_02, HFCM, VFCM, dml_03, GS, S6X, HSTR, VSTR, dml_04, Q6N, dml_05, DQ1, dml_06, Q5N, dml_07, bpm, dml_08, S5X, HSTR, VSTR, dml_09, DL3, dml_10, Q4N, dml_11, S4A, HSTR, VSTR, dml_12, bpm, dml_13, HFCM, VFCM, dml_14, O1X, dml_15, A2L, dml_16, S3A, dml_17, A1L, dml_18, HFCM, VFCM, dml_19, bpm, dml_20, S2A, HSTR, VSTR, dml_21, Q3L, dml_22, DL4, dml_23, Q2L, dml_24, bpm, dml_25, S1X, HSTR, VSTR, dml_26, Q1L, dml_27, COR_11, O0X, dml_28, Q0L, GE, dml_29, bpm, ID_I21)
+
+sp6      : line=(bpm, dlm_29, GS, Q0L, dlm_28, O0X, COR_11, dlm_27, Q1L, dlm_26, S1X, HSTR, VSTR, dlm_25, bpm, dlm_24, HFCM, VFCM, dlm_23, Q2L, dlm_22, DL1, dlm_21, Q3L, dlm_20, S2A, HSTR, VSTR, dlm_19, bpm, dlm_18, A1L, dlm_17, S3A, dlm_16, A2L, dlm_15, O1X, dlm_14, bpm, dlm_13, HFCM, VFCM, dlm_12, HSTR, VSTR, S4A, dlm_11, Q4N, dlm_10, DL2, dlm_09, S5X, HSTR, VSTR, dlm_08, HFCM, VFCM, dlm_07, bpm, dlm_06, Q5N, dlm_05, DQ1, dlm_04, Q6N, dlm_03, S6X, HSTR, VSTR, GE, dlm_02, bpm, ID_K21, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I22, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I23, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dms_27, bpm, dms_26, HFCM, VFCM, dms_25, GS, S6X, HSTR, VSTR, dms_24, Q6N, dms_23, DQ1, dms_22, Q5N, dms_21, bpm, dms_20, S5X, HSTR, VSTR, dms_19, DL3, dms_18, Q4N, dms_17, S4A, HSTR, VSTR, dms_16, bpm, dms_15, HFCM, VFCM, dms_14, O1X, dms_13, A2N, dms_12, S3A, dms_11, A1N, dms_10, HFCM, VFCM, dms_09, bpm, dms_08, S2A, HSTR, VSTR, dms_07, Q3N, dms_06, DL4, dms_05, Q2N, dms_04, S1X, HSTR, VSTR, dms_03, Q1N, GE, dms_02, bpm, ID_I24, bpm, dsm_02, HFCM, VFCM, dsm_03, GS, Q1N, dsm_04, S1X, HSTR, VSTR, dsm_05, Q2N, dsm_06, DL1, dsm_07, Q3N, dsm_08, S2A, HSTR, VSTR, dsm_09, bpm, dsm_10, A1N, dsm_11, S3A, dsm_12, A2N, dsm_13, O1X, dsm_14, bpm, dsm_15, HFCM, VFCM, dsm_16, S4A, HSTR, VSTR, dsm_17, Q4N, dsm_18, DL2, dsm_19, S5X, HSTR, VSTR, dsm_20, HFCM, VFCM, dsm_21, bpm, dsm_22, Q5N, dsm_23, DQ1, dsm_24, Q6N, dsm_25, S6X, HSTR, VSTR, GE, dsm_26, bpm, dsm_27, SE, MS, SE, dml_01, bpm, dml_02, HFCM, VFCM, dml_03, GS, S6X, HSTR, VSTR, dml_04, Q6N, dml_05, DQ1, dml_06, Q5N, dml_07, bpm, dml_08, S5X, HSTR, VSTR, dml_09, DL3, dml_10, Q4N, dml_11, S4A, HSTR, VSTR, dml_12, bpm, dml_13, HFCM, VFCM, dml_14, O1X, dml_15, A2L, dml_16, S3A, dml_17, A1L, dml_18, HFCM, VFCM, dml_19, bpm, dml_20, S2A, HSTR, VSTR, dml_21, Q3L, dml_22, DL4, dml_23, Q2L, dml_24, bpm, dml_25, S1X, HSTR, VSTR, dml_26, Q1L, dml_27, COR_11, O0X, dml_28, Q0L, GE, dml_29, bpm, dml_30, SE)
+
+
+ring     : line=(6*sp)
+ringRF   : line=(AP, RAD, CAV, sp1, sp2, sp3, sp4, sp5, sp6, AP)
+
+
+
+

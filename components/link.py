@@ -16,7 +16,7 @@ class LinkComponent(QWidget):
         self.displayHeight = 0
         self.pvHasLinkedElement = 'linkedElement' in self.pv.settings.keys()
         # Lattice elements and a list of names + indexes
-        if shared.elements is None:
+        if shared.elements is not None:
             shared.lattice = latticeutils.LoadLattice(shared.latticePath)
             shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
             shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]

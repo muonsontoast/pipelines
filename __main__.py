@@ -32,9 +32,10 @@ cwd = str(Path.cwd().resolve()) # Get the current working directory.
 signal.signal(signal.SIGINT, signal.SIG_DFL) # Allow Ctrl+C interrupt from terminal.
 
 class MainWindow(Entity, QMainWindow):
-    def __init__(self, latticeName = 'dls_ltb'):
+    def __init__(self, latticeName = ''):
         super().__init__(name = 'MainWindow', type = 'MainWindow')
         settingsPath = os.path.join(shared.cwd, 'config', 'settings.yaml')
+        print('&&&', settingsPath)
         shared.window = self
         self.setWindowTitle(f'{shared.windowTitle} - Early Prototype')
         self.setWindowIcon(QIcon(f'{cwd}\\pipelines\\\\gfx\\icon.png'))
@@ -84,11 +85,35 @@ class MainWindow(Entity, QMainWindow):
             print('Data dump folder does not exist, creating one.')
             os.mkdir(dataDumpPath)
         # Load lattice
-        shared.latticePath = os.path.abspath(os.path.join(os.getcwd(), 'Lattice', f'{latticeName}.mat')) # for now ...
+        shared.latticePath = os.path.join(shared.cwd, 'lattice-saves')
+        print('***', shared.latticePath, '***')
+        print(os.path.exists(shared.latticePath))
+        # create a lattice-saves folder if one doesn't already exist.
+        if not os.path.exists(shared.latticePath):
+            print(f'Lattice save folder \'lattice-saves\' does not exist, creating one. Any custom lattice files should be stored here.')
+            os.mkdir(shared.latticePath)
+
+
         if shared.elements is None:
-            shared.lattice = latticeutils.LoadLattice(shared.latticePath)
-            shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
-            shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
+            formattedLatticePath = Path(shared.latticePath)
+            files = sorted(list(formattedLatticePath.glob('*.mat')))
+            if files:
+                print('Found saved lattice(s):', files)
+                if latticeName == '':
+                    print(f'A lattice name was not specified as an additional argument in the CLI. Loading the first alphabetical lattice \'{files[0]}\'.')
+                    shared.lattice = latticeutils.LoadLattice(files[0])
+                else:
+                    latticeName = latticeName.split('.')[0] + '.mat' # ensure correct file extension
+                    try:
+                        print(f'Attempting to load saved lattice \'{latticeName}\'.')
+                        shared.lattice = latticeutils.LoadLattice(os.path.join(formattedLatticePath, latticeName))
+                    except:
+                        print(f'No saved lattices were found with the name \'{latticeName}\'. Defaulting to first alphabetical lattice \'{files[0]}\'.')
+                        shared.lattice = latticeutils.LoadLattice(files[0])
+                shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
+                shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
+            else:
+                print('No saved lattices found.')
         self.lightModeOn = False
         shared.mainWindow = self
         # Create a master widget to contain everything.
