@@ -39,7 +39,8 @@ def FormatComponents(components: dict):
                 print(f'Converting {attr} from numpy int to native int.')
                 c[attr] = int(v)
         newComponents[k] = c
-        newComponents[k]['type'] = f'{newComponents[k]['type']}'.split('.')[-1][:-2]
+        if 'type' in newComponents[k]:
+            newComponents[k]['type'] = f'{newComponents[k]['type']}'.split('.')[-1][:-2]
         if 'valueType' in c.keys():
             if newComponents[k]['valueType'] in [int, np.integer]:
                 newComponents[k]['valueType'] = 'int'

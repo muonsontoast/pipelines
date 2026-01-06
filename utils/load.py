@@ -27,9 +27,9 @@ def UpdateLinkedLatticeElements():
     for entity in shared.entities.values():
         if 'components' in entity.settings:
             if 'value' in entity.settings['components']:
-                if entity.settings['components']['value']['type'] == slider.SliderComponent:
-                    entity.UpdateLinkedElement(override = entity.settings['components']['value']['value'])
-    
+                if 'type' in entity.settings['components']['value']:
+                    if entity.settings['components']['value']['type'] == slider.SliderComponent:
+                        entity.UpdateLinkedElement(override = entity.settings['components']['value']['value'])
 
 # Have to loop over entities again as they won't all be added before the prior loop.
 def LinkBlocks():
@@ -81,10 +81,14 @@ def Load(path):
                                 shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
                             entity.settings['linkedElement'] = shared.elements.iloc[v['linkedElement']]
                         # Assign the correct components
-                        for componentName, c in v['components'].items():
-                            v['components'][componentName]['type'] = componentsLookup[c['type']]
-                            if 'valueType' in v['components'][componentName]:
-                                v['components'][componentName]['valueType'] = valueTypeLookup[v['components'][componentName]['valueType']]
+                        print(v)
+                        if 'components' in v:
+                            for componentName, c in v['components'].items():
+                                if 'type' in v['components'][componentName]:
+                                    v['components'][componentName]['type'] = componentsLookup[c['type']]
+                                if 'valueType' in v['components'][componentName]:
+                                    v['components'][componentName]['valueType'] = valueTypeLookup[v['components'][componentName]['valueType']]
+                        print('-------')
                         entity.settings['components'] = v['components']
                         if hasattr(entity, 'set'):
                             entity.set.setText(f'{v['components']['value']['value']:.3f}')

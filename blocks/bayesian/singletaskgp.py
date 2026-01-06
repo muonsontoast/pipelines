@@ -18,7 +18,13 @@ from ...utils.multiprocessing import PerformAction, TogglePause, StopAction
 
 class SingleTaskGP(Draggable):
     def __init__(self, parent, proxy, **kwargs):
-        super().__init__(proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 500]), **kwargs)
+        super().__init__(
+            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 500]), 
+            components = {
+                'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float),
+            },
+            **kwargs
+        )
         self.timeBetweenPolls = 1000
         self.runningCircle = RunningCircle()
         self.offlineAction = OfflineAction(self)
