@@ -22,7 +22,7 @@ Thumbs.db
 *.xlsx
 
 # Settings file
-config/settings.yaml
+config/*
 
 # lattice files
 lattice-saves/*
