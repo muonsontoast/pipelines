@@ -10,12 +10,9 @@ class Entity:
         super().__init__()
         self.name = kwargs.get('name', 'Entity')
         self.type = kwargs.get('type', 'Entity')
-        # self.data = np.zeros((0,))
-        # self.data[:] = np.inf
         self.data = np.full(1, np.inf)
         if self.type == 'SVD':
             print('At instantiation, SVD has this data:', self.data)
-        # self.data = np.inf((0,))
         self.sharingData = False
         self.settings = dict(name = self.name, type = self.type)
         componentsSpecified = False

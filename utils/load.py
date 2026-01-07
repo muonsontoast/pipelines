@@ -4,6 +4,7 @@ import yaml
 import time
 import multiprocessing
 from pathlib import Path
+import numpy as np
 from .commands import blockTypes, CreateBlock
 from ..lattice.latticeutils import LoadLattice, GetLatticeInfo
 from ..components import BPM, errors, kickangle, link, slider
@@ -90,6 +91,11 @@ def Load(path):
                             entity.settings['components'] = v['components']
                             if hasattr(entity, 'set'):
                                 entity.set.setText(f'{v['components']['value']['value']:.3f}')
+                        if 'hyperparameters' in v:
+                            for h in v['hyperparameters'].values():
+                                if h['type'] == 'vec':
+                                    h['value'] = np.array(h['value']) if h['value'] != [] else np.nan
+                            entity.settings['hyperparameters'] = v['hyperparameters']
                 LinkBlocks()
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')
                 shared.workspace.assistant.PushMessage(f'Loaded saved session from {path}')

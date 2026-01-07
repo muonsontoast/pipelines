@@ -119,7 +119,7 @@ def PushButtonStyle(**kwargs):
 
 def PushButtonBorderlessStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderColor`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`, `paddingTop`, `paddingBottom`, `marginTop`, `marginBottom`'''
+    `color`, `borderColor`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`, `paddingLeft`, `paddingRight`, `paddingTop`, `paddingBottom`, `marginTop`, `marginBottom`'''
     return f'''
     QPushButton {{
     background-color: {kwargs.get('color', buttonColor)};
@@ -134,7 +134,7 @@ def PushButtonBorderlessStyle(**kwargs):
     border: none;
     border-radius: 3px;
     margin-top: {kwargs.get('marginTop', 0)}px;
-    margin-bottom: {kwargs.get('marginBottom', -1)}px;
+    margin-bottom: {kwargs.get('marginBottom', 0)}px;
     }}
     QPushButton:hover {{
     background-color: {kwargs.get('hoverColor', buttonHoverColor)};
@@ -209,7 +209,7 @@ def ComboStyle(**kwargs):
 
 def LineEditStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `borderColor`, `borderRadius`, `hoverColor`, `paddingLeft`, `paddingBottom`, `bold`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `borderColor`, `borderRadius`, `hoverColor`, `paddingLeft`, `paddingRight`, `paddingBottom`, `paddingTop`, `bold`, `fontColor`, `fontSize`, `fontFamily`'''
     bold = 'font-weight: bold;' if kwargs.get('bold', False) else ''
     return f'''
     QLineEdit {{
@@ -220,7 +220,9 @@ def LineEditStyle(**kwargs):
     {bold}
     text-align: center;
     padding-left: {kwargs.get('paddingLeft', 0)}px;
+    padding-right: {kwargs.get('paddingRight', 0)}px;
     padding-bottom: {kwargs.get('paddingBottom', 0)}px;
+    padding-top: {kwargs.get('paddingTop', 0)}px;
     border-radius: {kwargs.get('borderRadius', 3)};
     }}'''
 

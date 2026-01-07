@@ -14,11 +14,13 @@ def Save():
         for entity in shared.entities.values():
             entitySettings = deepcopy(entity.settings)
             # Replace settings of specific kinds with more appropriate information.
-            for k in entitySettings.keys():
+            for k in entitySettings:
                 if k == 'components':
                     entitySettings['components'] = FormatComponents(entitySettings['components'])
                 elif k == 'linkedElement':
                     entitySettings['linkedElement'] = int(entitySettings['linkedElement'].Index) # linked element can be recovered from its index next session.
+                elif k == 'hyperparameters':
+                    entitySettings['hyperparameters'] = FormatHyperparameters(entitySettings['hyperparameters'])
             if entitySettings['type'] == 'Editor':
                 entitySettings['positionInSceneCoords'] = [entity.positionInSceneCoords.x(), entity.positionInSceneCoords.y()]
             settings[entity.ID] = entitySettings
@@ -49,3 +51,15 @@ def FormatComponents(components: dict):
             elif newComponents[k]['valueType'] == str:
                 newComponents[k]['valueType'] = 'str'
     return newComponents
+
+def FormatHyperparameters(hyperparameters: dict):
+    newHyperparams = dict()
+    for k, v in hyperparameters.items():
+        print(k, v)
+        if v['type'] == 'vec':
+            if type(v['value']) == np.ndarray:
+                v['value'] = v['value'].tolist()
+            else:
+                v['value'] = []
+        newHyperparams[k] = v
+    return newHyperparams

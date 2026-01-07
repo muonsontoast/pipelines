@@ -2,7 +2,7 @@
 
 from PySide6.QtWidgets import QGraphicsProxyWidget
 from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtCore import QPoint, QPointF
+from PySide6.QtCore import QPoint
 from ..blocks.draggable import Draggable
 from ..blocks.pv import PV
 from ..blocks.corrector import Corrector
@@ -17,6 +17,8 @@ from ..blocks.composition.svd import SVD
 from ..blocks.bayesian.singletaskgp import SingleTaskGP
 # kernels
 from ..blocks.kernels.linear import LinearKernel
+from ..blocks.kernels.anisotropic import AnisotropicKernel
+from ..blocks.kernels.periodic import PeriodicKernel
 from ..ui.group import Group
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
@@ -39,6 +41,8 @@ blockTypes = {
     'Single Task GP': SingleTaskGP,
     'Group': Group,
     'Linear Kernel': LinearKernel,
+    'Anisotropic Kernel': AnisotropicKernel,
+    'Periodic Kernel': PeriodicKernel,
 }
 
 def Undo():
@@ -156,8 +160,14 @@ def CreateSVD(pos: QPoint):
 def CreateSingleTaskGP(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Single Task GP'], 'Single Task GP', pos)
 
-def CreateLinearKernel(pos:QPoint):
+def CreateLinearKernel(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Linear Kernel'], 'Linear Kernel', pos)
+
+def CreateAnisotropicKernel(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Anisotropic Kernel'], 'Anisotropic Kernel', pos)
+
+def CreatePeriodicKernel(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Periodic Kernel'], 'Periodic Kernel', pos)
 
 def CreateGroup():
     if len(shared.activeEditor.area.selectedItems) < 2:
@@ -231,7 +241,9 @@ commands = {
     'Subtract (Composition)': dict(shortcut = [], func = CreateSubtract, args = [GetMousePos]),
     'SVD (Singular Value Decomposition)': dict(shortcut = [], func = CreateSVD, args = [GetMousePos]),
     'Single Task Gaussian Process': dict(shortcut = ['Shift+G'], func = CreateSingleTaskGP, args = [GetMousePos]),
-    'Linear Kernel': dict(shortcut = ['Shift+K+L'], func = CreateLinearKernel, args = [GetMousePos]),
+    'Linear Kernel': dict(shortcut = [], func = CreateLinearKernel, args = [GetMousePos]),
+    'Anisotropic Kernel': dict(shortcut = [], func = CreateAnisotropicKernel, args = [GetMousePos]),
+    'Periodic Kernel': dict(shortcut = [], func = CreatePeriodicKernel, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),

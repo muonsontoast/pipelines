@@ -36,9 +36,9 @@ class SingleTaskGP(Draggable):
         self.title = QLabel(f'{self.settings['name']} (Empty)', alignment = Qt.AlignCenter)
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         self.header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
-        self.AddSocket('decision', 'F', 'Decisions', 175, acceptableTypes = ['PV', 'Corrector', 'SVD', 'Add', 'Subtract'])
+        self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = ['PV', 'Corrector', 'SVD', 'Add', 'Subtract'])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = ['PV', 'BPM', 'Add', 'Subtract'])
-        self.AddSocket('context', 'F', 'Context', 175, acceptableTypes = ['PV', 'Corrector', 'BPM', 'Add', 'Subtract'])
+        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = ['Kernel', 'Linear Kernel', 'Anisotropic Kernel', 'Periodic Kernel'])
         self.AddSocket('out', 'M')
         # Main widget
         self.widget = QWidget()
@@ -126,22 +126,17 @@ class SingleTaskGP(Draggable):
             if decision.type not in self.pvBlockTypes and np.isinf(decision.streams[self.streamTypesIn[decision.ID]]()['data']).any():
                 waiting = True
                 self.title.setText(f'{self.title.text().split(' (')[0]} (Waiting)')
-                # self.offlineAction.ReadDependents(independents)
                 actionToRun.ReadDependents(independents)
                 break
 
         def WaitUntilInputsRead():
             nonlocal initialSamples, numParticles, waiting
             if waiting:
-                # if not self.offlineAction.resultsWritten:
-                #     return QTimer.singleShot(self.offlineAction.timeBetweenPolls, WaitUntilInputsRead)
                 if not actionToRun.resultsWritten:
                     return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
                 waiting = False
-                # return QTimer.singleShot(self.offlineAction.timeBetweenPolls, WaitUntilInputsRead)
                 return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
             else:
-                # if not self.offlineAction.CheckForValidInputs():
                 #     return
                 if not actionToRun.CheckForValidInputs():
                     return
@@ -156,7 +151,6 @@ class SingleTaskGP(Draggable):
                     '''Called on a separate worker thread so will not block the UI thread.'''
                     nonlocal counter, actionToRun
                     # Set the values of the decisions
-                    # self.offlineAction.SetIndependents(independentsToSet, inDict)
                     actionToRun.SetIndependents(independentsToSet, inDict)
                     # crank the handle
                     PerformAction(
@@ -173,11 +167,8 @@ class SingleTaskGP(Draggable):
 
                     counter += 1
                     # Read the value of the objective by feeding this GP's data upstream
-                    # self.offlineAction.ReadDependents([{'ID': self.objectives[0].ID, 'stream': self.streamTypesIn[self.objectives[0].ID]}], self.data)
                     actionToRun.ReadDependents([{'ID': self.objectives[0].ID, 'stream': self.streamTypesIn[self.objectives[0].ID]}], self.data)
 
-                    # while not self.offlineAction.resultsWritten:
-                    #     time.sleep(self.timeBetweenPolls / 1e3)
                     while not actionToRun.resultsWritten:
                         time.sleep(self.timeBetweenPolls / 1e3)
 
@@ -239,7 +230,7 @@ class SingleTaskGP(Draggable):
         else:
             self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, fontColor = '#c4c4c4'))
             self.decisionSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
-            self.contextSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
+            self.kernelSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
             self.objectiveSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
             self.header.setStyleSheet(style.WidgetStyle(color = "#B54428", borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
             self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
