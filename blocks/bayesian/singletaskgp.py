@@ -38,7 +38,7 @@ class SingleTaskGP(Draggable):
         self.header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
         self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = ['PV', 'Corrector', 'SVD', 'Add', 'Subtract'])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = ['PV', 'BPM', 'Add', 'Subtract'])
-        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = ['Kernel', 'Linear Kernel', 'Anisotropic Kernel', 'Periodic Kernel'])
+        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = ['Kernel', 'Linear Kernel', 'Anisotropic Kernel', 'Periodic Kernel', 'RBF Kernel'])
         self.AddSocket('out', 'M')
         # Main widget
         self.widget = QWidget()
@@ -110,7 +110,6 @@ class SingleTaskGP(Draggable):
         super().Push()
 
     def Start(self, **kwargs):
-        print('Starting up a Single Task GP')
         steps = kwargs.get('steps', 10)
         initialSamples = kwargs.get('initialSamples', 1)
         numParticles = kwargs.get('numParticles', 100000)
@@ -162,7 +161,6 @@ class SingleTaskGP(Draggable):
                         numParticles = numParticles,
                     )
                     while np.isinf(self.data).any():
-                        print(f'({counter}) Waiting...')
                         time.sleep(self.timeBetweenPolls / 1e3)
 
                     counter += 1
@@ -200,7 +198,6 @@ class SingleTaskGP(Draggable):
                         job = executor.submit(self.X.step)
                         job.add_done_callback(lambda _: StepUntilComplete())
                     else:
-                        print('GP Done!')
                         # temporarily save the data automatically here
                         self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
                         QTimer.singleShot(0, lambda: executor.shutdown(wait = True))

@@ -42,12 +42,3 @@ class AnisotropicKernel(Kernel):
         else:
             w = np.diag(self.settings['hyperparameters']['weights']['value'])
         return X1 @ w @ X2.T
-
-    def Push(self):
-        super().Push()
-        x = np.linspace(-5, 5, 20)
-        x = x[..., np.newaxis]
-        y = np.linspace(-5, 5, 20)
-        y = y[..., np.newaxis]
-        Z = self.k(x, y)
-        im = self.ax.imshow(Z, origin = 'lower', cmap = 'viridis')

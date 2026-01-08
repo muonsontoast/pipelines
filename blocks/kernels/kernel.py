@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QSpacerItem
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QMenu
+from PySide6.QtCore import Qt, QPointF
+from PySide6.QtGui import QAction
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -10,6 +11,7 @@ from ..draggable import Draggable
 from ...clickablewidget import ClickableWidget
 from ... import shared
 from ..socket import Socket
+from ...ui.kernelmenu import KernelMenu
 from ... import style
 
 plt.rcParams['text.usetex'] = True
@@ -48,6 +50,59 @@ class Kernel(Draggable):
         '''To be overriden by all subclasses inheriting from this base class.'''
         pass
 
+    def ShowMenu(self, context):
+        if shared.kernelMenu is not None and shared.kernelMenu != self.kernelMenu:
+            shared.kernelMenu.Hide()
+            shared.kernelMenu.draggable.kernelMenuIsOpen = False
+        localPos = context.mapTo(self.proxy.widget(), QPointF(40, -20))
+        finalPos = self.proxy.scenePos() + localPos
+        self.kernelMenu.currentHyperparameter = context.correspondingHyperparameter
+        self.kernelMenu.Show(finalPos)
+        shared.kernelMenu = self.kernelMenu
+        self.kernelMenuIsOpen = True
+        # show all the values for this hyperparameter
+        iters = 1 if type(self.settings['hyperparameters'][context.correspondingHyperparameter]['value']) in [int, float] else self.settings['hyperparameters'][context.correspondingHyperparameter]['value'].shape[0]
+        iterable = self.settings['hyperparameters'][context.correspondingHyperparameter]['value']
+        iterable = np.array(iterable) if type(iterable) in [int, float] else iterable
+        for idx in range(iters):
+            widget = QWidget()
+            widget.setFixedHeight(40)
+            widget.setLayout(QHBoxLayout())
+            widget.setContentsMargins(0, 0, 0, 0)
+            label = QLabel(f'Dim {idx}')
+            widget.layout().addWidget(label, alignment = Qt.AlignLeft)
+            edit = QLineEdit(f'{iterable[idx]:2f}')
+            edit.setAlignment(Qt.AlignCenter)
+            edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+            edit.setStyleSheet(style.LineEditStyle(fontColor = '#c4c4c4', color = '#2e2e2e'))
+            widget.layout().addWidget(edit)
+            copy = QPushButton('CP')
+            copy.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 12))
+            copy.setFixedSize(20, 20)
+            widget.layout().addWidget(copy, alignment = Qt.AlignVCenter)
+            delete = QPushButton('Del')
+            delete.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 12))
+            delete.setFixedSize(20, 20)
+            widget.layout().addWidget(delete, alignment = Qt.AlignVCenter)
+            self.kernelMenu.body.layout().insertWidget(idx, widget)
+
+    def CloseMenu(self):
+        if shared.kernelMenu == self.kernelMenu:
+            self.kernelMenu.Hide()
+            self.kernelMenu.currentHyperparameter = None
+            shared.kernelMenu = None
+        self.kernelMenuIsOpen = False
+
+    def ToggleMenu(self, context):
+        if not self.kernelMenuIsOpen:
+            self.ShowMenu(context)
+            return
+        if context.correspondingHyperparameter != self.kernelMenu.currentHyperparameter:
+            self.ShowMenu(context)
+            return
+        print(context.correspondingHyperparameter)
+        self.CloseMenu()
+
     def Push(self):
         self.clickable = ClickableWidget(self)
         self.clickable.setLayout(QVBoxLayout())
@@ -72,11 +127,6 @@ class Kernel(Draggable):
         self.figure.subplots_adjust(left = .015, right = .985, top = .985, bottom = .015)
         self.figure.set_facecolor('none')
         self.ax = self.figure.add_subplot(111)
-        self.ax.set_aspect('equal')
-        self.ax.set_xticklabels([])
-        self.ax.set_xticks([])
-        self.ax.set_yticklabels([])
-        self.ax.set_yticks([])
         self.canvas = FigureCanvas(self.figure)
         self.canvas.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.canvas.setStyleSheet('background: transparent')
@@ -97,98 +147,107 @@ class Kernel(Draggable):
         self.mainWidget.layout().addWidget(self.clickable, 0, 1, 3, 3)
         self.mainWidget.layout().addWidget(self.outSocket, 0, 4, 3, 1)
         self.DrawHyperparameterControls()
+        self.kernelMenu = KernelMenu(self)
+        setattr(self.kernelMenu, 'draggable', self)
+        self.kernelMenu.canDrag = False
+        self.kernelMenu.Hide()
+        self.kernelMenuIsOpen = False
+
+        self.RedrawFigure()
         self.ToggleStyling(active = False)
+
+    def ClearFigure(self):
+        self.ax.clear()
+        self.ax.set_aspect('equal')
+        self.ax.set_xticklabels([])
+        self.ax.set_xticks([])
+        self.ax.set_yticklabels([])
+        self.ax.set_yticks([])
+
+    def DrawFigure(self):
+        x = np.linspace(-5, 5, 40)
+        x = x[..., np.newaxis]
+        y = np.linspace(-5, 5, 40)
+        y = y[..., np.newaxis]
+        Z = self.k(x, y)
+        im = self.ax.imshow(Z, origin = 'lower', cmap = 'viridis')
+
+    def RedrawFigure(self):
+        self.ClearFigure()
+        self.DrawFigure()
+        self.canvas.draw()
 
     def DrawHyperparameterControls(self):
         rowIdx = 3
         for k, v in self.settings['hyperparameters'].items():
-            if v['type'] in ['int', 'float']:
-                pass
-            elif v['type'] == 'vec':
-                numEdits = 0
-                numEditName = f'{k}NumEdits'
-                setattr(self, numEditName, 0)
-                widgetName = f'{k}Widget'
-                setattr(self, widgetName, QWidget())
-                widget = getattr(self, widgetName)
-                widget.setLayout(QHBoxLayout())
-                widget.layout().setContentsMargins(0, 5, 0, 5)
-                widget.setFixedHeight(40)
-                housingName = f'{k}Housing'
-                setattr(self, housingName, QWidget())
-                housing = getattr(self, housingName)
-                housing.setLayout(QHBoxLayout())
-                housing.layout().setContentsMargins(2, 0, 2, 0)
-                housing.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-                labelHousing = QWidget()
-                labelHousing.setLayout(QHBoxLayout())
-                labelHousing.layout().setContentsMargins(5, 5, 5, 5)
-                label = QLabel(f'{k.upper()}', alignment = Qt.AlignVCenter)
-                label.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', padding = 0, fontSize = 12))
-                labelHousing.layout().addWidget(label, alignment = Qt.AlignLeft)
-                housing.layout().addWidget(labelHousing, alignment = Qt.AlignLeft)
-                editName = f'{k}Edit0'
-                if not np.isnan(v['value']):
-                    for idx, val in enumerate(v['value']):
-                        setattr(self, editName, QLineEdit(f'{val:.1f}'))
-                        edit = getattr(self, editName)
-                        edit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadius = 4, fontSize = 12))
-                        housing.layout().addWidget(edit, alignment = Qt.AlignRight)
-                        editName = f'{k}Edit{idx + 1}'
-                        numEdits += 1
-                else:
-                    setattr(self, editName, QLineEdit('1.0'))
-                    edit = getattr(self, editName)
-                    edit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12))
-                    housing.layout().addWidget(edit, alignment = Qt.AlignRight)
-                    numEdits += 1
-                setattr(self, numEditName, numEdits)
-                edit.setFixedSize(40, 30)
-                edit.setAlignment(Qt.AlignCenter)
-                edit.returnPressed.connect(lambda name = housingName, e = edit: self.ChangeEditValue(name, e))
-                # add/remove buttons
-                addButton = QPushButton('+')
-                addButton.setFixedSize(30, 30)
-                addButton.setStyleSheet(style.PushButtonBorderlessStyle(color = '#3e3e3e', hoverColor = '#4e4e4e', fontColor = '#c4c4c4', paddingLeft = 1, paddingRight = 1,borderRadius = 4, fontSize = 12))
-                addButton.clicked.connect(lambda: self.AddEdit(k))
-                widget.layout().addWidget(addButton, alignment = Qt.AlignRight | Qt.AlignVCenter)
-                removeButton = QPushButton('-')
-                removeButton.setFixedSize(30, 30)
-                removeButton.setStyleSheet(style.PushButtonBorderlessStyle(color = '#3e3e3e', hoverColor = '#4e4e4e', fontColor = '#c4c4c4', paddingLeft = 1, paddingRight = 1,borderRadius = 4, fontSize = 12))
-                removeButton.clicked.connect(lambda: self.RemoveEdit(k))
-                widget.layout().addWidget(removeButton, alignment = Qt.AlignRight | Qt.AlignVCenter)
-                widget.layout().addWidget(housing, alignment = Qt.AlignVCenter)
-                self.mainWidget.layout().addWidget(widget, rowIdx, 0, 1, 5)
+            numEdits = 0
+            numEditName = f'{k}NumEdits'
+            setattr(self, numEditName, 0)
+            widgetName = f'{k}Widget'
+            widget = QWidget()
+            widget.setLayout(QHBoxLayout())
+            widget.layout().setContentsMargins(0, 5, 0, 5)
+            widget.setFixedHeight(40)
+            housingName = f'{k}Housing'
+            setattr(self, housingName, QWidget())
+            housing = getattr(self, housingName)
+            housing.setLayout(QHBoxLayout())
+            housing.layout().setContentsMargins(2, 0, 2, 0)
+            housing.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+            labelHousing = QWidget()
+            labelHousing.setLayout(QHBoxLayout())
+            labelHousing.layout().setContentsMargins(5, 5, 5, 5)
+            labelText = f'{k.capitalize()} (Dim 1)' if k.lower() != 'scale' else f'{k.capitalize()}'
+            label = QLabel(labelText, alignment = Qt.AlignVCenter)
+            label.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', padding = 0, fontSize = 12))
+            labelHousing.layout().addWidget(label, alignment = Qt.AlignLeft)
+            housing.layout().addWidget(labelHousing, alignment = Qt.AlignLeft)
+            editName = f'{k}Edit'
+            setattr(self, widgetName, QWidget())
+            rightInnerHousing = getattr(self, widgetName)
+            rightInnerHousing.setLayout(QHBoxLayout())
+            rightInnerHousing.layout().setContentsMargins(0, 0, 0, 0)
+            rightInnerHousing.layout().setSpacing(5)
+            setattr(self, editName, QLineEdit('1.00'))
+            edit = getattr(self, editName)
+            edit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12))
+            rightInnerHousing.layout().addWidget(edit, alignment = Qt.AlignRight)
+            numEdits += 1
+            setattr(self, numEditName, numEdits)
+            edit.setFixedSize(60, 30)
+            edit.setAlignment(Qt.AlignCenter)
+            edit.returnPressed.connect(lambda name = widgetName, e = edit: self.ChangeEditValue(name, e))
+            if v['type'] == 'vec':
+                context = QPushButton('\u26ED')
+                setattr(context, 'draggable', self)
+                setattr(context, 'correspondingHyperparameter', k)
+                context.setFixedSize(35, 30)
+                context.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 16))
+                context.clicked.connect(lambda pressed, c = context: self.ToggleMenu(c))
+                rightInnerHousing.layout().addWidget(context, alignment = Qt.AlignRight)
+            housing.layout().addWidget(rightInnerHousing, alignment = Qt.AlignRight)
+            widget.layout().addWidget(housing, alignment = Qt.AlignVCenter)
+            self.mainWidget.layout().addWidget(widget, rowIdx, 1, 1, 3)
             rowIdx += 1
 
     def AddEdit(self, hyperparameterName):
         numEdits = getattr(self, f'{hyperparameterName}NumEdits')
         setattr(self, f'{hyperparameterName}NumEdits', numEdits + 1)
         widget = getattr(self, f'{hyperparameterName}Widget')
-        for idx in range(numEdits):
-            editName = f'{hyperparameterName}Edit{idx}'
-            widget.layout().removeWidget(getattr(self, editName))
-            getattr(self, editName).deleteLater()
+        editName = f'{hyperparameterName}Edit'
+        edit = getattr(self, editName)
+        editIndex = widget.layout().indexOf(edit)
+        widget.layout().removeWidget(edit)
+        getattr(self, editName).deleteLater()
         numEdits += 1
-        for idx in range(numEdits):
-            editName = f'{hyperparameterName}Edit{idx}'
-            setattr(self, editName, QLineEdit('1.0'))
-            edit = getattr(self, editName)
-            edit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12))
-            widget.layout().addWidget(edit, alignment = Qt.AlignRight)
-            edit.setFixedSize(40, 30)
-            edit.setAlignment(Qt.AlignCenter)
-            edit.returnPressed.connect(lambda name = f'{hyperparameterName}Housing', e = edit: self.ChangeEditValue(name, e))
-
-    def RemoveEdit(self, hyperparameterName):
-        numEdits = getattr(self, f'{hyperparameterName}NumEdits')
-        if numEdits == 0:
-            return
-        numEdits -= 1
-        widget = getattr(self, f'{hyperparameterName}Edit{numEdits}')
-        getattr(self, f'{hyperparameterName}Widget').layout().removeWidget(widget)
-        widget.deleteLater()
-        setattr(self, f'{hyperparameterName}NumEdits', numEdits)
+        editName = f'{hyperparameterName}Edit'
+        setattr(self, editName, QLineEdit('1.0'))
+        edit = getattr(self, editName)
+        edit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12))
+        widget.layout().insertWidget(editIndex, edit, alignment = Qt.AlignRight)
+        edit.setFixedSize(60, 30)
+        edit.setAlignment(Qt.AlignCenter)
+        edit.returnPressed.connect(lambda name = f'{hyperparameterName}Housing', e = edit: self.ChangeEditValue(name, e))
 
     def ChangeEditValue(self, name, edit):
         val = edit.text()
@@ -196,14 +255,18 @@ class Kernel(Draggable):
             val = float(val)
         except:
             return
-        getattr(self, name).layout().removeWidget(edit)
+        widget = getattr(self, name)
+        editIdx = widget.layout().indexOf(edit)
+        widget.layout().removeWidget(edit)
         edit.deleteLater()
-        newEdit = QLineEdit(f'{val:.1f}')
+        newEdit = QLineEdit(f'{val:.2f}')
         newEdit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12))
-        newEdit.setFixedSize(40, 30)
+        newEdit.setFixedSize(60, 30)
         newEdit.setAlignment(Qt.AlignCenter)
         newEdit.returnPressed.connect(lambda name = name, e = newEdit: self.ChangeEditValue(name, e))
-        getattr(self, name).layout().addWidget(newEdit, alignment = Qt.AlignRight)
+        widget.layout().insertWidget(editIdx, newEdit, alignment = Qt.AlignRight)
+        self.settings['hyperparameters'][name.split('Widget')[0]]['value'] = float(edit.text())
+        self.RedrawFigure()
 
     def mouseReleaseEvent(self, event):
         # Store temporary values since Draggable overwrites them in its mouseReleaseEvent override.

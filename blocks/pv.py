@@ -202,7 +202,6 @@ class PV(Draggable):
         linkedType = self.settings['linkedElement'].Type
         if linkedType == 'Corrector':
             idx = 0 if self.settings['alignment'] == 'Horizontal' else 1
-            print(f'Trying to set override to {override}')
             if override is None:
                 shared.lattice[self.settings['linkedElement'].Index].KickAngle[idx] = func(slider.value()) * 1e-3 # mrad -> rad
             else:

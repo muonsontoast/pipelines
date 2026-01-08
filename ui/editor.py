@@ -3,12 +3,9 @@ from PySide6.QtCore import Qt, QPoint, QRectF
 from PySide6.QtGui import QPainter, QCursor, QPixmap
 from .editormenu import EditorMenu
 from ..utils.entity import Entity
-from ..utils.transforms import MultiSceneBoundingRect
 from .boxselect import BoxSelect
-from .group import Group
 from ..utils.commands import DetailedView
 from .. import shared
-from .. import style
 
 class Editor(Entity, QGraphicsView):
     def __init__(self, window, minScale = 3, maxScale = .15):
@@ -168,10 +165,16 @@ class Editor(Entity, QGraphicsView):
                 return super().mouseReleaseEvent(event)
             if ds.x() ** 2 + ds.y() ** 2 < shared.cursorTolerance ** 2:
                 item = intersectingWidgets[0]
-                # do another check to see if the user has clicked on a button etc.
                 mousePosInProxyCoords = item.mapFromScene(mousePos)
                 proxyChildUnderCursor = item.widget().childAt(mousePosInProxyCoords.toPoint())
-                # allow interactions with buttons without affecting selections
+                # close kernel menu if it is open anywhere
+                draggable = getattr(proxyChildUnderCursor, 'draggable', None)
+                if shared.kernelMenu is not None:
+                    if draggable is None:
+                        shared.kernelMenu.draggable.kernelMenuIsOpen = False
+                        shared.kernelMenu.Hide()
+                        shared.kernelMenu = None
+                # allow interactions with buttons / menus without affecting selections
                 if type(proxyChildUnderCursor) not in [QPushButton]:
                     # check for shift click
                     if self.keysPressed == [Qt.Key_Shift]:
@@ -194,10 +197,16 @@ class Editor(Entity, QGraphicsView):
                         self.area.selectedItems = [item]
         else:
             if ds.x() ** 2 + ds.y() ** 2 < shared.cursorTolerance ** 2: # cursor has been moved.
+                if shared.kernelMenu is not None:
+                    # shared.kernelMenu.draggable.kernelMenuIsOn = False
+                    # shared.kernelMenu.Hide()
+                    # shared.kernelMenu = None
+                    shared.kernelMenu.draggable.CloseMenu()
                 for item in self.area.selectedItems:
                     item.widget().ToggleStyling(active = False)
                 self.area.selectedItems = []
                 shared.inspector.Push()
+
         # this will be added in later
         # get bounding rect of selected items and place a draggable handle nearby
         # if len(self.area.selectedItems) > 1:

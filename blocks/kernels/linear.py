@@ -29,12 +29,3 @@ class LinearKernel(Kernel):
         X1 = np.array(X1)
         X2 = np.array(X2)
         return X1 @ X2.T
-
-    def Push(self):
-        super().Push()
-        x = np.linspace(-5, 5, 20)
-        x = x[..., np.newaxis]
-        y = np.linspace(-5, 5, 20)
-        y = y[..., np.newaxis]
-        Z = self.k(x, y)
-        im = self.ax.imshow(Z, origin = 'lower', cmap = 'viridis')

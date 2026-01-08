@@ -247,9 +247,6 @@ class View(Draggable):
                 truncationX = self.entityIn.settings['components']['truncation']['value'] - 1 + .5
                 self.trunctationLine.set_xdata([truncationX, truncationX])
                 self.bm.update()
-        # except Exception as e:
-        #     print(f'Error drawing canvas: {e}')
-        #     pass
 
     def ClearCanvas(self):
         self.axes.tick_params(axis='x', which='both', labelbottom = False, length = 0)

@@ -31,25 +31,6 @@ class PV:
         print('==' * 30)
         return ''
     
-    # def put(self, samples = 1, timeout = .2):
-    #     if self.ID == '':
-    #         print('No PV ID supplied!')
-    #         return np.zeros(0)
-    #     v = np.zeros(samples)
-    #     for i in range(samples):
-    #         try: v[i] = caget(self.ID)
-    #         except:
-    #             print('The following PV ID doesn\'t exist:', self.ID)
-    #             return np.zeros(0)
-    #         cothread.Sleep(timeout)
-    #     return v
-
-    # def get(self):
-    #     if self.ID == '':
-    #         print('No PV ID supplied!')
-    #         return np.zeros(0)
-    #     return caget(self.ID)
-    
     def __params(self):
         return [(k, v) for k, v in vars(self).items() if not callable(v)]
 

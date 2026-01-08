@@ -92,10 +92,12 @@ def Load(path):
                             if hasattr(entity, 'set'):
                                 entity.set.setText(f'{v['components']['value']['value']:.3f}')
                         if 'hyperparameters' in v:
-                            for h in v['hyperparameters'].values():
+                            for hname, h in v['hyperparameters'].items():
                                 if h['type'] == 'vec':
-                                    h['value'] = np.array(h['value']) if h['value'] != [] else np.nan
+                                    v['hyperparameters'][hname]['value'] = np.array(h['value']) if h['value'] != [] else np.nan
+                                    getattr(entity, f'{hname}Edit').setText(f'{v['hyperparameters'][hname]['value'][0]:.1f}')
                             entity.settings['hyperparameters'] = v['hyperparameters']
+                            entity.RedrawFigure()
                 LinkBlocks()
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')
                 shared.workspace.assistant.PushMessage(f'Loaded saved session from {path}')

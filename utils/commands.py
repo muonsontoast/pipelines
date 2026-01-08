@@ -19,6 +19,7 @@ from ..blocks.bayesian.singletaskgp import SingleTaskGP
 from ..blocks.kernels.linear import LinearKernel
 from ..blocks.kernels.anisotropic import AnisotropicKernel
 from ..blocks.kernels.periodic import PeriodicKernel
+from ..blocks.kernels.rbf import RBFKernel
 from ..ui.group import Group
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
@@ -43,6 +44,7 @@ blockTypes = {
     'Linear Kernel': LinearKernel,
     'Anisotropic Kernel': AnisotropicKernel,
     'Periodic Kernel': PeriodicKernel,
+    'RBF Kernel': RBFKernel,
 }
 
 def Undo():
@@ -120,7 +122,6 @@ def CreateBlock(blockType, name: str, pos: QPoint = None, overrideID = None, *ar
         w.SetRect()
         w.settings['position'] = [pos.x(), pos.y()]
     rectCenter = proxy.sceneBoundingRect().center()
-    # rectCenter = shared.PVs[w.ID]['rect'].center()
     shared.workspace.assistant.PushMessage(f'Created {prefix} {name} at ({rectCenter.x():.0f}, {rectCenter.y():.0f})')
     if pos:
         return proxy, w
@@ -133,7 +134,6 @@ def CreateCorrector(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Corrector'], 'Corrector', pos)
     
 def CreateBCM(pos: QPoint):
-    print('Created BCM')
     proxy, widget = CreateBlock(blockTypes['BCM'], 'BCM', pos)
 
 def CreateBPM(pos: QPoint):
@@ -168,6 +168,9 @@ def CreateAnisotropicKernel(pos: QPoint):
 
 def CreatePeriodicKernel(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Periodic Kernel'], 'Periodic Kernel', pos)
+
+def CreateRBFKernel(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['RBF Kernel'], 'RBF Kernel', pos)
 
 def CreateGroup():
     if len(shared.activeEditor.area.selectedItems) < 2:
@@ -244,6 +247,7 @@ commands = {
     'Linear Kernel': dict(shortcut = [], func = CreateLinearKernel, args = [GetMousePos]),
     'Anisotropic Kernel': dict(shortcut = [], func = CreateAnisotropicKernel, args = [GetMousePos]),
     'Periodic Kernel': dict(shortcut = [], func = CreatePeriodicKernel, args = [GetMousePos]),
+    'RBF Kernel': dict(shortcut = [], func = CreateRBFKernel, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),
