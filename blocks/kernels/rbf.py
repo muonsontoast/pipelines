@@ -42,7 +42,7 @@ class RBFKernel(Kernel):
         Returns inner product between each pair of vectors.'''
         X1 = np.array(X1)
         X2 = np.array(X2)
-        self.settings['hyperparameters']['scale']['value'] = 1. if np.isnan(self.settings['hyperparameters']['scale']['value']) else self.settings['hyperparameters']['scale']['value']
+        self.settings['hyperparameters']['scale']['value'] = 1 if np.isnan(self.settings['hyperparameters']['scale']['value']) else self.settings['hyperparameters']['scale']['value']
         sigma = self.settings['hyperparameters']['scale']['value']
         self.settings['hyperparameters']['lengthscale']['value'] = np.ones(X1.shape[1]) if np.isnan(self.settings['hyperparameters']['lengthscale']['value']) else self.settings['hyperparameters']['lengthscale']['value']
         lengthscale = self.settings['hyperparameters']['lengthscale']['value']

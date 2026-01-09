@@ -38,6 +38,8 @@ fonttools==4.61.0
     # via matplotlib
 fsspec==2025.12.0
     # via torch
+gputil==1.4.0
+    # via -r requirements.in
 gpytorch==1.14.3
     # via botorch
 ipython==9.8.0
@@ -113,8 +115,12 @@ pillow==12.0.0
     # via matplotlib
 prompt-toolkit==3.0.52
     # via ipython
+psutil==7.2.1
+    # via -r requirements.in
 pure-eval==0.2.3
     # via stack-data
+py-cpuinfo==9.0.0
+    # via -r requirements.in
 pydantic==2.12.5
     # via xopt
 pydantic-core==2.41.5

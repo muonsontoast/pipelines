@@ -3,16 +3,23 @@ a critical issue and will be resolved in version 6.9.2 around August, so update 
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QFrame, QHBoxLayout, QGridLayout,
     QLabel, QPushButton, QProgressBar, QStackedLayout, QStyleFactory,
+    QSpacerItem, QSizePolicy
 )
 from PySide6.QtGui import QIcon, QPixmap
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 import qasync
 import asyncio
 import matplotlib.pyplot as plt
+import at
 import signal
 import sys
 import os
 import time
+import psutil
+import GPUtil
+from cpuinfo import get_cpu_info
+import subprocess
+from datetime import datetime
 from pathlib import Path
 from .utils import cothread
 from .inspector import Inspector
@@ -36,7 +43,21 @@ class MainWindow(Entity, QMainWindow):
         super().__init__(name = 'MainWindow', type = 'MainWindow')
         settingsPath = os.path.join(shared.cwd, 'config', 'settings.yaml')
         shared.window = self
-        self.setWindowTitle(f'{shared.windowTitle} - Early Prototype')
+        appPth = Path(__file__).resolve().parent
+        appVersion = subprocess.run(
+            ['git', 'describe', '--tags', '--always'],
+            cwd = appPth,
+            capture_output = True,
+            text = True,
+        )
+        commitDateAndTime = subprocess.run(
+            ['git', 'show', '-s', '--format=%cd', '--date=iso'],
+            cwd = appPth,
+            capture_output = True,
+            text = True,
+        )
+        dt = datetime.fromisoformat(commitDateAndTime.stdout.strip())
+        self.setWindowTitle(f'{shared.windowTitle} - commit {appVersion.stdout.strip()} - {dt.strftime('%Y/%m/%d')} at {dt.strftime('%H:%M:%S')}')
         self.setWindowIcon(QIcon(f'{cwd}\\pipelines\\\\gfx\\icon.png'))
         self.quitShortcutPressed = False
         # Create a compressed folder for commonly referenced frames if it doesn't already exist (first time setup).
@@ -167,7 +188,57 @@ class MainWindow(Entity, QMainWindow):
         # connect key shortcuts to their functions.
         ConnectShortcuts()
         self.page.setStyleSheet(style.Dark01())
-        self.page.layout().addWidget(QFrame(), 1, 7, 1, 2)
+        quickSettings = QFrame()
+        quickSettings.setLayout(QGridLayout())
+        quickSettings.layout().setSpacing(2)
+        self.physicsEngine = QLabel(f'Physics Engine:\t\t\tPyAT {at.__version__} (Python Accelerator Toolbox)')
+        self.physicsEngine.setFixedHeight(20)
+        self.physicsEngine.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        quickSettings.layout().addWidget(self.physicsEngine, 0, 0, 1, 1)
+        self.CPU = get_cpu_info()['brand_raw']
+        if 'processor' in self.CPU.lower():
+            self.CPU = ' '.join(self.CPU.split(' ')[:-2])
+        self.CPUName = QLabel(f'CPU:\t\t\t\t{self.CPU}')
+        self.CPUName.setFixedHeight(20)
+        self.CPUName.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        quickSettings.layout().addWidget(self.CPUName, 1, 0, 1, 1)
+        self.physicalCPUCores = psutil.cpu_count(logical = False)
+        self.logicalCPUCores = psutil.cpu_count(logical = True)
+        self.CPUCoreCount = QLabel(f'CPU Cores:\t\t\t{self.physicalCPUCores} ({self.logicalCPUCores} logical processors)')
+        self.CPUCoreCount.setFixedHeight(20)
+        self.CPUCoreCount.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        quickSettings.layout().addWidget(self.CPUCoreCount, 2, 0, 1, 1)
+        self.GPUUseage = QLabel('')
+        self.GPUUseage.setFixedHeight(20)
+        self.GPUUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        quickSettings.layout().addWidget(self.GPUUseage, 3, 0, 1, 1)
+        #  = GPUtil.getGPUs()[0]
+        self.RAMUseage = QLabel('')
+        self.RAMUseage.setFixedHeight(20)
+        self.RAMUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        quickSettings.layout().addWidget(self.RAMUseage, 4, 0, 1, 1)
+        def PollAndWaitForGPU():
+            self.GPU = GPUtil.getGPUs()[0]
+            self.GPUUseage.setText(f'GPU:\t\t\t\t{self.GPU.name} ({self.GPU.memoryUsed / 1024:.1f} / {self.GPU.memoryTotal / 1024:.1f} GB)')
+            QTimer.singleShot(1000, PollAndWaitForGPU)
+        PollAndWaitForGPU()
+        def PollAndWaitForRAM():
+            self.RAM = psutil.virtual_memory() # given in Bytes
+            self.RAMGB = self.RAM.total / 1024 ** 3 # convert to GB
+            self.RAMUseage.setText(f'RAM:\t\t\t\t{self.RAM.percent * self.RAMGB * 1e-2:.1f} / {self.RAMGB:.1f} GB')
+            QTimer.singleShot(1000, PollAndWaitForRAM)
+        PollAndWaitForRAM()
+        self.diskUseage = QLabel('')
+        self.diskUseage.setFixedHeight(20)
+        self.diskUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        quickSettings.layout().addWidget(self.diskUseage, 5, 0, 1, 1)
+        def PollAndWaitForDisk():
+            self.useage = psutil.disk_usage('/')
+            self.diskUseage.setText(f'Disk:\t\t\t\t{self.useage.used / 1024 ** 3:.1f} / {self.useage.total / 1024 ** 3:.1f} GB')
+            QTimer.singleShot(1000, PollAndWaitForDisk)
+        PollAndWaitForDisk()
+        quickSettings.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding), 6, 0, 1, 2)
+        self.page.layout().addWidget(quickSettings, 1, 7, 1, 2)
         self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
         self.page.layout().addWidget(self.workspace, 2, 1, 2, 6)
         self.page.layout().addWidget(self.inspector, 2, 7, 2, 2)
@@ -216,7 +287,6 @@ class MainWindow(Entity, QMainWindow):
         self.page.layout().addWidget(self.buttonHousing, 4, 8)
         # Give the editor focus by default
         shared.activeEditor.setFocus()
-        # shared.app.processEvents()
 
         # Load in settings if they exist and apply to existing entities, and create new ones if they don't already exist.
         print('Loading settings from:', settingsPath)
@@ -259,5 +329,4 @@ if __name__ == "__main__":
     # skip first arg which is app name.
     window = MainWindow(*sys.argv[1:])
     window.show()
-    # sys.exit(shared.app.exec())
     qasync.run(window.ConfigureLoop())

@@ -63,7 +63,7 @@ class Kernel(Draggable):
         # show all the values for this hyperparameter
         iters = 1 if type(self.settings['hyperparameters'][context.correspondingHyperparameter]['value']) in [int, float] else self.settings['hyperparameters'][context.correspondingHyperparameter]['value'].shape[0]
         iterable = self.settings['hyperparameters'][context.correspondingHyperparameter]['value']
-        iterable = np.array(iterable) if type(iterable) in [int, float] else iterable
+        iterable = np.array([iterable]) if type(iterable) in [int, float] else iterable
         for idx in range(iters):
             widget = QWidget()
             widget.setFixedHeight(40)

@@ -8,3 +8,6 @@ accelerator-toolbox
 PyYAML
 xopt
 pandas
+psutil
+py-cpuinfo
+GPUtil
