@@ -218,9 +218,12 @@ class MainWindow(Entity, QMainWindow):
         self.RAMUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.RAMUseage, 4, 0, 1, 1)
         def PollAndWaitForGPU():
-            self.GPU = GPUtil.getGPUs()[0]
-            self.GPUUseage.setText(f'GPU:\t\t\t\t{self.GPU.name} ({self.GPU.memoryUsed / 1024:.1f} / {self.GPU.memoryTotal / 1024:.1f} GB)')
-            QTimer.singleShot(1000, PollAndWaitForGPU)
+            try:
+                self.GPU = GPUtil.getGPUs()[0]
+                self.GPUUseage.setText(f'GPU:\t\t\t\t{self.GPU.name} ({self.GPU.memoryUsed / 1024:.1f} / {self.GPU.memoryTotal / 1024:.1f} GB)')
+                QTimer.singleShot(1000, PollAndWaitForGPU)
+            except:
+                self.GPUUseage.setText('GPU:\t\t\t\tNo information is available on this system.')
         PollAndWaitForGPU()
         def PollAndWaitForRAM():
             self.RAM = psutil.virtual_memory() # given in Bytes
