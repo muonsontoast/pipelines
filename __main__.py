@@ -110,7 +110,6 @@ class MainWindow(Entity, QMainWindow):
         if not os.path.exists(shared.latticePath):
             print(f'Lattice save folder \'lattice-saves\' does not exist, creating one. Any custom lattice files should be stored here.')
             os.mkdir(shared.latticePath)
-            # Path(os.path.join(shared.latticePath, '.gitignore')).touch()
             (Path(shared.latticePath) / '.gitignore').write_text('# Store any custom .mat lattice files in this folder.')
         if shared.elements is None:
             formattedLatticePath = Path(shared.latticePath)
@@ -155,6 +154,12 @@ class MainWindow(Entity, QMainWindow):
         self.page.layout().setRowStretch(1, .1)
         self.page.layout().setRowStretch(2, 3)
         self.page.layout().setRowStretch(3, 1.65)
+
+        for col in range(1, 7):
+            self.page.layout().setColumnStretch(col, 1)
+        self.page.layout().setColumnStretch(7, 0)
+        self.page.layout().setColumnStretch(8, 0)
+
         self.page.setFocusPolicy(Qt.StrongFocus)
         # Add page to the stacked layout.
         self.master.layout().addWidget(self.page)
@@ -187,24 +192,28 @@ class MainWindow(Entity, QMainWindow):
         shared.lightModeOn = True
         # connect key shortcuts to their functions.
         ConnectShortcuts()
+        self.inspector.setMaximumWidth(450)
         self.page.setStyleSheet(style.Dark01())
-        quickSettings = QFrame()
+        quickSettings = QWidget()
+        quickSettings.setStyleSheet(style.WidgetStyle(color = '#1e1e1e'))
+        quickSettings.setMaximumWidth(450)
         quickSettings.setLayout(QGridLayout())
-        quickSettings.layout().setSpacing(2)
-        self.physicsEngine = QLabel(f'Physics Engine:\t\t\tPyAT {at.__version__} (Python Accelerator Toolbox)')
+        quickSettings.layout().setContentsMargins(0, 0, 0, 0)
+        quickSettings.layout().setSpacing(1)
+        self.physicsEngine = QLabel(f'Physics Engine:\tPyAT {at.__version__} (Python Accelerator Toolbox)')
         self.physicsEngine.setFixedHeight(20)
-        self.physicsEngine.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        # self.physicsEngine.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.physicsEngine, 0, 0, 1, 1)
         self.CPU = get_cpu_info()['brand_raw']
         if 'processor' in self.CPU.lower():
             self.CPU = ' '.join(self.CPU.split(' ')[:-2])
-        self.CPUName = QLabel(f'CPU:\t\t\t\t{self.CPU}')
+        self.CPUName = QLabel(f'CPU:\t\t{self.CPU}')
         self.CPUName.setFixedHeight(20)
         self.CPUName.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.CPUName, 1, 0, 1, 1)
         self.physicalCPUCores = psutil.cpu_count(logical = False)
         self.logicalCPUCores = psutil.cpu_count(logical = True)
-        self.CPUCoreCount = QLabel(f'CPU Cores:\t\t\t{self.physicalCPUCores} ({self.logicalCPUCores} logical processors)')
+        self.CPUCoreCount = QLabel(f'CPU Cores:\t{self.physicalCPUCores} ({self.logicalCPUCores} logical processors)')
         self.CPUCoreCount.setFixedHeight(20)
         self.CPUCoreCount.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.CPUCoreCount, 2, 0, 1, 1)
@@ -212,7 +221,6 @@ class MainWindow(Entity, QMainWindow):
         self.GPUUseage.setFixedHeight(20)
         self.GPUUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.GPUUseage, 3, 0, 1, 1)
-        #  = GPUtil.getGPUs()[0]
         self.RAMUseage = QLabel('')
         self.RAMUseage.setFixedHeight(20)
         self.RAMUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -220,15 +228,15 @@ class MainWindow(Entity, QMainWindow):
         def PollAndWaitForGPU():
             try:
                 self.GPU = GPUtil.getGPUs()[0]
-                self.GPUUseage.setText(f'GPU:\t\t\t\t{self.GPU.name} ({self.GPU.memoryUsed / 1024:.1f} / {self.GPU.memoryTotal / 1024:.1f} GB)')
+                self.GPUUseage.setText(f'GPU:\t\t{self.GPU.name} ({self.GPU.memoryUsed / 1024:.1f} / {self.GPU.memoryTotal / 1024:.1f} GB)')
                 QTimer.singleShot(1000, PollAndWaitForGPU)
             except:
-                self.GPUUseage.setText('GPU:\t\t\t\tNo information is available on this system.')
+                self.GPUUseage.setText('GPU:\t\t\tNo dedicated GPU detected.')
         PollAndWaitForGPU()
         def PollAndWaitForRAM():
             self.RAM = psutil.virtual_memory() # given in Bytes
             self.RAMGB = self.RAM.total / 1024 ** 3 # convert to GB
-            self.RAMUseage.setText(f'RAM:\t\t\t\t{self.RAM.percent * self.RAMGB * 1e-2:.1f} / {self.RAMGB:.1f} GB')
+            self.RAMUseage.setText(f'RAM:\t\t{self.RAM.percent * self.RAMGB * 1e-2:.1f} / {self.RAMGB:.1f} GB')
             QTimer.singleShot(1000, PollAndWaitForRAM)
         PollAndWaitForRAM()
         self.diskUseage = QLabel('')
@@ -237,10 +245,12 @@ class MainWindow(Entity, QMainWindow):
         quickSettings.layout().addWidget(self.diskUseage, 5, 0, 1, 1)
         def PollAndWaitForDisk():
             self.useage = psutil.disk_usage('/')
-            self.diskUseage.setText(f'Disk:\t\t\t\t{self.useage.used / 1024 ** 3:.1f} / {self.useage.total / 1024 ** 3:.1f} GB')
+            self.diskUseage.setText(f'Disk:\t\t{self.useage.used / 1024 ** 3:.1f} / {self.useage.total / 1024 ** 3:.1f} GB')
             QTimer.singleShot(1000, PollAndWaitForDisk)
         PollAndWaitForDisk()
-        quickSettings.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding), 6, 0, 1, 2)
+        # quickSettings.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding), 6, 0, 1, 2)
+        # self.latticeGlobal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        # self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.page.layout().addWidget(quickSettings, 1, 7, 1, 2)
         self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
         self.page.layout().addWidget(self.workspace, 2, 1, 2, 6)
@@ -263,39 +273,38 @@ class MainWindow(Entity, QMainWindow):
         bottomPad.setFixedHeight(screenPad + 5)
         self.page.layout().addWidget(bottomPad, 5, 0, 1, 10)
         # Status text
-        self.statusText = QLabel('Status: Idle')
-        self.page.layout().addWidget(self.statusText, 4, 1)
+        # self.statusText = QLabel('Status: Idle')
+        # self.page.layout().addWidget(self.statusText, 4, 1)
         # Progress bar
-        self.progressBar = QProgressBar()
-        self.progressBar.setAlignment(Qt.AlignCenter)
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(100)
-        self.progressBar.setValue(0)
-        SetFontToBold(self.progressBar)
-        self.page.layout().addWidget(self.progressBar, 4, 2, 1, 6)
-        self.buttonHousing = QWidget()
-        self.buttonHousing.setLayout(QHBoxLayout())
-        self.buttonHousing.setContentsMargins(0, 0, 10, 0)
+        # self.progressBar = QProgressBar()
+        # self.progressBar.setAlignment(Qt.AlignCenter)
+        # self.progressBar.setMinimum(0)
+        # self.progressBar.setMaximum(100)
+        # self.progressBar.setValue(0)
+        # SetFontToBold(self.progressBar)
+        # self.page.layout().addWidget(self.progressBar, 4, 2, 1, 6)
+        # self.buttonHousing = QWidget()
+        # self.buttonHousing.setLayout(QHBoxLayout())
+        # self.buttonHousing.setContentsMargins(0, 0, 10, 0)
         # Settings button
-        self.settingsButton = QPushButton('Settings')
-        self.settingsButton.pressed.connect(lambda state = 'pressed': style.AdjustButtonColor(self.settingsButton, state))
-        self.settingsButton.released.connect(lambda state = 'released': style.AdjustButtonColor(self.settingsButton, state))
-        self.settingsButton.setFixedSize(75, 30)
-        self.toggleDarkModeButton = QPushButton()
-        self.toggleDarkModeButton.clicked.connect(self.ToggleDisplayMode)
-        self.toggleDarkModeButton.setText('\u26AA Light Mode')
-        self.toggleDarkModeButton.setFixedSize(115, 30)
-        self.buttonHousing.layout().addWidget(self.toggleDarkModeButton)
-        self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
-        self.page.layout().addWidget(self.buttonHousing, 4, 8)
+        # self.settingsButton = QPushButton('Settings')
+        # self.settingsButton.pressed.connect(lambda state = 'pressed': style.AdjustButtonColor(self.settingsButton, state))
+        # self.settingsButton.released.connect(lambda state = 'released': style.AdjustButtonColor(self.settingsButton, state))
+        # self.settingsButton.setFixedSize(75, 30)
+        # self.toggleDarkModeButton = QPushButton()
+        # self.toggleDarkModeButton.clicked.connect(self.ToggleDisplayMode)
+        # self.toggleDarkModeButton.setText('\u26AA Light Mode')
+        # self.toggleDarkModeButton.setFixedSize(115, 30)
+        # self.buttonHousing.layout().addWidget(self.toggleDarkModeButton)
+        # self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
+        # self.page.layout().addWidget(self.buttonHousing, 4, 8)
         # Give the editor focus by default
         shared.activeEditor.setFocus()
 
         # Load in settings if they exist and apply to existing entities, and create new ones if they don't already exist.
         print('Loading settings from:', settingsPath)
         Load(settingsPath)
-        
-        self.showMaximized() # This throws a known but harmless error in PySide 6.9.1, to be corrected in the next version.
+        self.showMaximized()
     
     async def ConfigureLoop(self):
         # Setup an event loop to handle asynchronous PV I/O without blocking the UI thread.
@@ -309,9 +318,11 @@ class MainWindow(Entity, QMainWindow):
     def ToggleDisplayMode(self):
         if shared.lightModeOn:
             self.page.setStyleSheet(style.Dark01())
+            self.physicsEngine.setStyleSheet(style.WidgetStyle(color = 'green', fontColor = '#c4c4c4'))
             self.toggleDarkModeButton.setText('\u26AA Light Mode')
         else:
             self.page.setStyleSheet(style.Light01())
+            self.physicsEngine.setStyleSheet(style.WidgetStyle(color = 'green', fontColor = '#c4c4c4'))
             self.toggleDarkModeButton.setText('\u26AB Dark Mode')
         shared.app.processEvents()
 

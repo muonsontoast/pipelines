@@ -14,18 +14,7 @@ class Workspace(Entity, QTabWidget):
         self.setLayout(QStackedLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         size = self.settings.get('size', (None, None))
-        sizePolicy = [None, None]
-        if size[0] is None:
-            sizePolicy[0] = QSizePolicy.Expanding
-        else:
-            self.setFixedWidth(size[0])
-            sizePolicy[0] = QSizePolicy.Preferred
-        if size[1] is None:
-            sizePolicy[1] = QSizePolicy.Expanding
-        else:
-            self.setFixedHeight(size[1])
-            sizePolicy[1] = QSizePolicy.Preferred
-        self.setSizePolicy(*sizePolicy)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         shared.workspace = self
         self.editors, self.monitors, self.controlPanels, self.optimisationPanels =  dict(), dict(), dict(), dict()
         self.Push()
@@ -44,6 +33,7 @@ class Workspace(Entity, QTabWidget):
 
     def AddEditor(self):
         editorPanel = QWidget()
+        editorPanel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         editorPanel.setLayout(QVBoxLayout())
         editorPanel.layout().setContentsMargins(0, 0, 0, 0)
         editorPanel.layout().setSpacing(0)
@@ -64,6 +54,7 @@ class Workspace(Entity, QTabWidget):
         editor.message.layout().addWidget(editor.zoomTitle, alignment = Qt.AlignRight)
         # footer
         footer = QWidget()
+        footer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         footer.setStyleSheet(style.WidgetStyle(color = '#1a1a1a'))
         footer.setFixedHeight(35)
         editorPanel.layout().addWidget(footer)
@@ -72,11 +63,11 @@ class Workspace(Entity, QTabWidget):
         footer.layout().setSpacing(5)
         "#e98514"
         shortcutHints = [
-            f'Corrector (<span style = "color: #e98514">Ctrl+Shift+C</span>)',
-            f'BPM (<span style = "color: #e98514">Ctrl+Shift+B</span>)',
-            f'Orbit Response (<span style = "color: #e98514">Ctrl+Shift+O</span>)',
-            f'View (<span style = "color: #e98514">Ctrl+Shift+V</span>)',
-            f'Quick Menu (<span style = "color: #e98514">Ctrl+M</span>)',
+            f'Corrector (<span style = "color: #6e488c">Ctrl+Shift+C</span>)',
+            f'BPM (<span style = "color: #6e488c">Ctrl+Shift+B</span>)',
+            f'Orbit Response (<span style = "color: #6e488c">Ctrl+Shift+O</span>)',
+            f'View (<span style = "color: #6e488c">Ctrl+Shift+V</span>)',
+            f'Quick Menu (<span style = "color: #6e488c">Ctrl+M</span>)',
         ]
         for hint in shortcutHints:
             label = QLabel(hint)
@@ -91,6 +82,6 @@ class Workspace(Entity, QTabWidget):
             idx += 1
         name = f'Editor ({idx})'
         self.editors[idx] = editorPanel
-        tabName = '\U0001F441\uFE0F ' + name if idx > 0 else '\U0001F441\uFE0F Editor'
+        tabName = '\U0001F441\uFE0F ' + name if idx > 0 else 'Editor'
         self.addTab(editorPanel, tabName)
         shared.activeEditor = shared.editors[-1]

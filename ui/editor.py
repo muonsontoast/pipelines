@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QFrame, QWidget, QLabel, QPushButton, QGraphicsProxyWidget, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem
+from PySide6.QtWidgets import QFrame, QWidget, QLabel, QPushButton, QGraphicsProxyWidget, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem, QSizePolicy
 from PySide6.QtCore import Qt, QPoint, QRectF
 from PySide6.QtGui import QPainter, QCursor, QPixmap
 from .editormenu import EditorMenu
@@ -14,6 +14,7 @@ class Editor(Entity, QGraphicsView):
         self.parent = window
         self.minScale = minScale
         self.maxScale = maxScale
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.canDrag = False
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
@@ -24,10 +25,11 @@ class Editor(Entity, QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scene = QGraphicsScene()
         self.setScene(self.scene)
-        self.setSceneRect(0, 0, 10000, 10000)
+        self.setSceneRect(-10000, -10000, 10000, 10000)
         shared.editors.append(self)
         self.menu = EditorMenu(self)
-        self.centerOn(1400, 1400)
+        # self.centerOn(1400, 1400)
+        self.centerOn(0, 0)
 
         # grab handle for performing group movement of selected items
         self.grabHandle = QGraphicsProxyWidget()

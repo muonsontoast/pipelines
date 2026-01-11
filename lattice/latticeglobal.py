@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QWidget, QFrame, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem, QVBoxLayout
+    QWidget, QFrame, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsTextItem, QVBoxLayout, QSizePolicy,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPen, QBrush, QColor, QFont
@@ -10,12 +10,13 @@ class LatticeGlobal(Entity, QWidget):
     # Lattice should fit into size 1250 width x 50 height
     # (0, 0) is at the top left of the graphics view
     def __init__(self, parent):
-        super().__init__(name = 'Global Lattice', type = 'Global Lattice', sceneWidth = 1200, sceneHeight = 145)
+        super().__init__(name = 'Global Lattice', type = 'Global Lattice', sceneWidth = 1600, sceneHeight = 145)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.parent = parent
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         # Define width and height of scene
-        self.sceneWidth = 1200
+        self.sceneWidth = 1500
         self.sceneHeight = 145
         self.halfHeight = self.sceneHeight / 2
         self.verticalCenter = self.sceneHeight / 2 + 20
@@ -24,6 +25,7 @@ class LatticeGlobal(Entity, QWidget):
         self.scene = QGraphicsScene()
         self.scene.setSceneRect(0, 0, self.sceneWidth, self.sceneHeight) # in scene coordinates
         self.view = QGraphicsView(self.scene)
+        self.view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         # Beam axis
         axis = QGraphicsLineItem(0, self.verticalCenter, 1250, self.verticalCenter)
         axis.setPen(QPen(QColor('#3e3e3e'), 3))

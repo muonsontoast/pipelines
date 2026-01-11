@@ -2,10 +2,10 @@ from PySide6.QtGui import QColor
 from . import shared
 
 backgroundColor = "#181818"
-tabColor = "#282523"
+tabColor = "#09BC8A"
 PVSelectedColor = "#74BC80"
-tabSelectedColor = "#c4c4c4"
-tabHoverColor = "#303F33"
+tabSelectedColor = "#09BC8A"
+tabHoverColor = "#09BC8A"
 buttonColor = "#1E1E1E"
 buttonSelectedColor = "#313131"
 buttonHoverColor = "#252525"
@@ -688,7 +688,7 @@ def Dark01():
         if hasattr(e, 'popup'):
             e.popup.UpdateColors()
     # shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#1a1a1a')) # controls color of the inspector.
-    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#1a1a1a", borderColor = '#1a1a1a', fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#222222') + TabStyle(color = "#1a1a1a", hoverColor = "#B26A17", selectedColor = "#985911", fontColor = '#C4C4C4') + TabWidgetStyle(color = "#1a1a1a", fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
+    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#1a1a1a", borderColor = '#1a1a1a', fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#09BC8A", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#222222') + TabStyle(color = "#1a1a1a", hoverColor = "#B26A17", selectedColor = "#312244", fontColor = '#C4C4C4') + TabWidgetStyle(color = "#1a1a1a", fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
 
 def socketStyle(radius, color = tabSelectedColor, alignment = 'left'):
     '''`alignment` is the side of the widget the socket sits on.'''

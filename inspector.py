@@ -12,12 +12,12 @@ class Inspector(Entity, QTabWidget):
     '''Inspector widget that holds contextual information on currently selected items in the app.'''
     def __init__(self, parent, **kwargs):
         # -1 size corresponds to an expanding size policy.
-        size = kwargs.pop('size', [415, -1])
+        size = kwargs.pop('size', [500, -1])
         super().__init__(name = 'Inspector', type = 'Inspector', size = size)
         shared.inspector = self
         self.parent = parent
-        self.setMinimumWidth(size[0])
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.setMaximumWidth(size[0])
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.mainWindow = QWidget()
         self.mainWindow.setLayout(QVBoxLayout())
         self.mainWindow.layout().setContentsMargins(10, 10, 10, 0)
