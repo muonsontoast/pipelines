@@ -123,7 +123,7 @@ class SliderComponent(QWidget):
         if self.pv is not None:
             if hasattr(self.pv, 'set'):
                 # v = self.value.text() if abs(float(self.value.text()) > self.eps else '0.000'
-                self.pv.set.setText(v)
+                self.pv.set.setText(self.value.text())
 
     def ToAbsolute(self, v):
         self.range = 1 if self.range == 0 else self.range
