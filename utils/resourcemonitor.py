@@ -27,8 +27,6 @@ class ResourceMonitor(QThread):
                 nvmlShutdown()
             except:
                 pass
-        self.quit()
-        self.wait()
 
     def PollGPU(self):
         if not self.hasGPU:
@@ -74,7 +72,8 @@ class ResourceMonitor(QThread):
     def FetchResourceValues(self):
         if hasattr(self, 'timer'):
             if not self.running:
-                return self.timer.stop()
+                self.quit()
+                return
         self.PollGPU()
         self.PollRAM()
         self.PollDisk()
