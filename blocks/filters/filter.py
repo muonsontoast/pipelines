@@ -15,6 +15,7 @@ class Filter(Draggable):
             size = kwargs.pop('size', [300, 150]),
             fontsize = kwargs.pop('fontsize', 12),
             headerColor = '#312244',
+            **kwargs,
         )
         self.parent = parent
         self.CreateEmptySharedData(np.zeros(2)) # a SET value and a READ value
@@ -23,8 +24,8 @@ class Filter(Draggable):
         self.dataSharedMemoryName = self.dataSharedMemory.name
         self.dataSharedMemoryShape = self.data.shape
         self.dataSharedMemoryDType = self.data.dtype
-        self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, marginRight = 0, fontSize = 16)
-        self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 16)
+        self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, marginRight = 0, fontSize = 14)
+        self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 14)
         self.Push()
     
     def Push(self):
