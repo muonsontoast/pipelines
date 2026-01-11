@@ -109,6 +109,11 @@ class SliderComponent(QWidget):
             self.default.returnPressed.connect(self.SetDefault)
             self.defaultRow.layout().addWidget(self.default, alignment = Qt.AlignRight)
             self.defaultRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
+            # make read-only if there is a PV match
+            if self.pv.PVMatch:
+                self.minimum.setReadOnly(True)
+                self.maximum.setReadOnly(True)
+                self.default.setReadOnly(True)
         # Add rows
         self.layout().addWidget(self.sliderRow)
         if not self.hideRange:
@@ -122,7 +127,6 @@ class SliderComponent(QWidget):
         # If this block has a SET value, it will automatically update it as the slider value changes
         if self.pv is not None:
             if hasattr(self.pv, 'set'):
-                # v = self.value.text() if abs(float(self.value.text()) > self.eps else '0.000'
                 self.pv.set.setText(self.value.text())
 
     def ToAbsolute(self, v):

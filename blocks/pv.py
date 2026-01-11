@@ -125,6 +125,7 @@ class PV(Draggable):
             if self.active:
                 shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
                 shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
+                shared.inspector.expandables['value'].widget.default.setReadOnly(False)
         else:
             try:
                 mn = await aioca.caget(PVName + ':IMIN', timeout = timeout)
@@ -167,6 +168,7 @@ class PV(Draggable):
                     self.data[1] = await aioca.caget(PVName + ':I', timeout = timeout)
                 self.settings['components']['value']['default'] = self.data[1]
                 if PVName != lastMatch:
+                    self.PVMatch = True
                     shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
                     self.get.setText(f'{self.data[1]:.3f}')
                     self.set.setText(f'{self.data[1]:.3f}')
@@ -179,6 +181,7 @@ class PV(Draggable):
                             shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
                     await self.UpdateInspectorLimits(PVName)
             except:
+                self.PVMatch = False
                 if not np.isnan(self.data[1]):
                     self.data[1] = np.nan
                     self.get.setText('N/A')
