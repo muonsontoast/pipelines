@@ -38,8 +38,6 @@ fonttools==4.61.0
     # via matplotlib
 fsspec==2025.12.0
     # via torch
-gputil==1.4.0
-    # via -r requirements.in
 gpytorch==1.14.3
     # via botorch
 ipython==9.8.0
@@ -99,6 +97,8 @@ numpy==2.3.5
     #   scikit-learn
     #   scipy
     #   xopt
+nvidia-ml-py==13.590.44
+    # via -r requirements.in
 opt-einsum==3.4.0
     # via pyro-ppl
 orjson==3.11.5

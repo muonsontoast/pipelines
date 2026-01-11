@@ -10,4 +10,4 @@ xopt
 pandas
 psutil
 py-cpuinfo
-GPUtil
+nvidia-ml-py

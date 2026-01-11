@@ -1,12 +1,10 @@
-'''There is a known QPainter error that is raised when maximising the main window in PySide 6.9.1. This is not 
-a critical issue and will be resolved in version 6.9.2 around August, so update when you have a chance.'''
 from PySide6.QtWidgets import (
-    QMainWindow, QApplication, QWidget, QFrame, QHBoxLayout, QGridLayout,
-    QLabel, QPushButton, QProgressBar, QStackedLayout, QStyleFactory,
-    QSpacerItem, QSizePolicy
+    QMainWindow, QApplication, QWidget, QGridLayout,
+    QLabel, QStackedLayout, QStyleFactory,
+    QSizePolicy,
 )
 from PySide6.QtGui import QIcon, QPixmap
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 import qasync
 import asyncio
 import matplotlib.pyplot as plt
@@ -16,12 +14,10 @@ import sys
 import os
 import time
 import psutil
-import GPUtil
 from cpuinfo import get_cpu_info
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from .utils import cothread
 from .inspector import Inspector
 from .ui.workspace import Workspace
 from .lattice.latticeglobal import LatticeGlobal
@@ -30,6 +26,7 @@ from .font import SetFontToBold
 from .utils.entity import Entity
 from .utils import memory
 from .utils.commands import ConnectShortcuts, Save, StopAllActions
+from .utils.resourcemonitor import ResourceMonitor
 from .utils.load import Load
 from . import style
 from . import shared
@@ -219,38 +216,19 @@ class MainWindow(Entity, QMainWindow):
         quickSettings.layout().addWidget(self.CPUCoreCount, 2, 0, 1, 1)
         self.GPUUseage = QLabel('')
         self.GPUUseage.setFixedHeight(20)
-        self.GPUUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.GPUUseage, 3, 0, 1, 1)
         self.RAMUseage = QLabel('')
         self.RAMUseage.setFixedHeight(20)
-        self.RAMUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.RAMUseage, 4, 0, 1, 1)
-        def PollAndWaitForGPU():
-            try:
-                self.GPU = GPUtil.getGPUs()[0]
-                self.GPUUseage.setText(f'GPU:\t\t{self.GPU.name} ({self.GPU.memoryUsed / 1024:.1f} / {self.GPU.memoryTotal / 1024:.1f} GB)')
-                QTimer.singleShot(1000, PollAndWaitForGPU)
-            except:
-                self.GPUUseage.setText('GPU:\t\tNo dedicated GPU detected.')
-        PollAndWaitForGPU()
-        def PollAndWaitForRAM():
-            self.RAM = psutil.virtual_memory() # given in Bytes
-            self.RAMGB = self.RAM.total / 1024 ** 3 # convert to GB
-            self.RAMUseage.setText(f'RAM:\t\t{self.RAM.percent * self.RAMGB * 1e-2:.1f} / {self.RAMGB:.1f} GB')
-            QTimer.singleShot(1000, PollAndWaitForRAM)
-        PollAndWaitForRAM()
         self.diskUseage = QLabel('')
         self.diskUseage.setFixedHeight(20)
-        self.diskUseage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.diskUseage, 5, 0, 1, 1)
-        def PollAndWaitForDisk():
-            self.useage = psutil.disk_usage('/')
-            self.diskUseage.setText(f'Disk:\t\t{self.useage.used / 1024 ** 3:.1f} / {self.useage.total / 1024 ** 3:.1f} GB')
-            QTimer.singleShot(1000, PollAndWaitForDisk)
-        PollAndWaitForDisk()
-        # quickSettings.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding), 6, 0, 1, 2)
-        # self.latticeGlobal.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        # self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.resourceMonitor = ResourceMonitor()
+        self.resourceMonitor.GPUSignal.connect(self.GPUUseage.setText)
+        self.resourceMonitor.RAMSignal.connect(self.RAMUseage.setText)
+        self.resourceMonitor.diskSignal.connect(self.diskUseage.setText)
+        self.resourceMonitor.FetchResourceValues() # fetch once immediately at the start to popuate initial string values
+        self.resourceMonitor.start()
         self.page.layout().addWidget(quickSettings, 1, 7, 1, 2)
         self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)
         self.page.layout().addWidget(self.workspace, 2, 1, 2, 6)
@@ -328,6 +306,7 @@ class MainWindow(Entity, QMainWindow):
 
     def closeEvent(self, event):
         StopAllActions()
+        self.resourceMonitor.stop()
         if not self.quitShortcutPressed:
             Save()
         if hasattr(self, 'future') and self.future and not self.future.done():
