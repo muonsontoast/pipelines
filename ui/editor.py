@@ -202,7 +202,7 @@ class Editor(Entity, QGraphicsView):
                     # shared.kernelMenu.draggable.kernelMenuIsOn = False
                     # shared.kernelMenu.Hide()
                     # shared.kernelMenu = None
-                    shared.kernelMenu.draggable.CloseMenu()
+                    shared.kernelMenu.draggable.CloseMenu(shared.kernelContext)
                 for item in self.area.selectedItems:
                     item.widget().ToggleStyling(active = False)
                 self.area.selectedItems = []

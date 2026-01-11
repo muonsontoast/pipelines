@@ -51,14 +51,18 @@ class Kernel(Draggable):
         pass
 
     def ShowMenu(self, context):
-        if shared.kernelMenu is not None and shared.kernelMenu != self.kernelMenu:
-            shared.kernelMenu.Hide()
-            shared.kernelMenu.draggable.kernelMenuIsOpen = False
+        if shared.kernelMenu is not None:
+            if shared.kernelMenu != self.kernelMenu or self.kernelMenu.currentHyperparameter != context.correspondingHyperparameter:
+                shared.kernelMenu.Hide()
+                shared.kernelMenu.draggable.kernelMenuIsOpen = False
+                shared.kernelContext.setText('+')
         localPos = context.mapTo(self.proxy.widget(), QPointF(40, -20))
         finalPos = self.proxy.scenePos() + localPos
         self.kernelMenu.currentHyperparameter = context.correspondingHyperparameter
         self.kernelMenu.Show(finalPos)
         shared.kernelMenu = self.kernelMenu
+        shared.kernelContext = context
+        context.setText('-')
         self.kernelMenuIsOpen = True
         # show all the values for this hyperparameter
         iters = 1 if type(self.settings['hyperparameters'][context.correspondingHyperparameter]['value']) in [int, float] else self.settings['hyperparameters'][context.correspondingHyperparameter]['value'].shape[0]
@@ -86,11 +90,13 @@ class Kernel(Draggable):
             widget.layout().addWidget(delete, alignment = Qt.AlignVCenter)
             self.kernelMenu.body.layout().insertWidget(idx, widget)
 
-    def CloseMenu(self):
+    def CloseMenu(self, context):
         if shared.kernelMenu == self.kernelMenu:
             self.kernelMenu.Hide()
             self.kernelMenu.currentHyperparameter = None
             shared.kernelMenu = None
+            shared.kernelContext = None
+        context.setText('+')
         self.kernelMenuIsOpen = False
 
     def ToggleMenu(self, context):
@@ -100,8 +106,7 @@ class Kernel(Draggable):
         if context.correspondingHyperparameter != self.kernelMenu.currentHyperparameter:
             self.ShowMenu(context)
             return
-        print(context.correspondingHyperparameter)
-        self.CloseMenu()
+        self.CloseMenu(context)
 
     def Push(self):
         self.clickable = ClickableWidget(self)
@@ -218,7 +223,8 @@ class Kernel(Draggable):
             edit.setAlignment(Qt.AlignCenter)
             edit.returnPressed.connect(lambda name = widgetName, e = edit: self.ChangeEditValue(name, e))
             if v['type'] == 'vec':
-                context = QPushButton('\u26ED')
+                # context = QPushButton('\u26ED')
+                context = QPushButton('+')
                 setattr(context, 'draggable', self)
                 setattr(context, 'correspondingHyperparameter', k)
                 context.setFixedSize(35, 30)

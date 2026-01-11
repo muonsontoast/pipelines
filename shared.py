@@ -41,5 +41,6 @@ UIMoveUpdateRate = 480 # number of times to handle UI movement inside the editor
 currentMousePos = None
 mousePosUponRelease = None # used to determine if the user released the mouse inside another socket.
 kernelMenu = None # store a reference to the existing open kernel menu if it exists inside the editor.
+kernelContext = None # a reference to the button that opened the kernel context view.
 lastActionPerformed = None
 editorMenuOffset = QPoint(30, 30)
