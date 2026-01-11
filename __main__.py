@@ -305,8 +305,8 @@ class MainWindow(Entity, QMainWindow):
         shared.app.processEvents()
 
     def closeEvent(self, event):
-        StopAllActions()
         self.resourceMonitor.stop()
+        StopAllActions()
         if not self.quitShortcutPressed:
             Save()
         if hasattr(self, 'future') and self.future and not self.future.done():

@@ -9,10 +9,10 @@ class ResourceMonitor(QThread):
 
     def __init__(self):
         super().__init__()
+        self.running = False
         try:
             nvmlInit()
             self.GPUHandle = nvmlDeviceGetHandleByIndex(0)
-            print(nvmlDeviceGetName(self.GPUHandle))
             self.hasGPU = True
             self.GPUName = ''
             self.GPUMemoryUsed = 0
@@ -21,6 +21,7 @@ class ResourceMonitor(QThread):
             self.hasGPU = False
 
     def stop(self):
+        self.running = False
         if self.hasGPU:
             try:
                 nvmlShutdown()
@@ -71,11 +72,15 @@ class ResourceMonitor(QThread):
             )
 
     def FetchResourceValues(self):
+        if hasattr(self, 'timer'):
+            if not self.running:
+                return self.timer.stop()
         self.PollGPU()
         self.PollRAM()
         self.PollDisk()
 
     def run(self):
+        self.running = True
         self.timer = QTimer()
         self.timer.timeout.connect(self.FetchResourceValues)
         self.timer.start(1000)
