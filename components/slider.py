@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt
+import numpy as np
 from .. import shared
 from .. import style
 
@@ -121,7 +122,7 @@ class SliderComponent(QWidget):
         # If this block has a SET value, it will automatically update it as the slider value changes
         if self.pv is not None:
             if hasattr(self.pv, 'set'):
-                v = self.value.text() if float(self.value.text()) > self.eps else '0.000'
+                # v = self.value.text() if abs(float(self.value.text()) > self.eps else '0.000'
                 self.pv.set.setText(v)
 
     def ToAbsolute(self, v):
@@ -134,7 +135,7 @@ class SliderComponent(QWidget):
 
     def UpdateSliderValue(self):
         v = self.ToAbsolute(self.slider.value())
-        v = v if v > self.eps else 0
+        v = v if np.abs(v) > self.eps else 0
         self.value.setText(f'{v:.{self.floatdp}f}')
         if 'valueType' not in self.pv.settings['components'][self.component].keys():
             self.pv.settings['components'][self.component]['valueType'] = float
@@ -249,6 +250,7 @@ class SliderComponent(QWidget):
     
     def SetMaximum(self, override = False):
         '''`override` is a bool. Component should be updated before calling this override. '''
+        print('setting maximum ...')
         if not override:
             self.maximum.clearFocus()
             v = float(self.maximum.text())
