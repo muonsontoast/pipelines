@@ -162,9 +162,13 @@ class PV(Draggable):
                 # will attempt to find a match on the full name first, before splitting
                 PVName = self.name
                 try:
+                    await aioca.caget(self.name, timeout = timeout)
+                    await asyncio.sleep(.25)
                     self.data[1] = await aioca.caget(self.name, timeout = timeout)
                 except:
                     PVName = self.name.split(':')[0]
+                    await aioca.caget(PVName + ':I', timeout = timeout)
+                    await asyncio.sleep(.25)
                     self.data[1] = await aioca.caget(PVName + ':I', timeout = timeout)
                 self.settings['components']['value']['default'] = self.data[1]
                 if PVName != lastMatch:
