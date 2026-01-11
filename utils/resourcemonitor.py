@@ -36,6 +36,7 @@ class ResourceMonitor(QThread):
 
         if self.GPUName == '':
             name = nvmlDeviceGetName(self.GPUHandle)
+            name.split('GPU')[0]
             self.GPUName = name
         memoryHandle = nvmlDeviceGetMemoryInfo(self.GPUHandle)
         self.GPUMemoryUsed = memoryHandle.used / 1024 ** 3
