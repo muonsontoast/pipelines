@@ -5,13 +5,13 @@ from .filter import Filter
 from ... import shared
 from ... import style
 
-class GreaterThan(Filter):
+class LessThan(Filter):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(
             parent, 
             proxy,
-            name = kwargs.pop('name', 'Greater Than (Filter)'),
-            type = kwargs.pop('type', 'Greater Than'),
+            name = kwargs.pop('name', 'Less Than (Filter)'),
+            type = kwargs.pop('type', 'Less Than'),
             size = kwargs.pop('size', [350, 150]),
             fontsize = kwargs.pop('fontsize', 12),
             threshold = kwargs.pop('threshold', 0),
@@ -23,7 +23,7 @@ class GreaterThan(Filter):
         if len(self.linksIn) > 0:
             ID = next(iter(self.linksIn))
             print('My value is', np.maximum(shared.entities[ID].data[1], self.settings['threshold']))
-            return np.maximum(shared.entities[ID].data[1], self.settings['threshold'])
+            return np.minimum(shared.entities[ID].data[1], self.settings['threshold'])
         
     def Push(self):
         super().Push()

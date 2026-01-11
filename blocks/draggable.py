@@ -298,6 +298,11 @@ class Draggable(Entity, QWidget):
             socketTitle = QLabel(f'{socketText}')
             socketTitle.setObjectName(f'{socketText}SocketTitle')
             socketTitle.setAlignment(Qt.AlignCenter)
+            if socketType == 'F':
+                socketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
+            else:
+                socketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopRight = 12, borderRadiusBottomRight = 12))
+            # socketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4'))
             socketHousing.layout().addWidget(socketTitle)
             setattr(self, f'{name}SocketTitle', socketTitle)
         setattr(self, f'{name}SocketHousing', socketHousing)

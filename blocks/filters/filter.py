@@ -30,7 +30,7 @@ class Filter(Draggable):
     
     def Push(self):
         super().Push()
-        self.AddSocket('in', 'F', acceptableTypes = ['PV', 'Corrector', 'BPM', 'Single Task Gaussian Proecss'])
+        self.AddSocket('in', 'F', acceptableTypes = ['PV', 'Corrector', 'BPM', 'Single Task Gaussian Process', 'Less Than', 'Greater Than', 'Invert', 'Single Control'])
         self.AddSocket('out', 'M')
         self.BaseStyling()
 
