@@ -2,10 +2,10 @@ from PySide6.QtGui import QColor
 from . import shared
 
 backgroundColor = "#181818"
-tabColor = "#09BC8A"
+tabColor = "#282523"
 PVSelectedColor = "#74BC80"
-tabSelectedColor = "#09BC8A"
-tabHoverColor = "#09BC8A"
+tabSelectedColor = "#c4c4c4"
+tabHoverColor = "#303F33"
 buttonColor = "#1E1E1E"
 buttonSelectedColor = "#313131"
 buttonHoverColor = "#252525"
