@@ -57,7 +57,7 @@ class SliderComponent(QWidget):
         self.sliderRow.layout().addWidget(self.slider)
         self.sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
         # Value
-        v = f'{pv.settings['components'][component]['value']:.{self.floatdp}f}' if pv.settings['components'][component]['value'] > self.eps else '0.000'
+        v = f'{pv.settings['components'][component]['value']:.{self.floatdp}f}' if np.abs(pv.settings['components'][component]['value']) > self.eps else '0.000'
         self.value = QLineEdit(v)
         self.value.setAlignment(Qt.AlignCenter)
         self.value.setFixedSize(75, 25)
