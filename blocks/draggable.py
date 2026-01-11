@@ -16,6 +16,7 @@ class Draggable(Entity, QWidget):
     pvBlockTypes = ['PV', 'Corrector', 'BPM', 'BCM']
 
     def __init__(self, proxy, **kwargs):
+        self.headerColor = kwargs.pop('headerColor', '#2e2e2e')
         super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), **kwargs)
         self.proxy = proxy
         self.setLayout(QHBoxLayout())
@@ -63,6 +64,7 @@ class Draggable(Entity, QWidget):
         self.main = QWidget()
         self.main.setLayout(QVBoxLayout())
         self.main.layout().setContentsMargins(0, 0, 0, 0)
+        self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # Every draggable has a popup box hidden until 'Alt' is pressed
         self.popup = QGraphicsProxyWidget()
         self.popup.setZValue(100)
@@ -111,6 +113,7 @@ class Draggable(Entity, QWidget):
     def Push(self):
         # Add widget sections to the layout.
         self.layout().addWidget(self.FSocketWidgets)
+        self.AddHeader()
         self.layout().addWidget(self.main)
         self.layout().addWidget(self.MSocketWidgets)
 
@@ -239,7 +242,8 @@ class Draggable(Entity, QWidget):
         self.active = not self.active
 
     def BaseStyling(self):
-        pass
+        if hasattr(self, 'header'):
+            self.header.setStyleSheet(style.WidgetStyle(color = self.headerColor, borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
 
     def SelectedStyling(self):
         pass
@@ -339,19 +343,16 @@ class Draggable(Entity, QWidget):
             self.buttons.layout().addWidget(self.clear)
         self.main.layout().addWidget(self.buttons)
 
+    def AddHeader(self):
+        self.header = QWidget()
+        self.header.setFixedHeight(40)
+        self.header.setLayout(QHBoxLayout())
+        self.header.layout().setContentsMargins(15, 0, 5, 0)
+        self.title = QLabel(f'{self.settings['name']}', alignment = Qt.AlignCenter)
+        self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
+        self.main.layout().addWidget(self.header, alignment = Qt.AlignTop)
+
     def Start(self, **kwargs):
-        '''Pass the current set value in the inspector by default, assuming a value component exists.\n
-        Accepts a `setpoint` **int/float** to override the inspector value.'''
-        # if 'components' in self.settings:
-        #     if 'value' in self.settings['components']:
-        #         setpoint = kwargs.get('setpoint', None)
-        #         if setpoint is not None:
-        #             # pull the inspector setpoint
-        #             self.data = np.array([self.settings['components']['value']['value']])
-        #         else:
-        #             # This will only trigger for controllable PVs - others will override their Start methods
-        #             self.UpdateLinkedElement(override = setpoint)
-        #             self.data = np.array([setpoint])
         pass
 
     def Pause(self):

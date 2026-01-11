@@ -23,23 +23,13 @@ class SingleTaskGP(Draggable):
             components = {
                 'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float),
             },
+            headerColor = '#B54428',
             **kwargs
         )
         self.timeBetweenPolls = 1000
         self.runningCircle = RunningCircle()
         self.offlineAction = OfflineAction(self)
         self.onlineAction = OnlineAction(self)
-        self.header = QWidget()
-        self.header.setFixedHeight(40)
-        self.header.setLayout(QHBoxLayout())
-        self.header.layout().setContentsMargins(15, 0, 5, 0)
-        self.title = QLabel(f'{self.settings['name']} (Empty)', alignment = Qt.AlignCenter)
-        self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
-        self.header.layout().addWidget(self.runningCircle, alignment = Qt.AlignRight)
-        self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = ['PV', 'Corrector', 'SVD', 'Add', 'Subtract'])
-        self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = ['PV', 'BPM', 'Add', 'Subtract'])
-        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = ['Kernel', 'Linear Kernel', 'Anisotropic Kernel', 'Periodic Kernel', 'RBF Kernel'])
-        self.AddSocket('out', 'M')
         # Main widget
         self.widget = QWidget()
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -87,26 +77,11 @@ class SingleTaskGP(Draggable):
         StopAction(self)
 
     def Push(self):
-        self.mode = QWidget()
-        self.mode.setLayout(QHBoxLayout())
-        self.mode.layout().setContentsMargins(15, 10, 15, 0)
-        self.modeTitle = QLabel('Mode: <u><span style = "color: #C74343">Offline</span></u>')
-        self.modeTitle.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', padding = 0))
-        self.modeTitle.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.modeSwitch = QPushButton('Switch')
-        self.modeSwitch.clicked.connect(self.SwitchMode)
-        self.modeSwitch.setStyleSheet(style.PushButtonStyle(color = '#1e1e1e', fontColor = '#c4c4c4', padding = 5))
-        self.modeSwitch.setFixedWidth(100)
-        self.mode.layout().addWidget(self.modeTitle)
-        self.mode.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Preferred))
-        self.mode.layout().addWidget(self.modeSwitch)
-        self.widget.layout().addWidget(self.header)
-        self.content.layout().addWidget(self.mode)
-        self.content.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
-        self.widget.layout().addWidget(self.content)
-        self.main.layout().addWidget(self.widget)
-        self.AddButtons()
-
+        self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = ['PV', 'Corrector', 'SVD', 'Add', 'Subtract'])
+        self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = ['PV', 'BPM', 'Add', 'Subtract', 'Greater Than'])
+        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = ['Kernel', 'Linear Kernel', 'Anisotropic Kernel', 'Periodic Kernel', 'RBF Kernel'])
+        self.AddSocket('out', 'M')
+        self.BaseStyling()
         super().Push()
 
     def Start(self, **kwargs):
@@ -225,12 +200,11 @@ class SingleTaskGP(Draggable):
         if shared.lightModeOn:
             pass
         else:
-            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, fontColor = '#c4c4c4'))
+            self.main.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, fontColor = '#c4c4c4', fontSize = 16))
             self.decisionSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
             self.kernelSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
             self.objectiveSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
-            self.header.setStyleSheet(style.WidgetStyle(color = "#B54428", borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
-            self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
+        super().BaseStyling()
 
     def SelectedStyling(self):
         pass

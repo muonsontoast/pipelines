@@ -20,6 +20,7 @@ from ..blocks.kernels.linear import LinearKernel
 from ..blocks.kernels.anisotropic import AnisotropicKernel
 from ..blocks.kernels.periodic import PeriodicKernel
 from ..blocks.kernels.rbf import RBFKernel
+from ..blocks.filters.greaterthan import GreaterThan
 from ..ui.group import Group
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
@@ -45,6 +46,7 @@ blockTypes = {
     'Anisotropic Kernel': AnisotropicKernel,
     'Periodic Kernel': PeriodicKernel,
     'RBF Kernel': RBFKernel,
+    'Greater Than': GreaterThan,
 }
 
 def Undo():
@@ -172,6 +174,9 @@ def CreatePeriodicKernel(pos: QPoint):
 def CreateRBFKernel(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['RBF Kernel'], 'RBF Kernel', pos)
 
+def CreateGreaterThan(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Greater Than'], 'Greater Than (Filter)', pos)
+
 def CreateGroup():
     if len(shared.activeEditor.area.selectedItems) < 2:
         return print('Too few elements to create a group!')
@@ -248,6 +253,7 @@ commands = {
     'Anisotropic Kernel': dict(shortcut = [], func = CreateAnisotropicKernel, args = [GetMousePos]),
     'Periodic Kernel': dict(shortcut = [], func = CreatePeriodicKernel, args = [GetMousePos]),
     'RBF Kernel': dict(shortcut = [], func = CreateRBFKernel, args = [GetMousePos]),
+    'Greater Than (Filter)': dict(shortcut = [], func = CreateGreaterThan, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),
