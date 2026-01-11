@@ -25,11 +25,10 @@ class Editor(Entity, QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scene = QGraphicsScene()
         self.setScene(self.scene)
-        self.setSceneRect(-10000, -10000, 10000, 10000)
+        self.setSceneRect(0, 0, 10000, 10000)
         shared.editors.append(self)
         self.menu = EditorMenu(self)
-        # self.centerOn(1400, 1400)
-        self.centerOn(0, 0)
+        self.centerOn(1500, 1500)
 
         # grab handle for performing group movement of selected items
         self.grabHandle = QGraphicsProxyWidget()
