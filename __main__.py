@@ -231,7 +231,7 @@ class MainWindow(Entity, QMainWindow):
                 self.GPUUseage.setText(f'GPU:\t\t{self.GPU.name} ({self.GPU.memoryUsed / 1024:.1f} / {self.GPU.memoryTotal / 1024:.1f} GB)')
                 QTimer.singleShot(1000, PollAndWaitForGPU)
             except:
-                self.GPUUseage.setText('GPU:\t\t\tNo dedicated GPU detected.')
+                self.GPUUseage.setText('GPU:\t\tNo dedicated GPU detected.')
         PollAndWaitForGPU()
         def PollAndWaitForRAM():
             self.RAM = psutil.virtual_memory() # given in Bytes
