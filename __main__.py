@@ -189,11 +189,11 @@ class MainWindow(Entity, QMainWindow):
         shared.lightModeOn = True
         # connect key shortcuts to their functions.
         ConnectShortcuts()
-        self.inspector.setMaximumWidth(500)
+        self.inspector.setMaximumWidth(475)
         self.page.setStyleSheet(style.Dark01())
         quickSettings = QWidget()
         quickSettings.setStyleSheet(style.WidgetStyle(color = '#1e1e1e'))
-        quickSettings.setMaximumWidth(500)
+        quickSettings.setMaximumWidth(475)
         quickSettings.setLayout(QGridLayout())
         quickSettings.layout().setContentsMargins(0, 0, 0, 0)
         quickSettings.layout().setSpacing(1)
