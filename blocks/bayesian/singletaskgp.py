@@ -2,11 +2,14 @@ from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QSizePolicy, QHBoxLa
 from PySide6.QtCore import Qt, QTimer
 import numpy as np
 import time
+import aioca
+import asyncio
 from xopt.vocs import VOCS
 from xopt.evaluator import Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator
 from xopt import Xopt
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
 from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
@@ -78,32 +81,37 @@ class SingleTaskGP(Draggable):
 
     def Push(self):
         self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = ['PV', 'Corrector', 'SVD', 'Add', 'Subtract'])
-        self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = ['PV', 'BPM', 'Add', 'Subtract', 'Greater Than'])
+        self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = ['PV', 'BPM', 'Add', 'Subtract', 'Greater Than', 'Less Than', 'Single Control'])
         self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = ['Kernel', 'Linear Kernel', 'Anisotropic Kernel', 'Periodic Kernel', 'RBF Kernel'])
         self.AddSocket('out', 'M')
         self.BaseStyling()
         super().Push()
 
-    def Start(self, **kwargs):
-        steps = kwargs.get('steps', 10)
+    async def Start(self, **kwargs):
+        print('Starting up single task GP')
+        steps = kwargs.get('steps', 3)
         initialSamples = kwargs.get('initialSamples', 1)
         numParticles = kwargs.get('numParticles', 100000)
         self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
+        print('This GP has these decision variables:', self.decisions)
         self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
         # this will be deprecated soon
         independents = [
             {'ID': d.ID, 'stream': self.streamTypesIn[d.ID]} for d in self.decisions
         ]
         waiting = False
+        # force it online for now ...
+        self.online = True
         actionToRun = self.offlineAction if not self.online else self.onlineAction
+        actionToRun.decisions = self.decisions
         for decision in self.decisions:
             if decision.type not in self.pvBlockTypes and np.isinf(decision.streams[self.streamTypesIn[decision.ID]]()['data']).any():
                 waiting = True
                 self.title.setText(f'{self.title.text().split(' (')[0]} (Waiting)')
-                actionToRun.ReadDependents(independents)
+                await actionToRun.ReadDependents(independents)
                 break
 
-        def WaitUntilInputsRead():
+        async def WaitUntilInputsRead():
             nonlocal initialSamples, numParticles, waiting
             if waiting:
                 if not actionToRun.resultsWritten:
@@ -111,8 +119,7 @@ class SingleTaskGP(Draggable):
                 waiting = False
                 return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
             else:
-                #     return
-                if not actionToRun.CheckForValidInputs():
+                if not await actionToRun.CheckForValidInputs():
                     return
 
                 independentsToSet = {
@@ -121,7 +128,7 @@ class SingleTaskGP(Draggable):
                 
                 counter = 0
                     
-                def PerformActionAndWait(inDict:dict):
+                def PerformActionAndWait(inDict: dict):
                     '''Called on a separate worker thread so will not block the UI thread.'''
                     nonlocal counter, actionToRun
                     # Set the values of the decisions
@@ -135,7 +142,7 @@ class SingleTaskGP(Draggable):
                         currentStep = counter,
                         numParticles = numParticles,
                     )
-                    while np.isinf(self.data).any():
+                    while np.isnan(self.data).any():
                         time.sleep(self.timeBetweenPolls / 1e3)
 
                     counter += 1
@@ -148,17 +155,39 @@ class SingleTaskGP(Draggable):
                     return {'f': self.objectives[0].streams[self.streamTypesIn[self.objectives[0].ID]]()['data']}
                     
                 variables = dict()
+                # for d in self.decisions:
+                #     stream = d.streams[self.streamTypesIn[d.ID]]()
+                #     for dim in range(stream['data'].shape[0]): # each row is a new singular vector for SVD, otherwise a 1x1 for a PV.
+                #         variables[f'{d.ID}-{dim}'] = [-3, 3] # values get sent through tanh so restrict to sensible domain
                 for d in self.decisions:
-                    stream = d.streams[self.streamTypesIn[d.ID]]()
-                    for dim in range(stream['data'].shape[0]): # each row is a new singular vector for SVD, otherwise a 1x1 for a PV.
-                        variables[f'{d.ID}-{dim}'] = [-3, 3] # values get sent through tanh so restrict to sensible domain
+                    variables[f'{d.name}'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
 
                 vocs = VOCS(
                     variables = variables,
                     objectives = {'f': 'MINIMIZE'},
                 )
                 executor = ThreadPoolExecutor(max_workers = 1)
-                evaluator = Evaluator(function = PerformActionAndWait)
+                # def dummy(dictIn):
+                #     return {'f': np.random.uniform()}
+                # evaluator = Evaluator(function = PerformActionAndWait)
+
+                async def SetDecisionsAndRecordResponse(dictIn: dict):
+                    print('Setting decisions to target values')
+                    for d in self.decisions:
+                        if dictIn[d.name] < await aioca.caget(d.name + ':I'):
+                            await aioca.caput(d.name + ':SETI', dictIn[d.name] - .2)
+                    await aioca.sleep(2)
+                    await aioca.caput(d.name + ':SETI', dictIn[d.name])
+                    await aioca.sleep(1)
+
+                    result = await self.objectives[0].Start()
+                    return {'f': result}
+
+                def Evaluate(dictIn: dict):
+                    dictOut = asyncio.create_task(SetDecisionsAndRecordResponse(dictIn))
+                    return dictOut
+
+                evaluator = Evaluator(function = Evaluate)
                 generator = UpperConfidenceBoundGenerator(vocs = vocs)
                 self.X = Xopt(evaluator = evaluator, generator = generator, vocs = vocs)
 
@@ -174,11 +203,16 @@ class SingleTaskGP(Draggable):
                         job.add_done_callback(lambda _: StepUntilComplete())
                     else:
                         # temporarily save the data automatically here
-                        self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
+                        print('GP data temporarily saved to:', Path(shared.cwd) / 'datadump' / f'{self.name}.csv')
+                        self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{self.name}.csv', index = False)
                         QTimer.singleShot(0, lambda: executor.shutdown(wait = True))
 
+                await aioca.caput('LI-TI-MTGEN-01:START', 1, timeout = 2)
+                print('LINAC active!')
                 job.add_done_callback(lambda _: StepUntilComplete())
-        WaitUntilInputsRead()
+                await aioca.caput('LI-TI-MTGEN-01:STOP', 1, timeout = 2)
+                print('LINAC deactivated!')
+        await WaitUntilInputsRead()
 
     def SwitchMode(self):
         if cothread.AVAILABLE:
@@ -201,9 +235,6 @@ class SingleTaskGP(Draggable):
             pass
         else:
             self.main.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, fontColor = '#c4c4c4', fontSize = 16))
-            # self.decisionSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
-            # self.kernelSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
-            # self.objectiveSocketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
         super().BaseStyling()
 
     def SelectedStyling(self):

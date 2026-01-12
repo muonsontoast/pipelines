@@ -52,20 +52,22 @@ class Action:
             self.resultsWritten = True
         WaitUntilInputsSet()
 
-    def ReadDependents(self, dependents:list[dict], actionData:np.ndarray = np.array([])) -> np.ndarray:
+    async def ReadDependents(self, dependents:list[dict], actionData:np.ndarray = np.array([])) -> np.ndarray:
         '''Records the values of incoming outputs linked to the block and waits for them to finish.\n
         `dependents` is a list of dicts generated during pickling of block data by the action, of the form [ { \'ID\': **ID**, \'stream\': **stream** }, ... ]\n
         `actionData` is a numpy array holding data generated after running the action, from which the objectives can be extracted.'''
 
         self.resultsWritten = False
         for d in dependents:
-            shared.entities[d['ID']].Start(downstreamData = actionData) # blindly start all inputs for now ...
+            await shared.entities[d['ID']].Start(downstreamData = actionData) # blindly start all inputs for now ...
 
         # wait for dependents that have been run to finish -- needs more work to be error aware
         def CheckDependentsRunning():
             for d in dependents:
-                if np.isinf(shared.entities[d['ID']].streams[d['stream']]()['data']).any():
+                if np.isnan(shared.entities[d['ID']].data[1]).any():
                     return QTimer.singleShot(self.timeBetweenPolls, CheckDependentsRunning)
+                # if np.isinf(shared.entities[d['ID']].streams[d['stream']]()['data']).any():
+                #     return QTimer.singleShot(self.timeBetweenPolls, CheckDependentsRunning)
             self.resultsWritten = True
         CheckDependentsRunning()
         print(f'{self.parent.name} is done running dependents!')

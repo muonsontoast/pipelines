@@ -3,6 +3,7 @@
 from PySide6.QtWidgets import QGraphicsProxyWidget
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtCore import QPoint
+import asyncio
 from ..blocks.draggable import Draggable
 from ..blocks.pv import PV
 from ..blocks.corrector import Corrector
@@ -71,7 +72,7 @@ def StopAllActions():
 
 _toggleState = False
 
-def ToggleAllActions():
+async def ToggleAllActions():
     # check which blocks can run and have well-defined inputs.
     global _toggleState
     if not runningActions:
@@ -81,7 +82,7 @@ def ToggleAllActions():
     stateText = 'running' if _toggleState else 'paused'
     if _toggleState:
         for r in shared.runnableBlocks.values():
-            r.Start()
+            await r.Start()
     else:
         for r in shared.runnableBlocks.values():
             TogglePause(r)
@@ -288,7 +289,10 @@ def ConnectShortcuts():
     editor = shared.editors[0]
     # Get function arguments
     def InvokeAction(action):
-        commands[action]['func'](*[arg() for arg in commands[action]['args']])
+        if asyncio.iscoroutinefunction(commands[action]['func']):
+            asyncio.create_task(commands[action]['func'](*[arg() for arg in commands[action]['args']]))
+        else:
+            commands[action]['func'](*[arg() for arg in commands[action]['args']])
     # Connect the shortcuts 
     for k in commands.keys():
         for shortcut in commands[k]['shortcut']:

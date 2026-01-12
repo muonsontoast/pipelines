@@ -1,0 +1,449 @@
+0:
+  components: {}
+  name: MainWindow
+  type: MainWindow
+1:
+  components: {}
+  name: Workspace
+  type: Workspace
+2:
+  components: {}
+  name: Editor
+  positionInSceneCoords:
+  - 6292.403414530304
+  - 5460.155144977969
+  type: Editor
+  zoom: 0.5935728773166713
+3:
+  components: {}
+  linksIn: {}
+  linksOut: {}
+  name: EditorMenu
+  size:
+  - 350
+  - 250
+  type: EditorMenu
+4:
+  components: {}
+  name: Global Lattice
+  sceneHeight: 145
+  sceneWidth: 1600
+  type: Global Lattice
+5:
+  components: {}
+  name: Inspector
+  size:
+  - 500
+  - -1
+  type: Inspector
+6:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.41779008507728577
+      max: 5.0
+      min: -5.0
+      name: Value
+      type: SliderComponent
+      units: Amps
+      value: 0.4177299999999997
+      valueType: float
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: LB-PC-HSTR-01
+  position:
+  - 5406
+  - 5159
+  size:
+  - 325
+  - 115
+  type: PV
+7:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -1.4600733518600464
+      max: 5.0
+      min: -5.0
+      name: Value
+      type: SliderComponent
+      units: Amps
+      value: 0.41780999999999935
+      valueType: float
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: LB-PC-HSTR-06
+  position:
+  - 5766
+  - 5284
+  size:
+  - 325
+  - 115
+  type: PV
+8:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 3.8500092029571533
+      max: 5.0
+      min: -5.0
+      name: Value
+      type: SliderComponent
+      units: Amps
+      value: 0
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: LB-PC-HSTR-05
+  position:
+  - 5766
+  - 5160
+  size:
+  - 325
+  - 115
+  type: PV
+9:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.7099058032035828
+      max: 5.0
+      min: -5.0
+      name: Value
+      type: SliderComponent
+      units: Amps
+      value: 0.7100300000000006
+      valueType: float
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: LB-PC-HSTR-04
+  position:
+  - 5407
+  - 5524
+  size:
+  - 325
+  - 115
+  type: PV
+10:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 3.2699997425079346
+      max: 5.0
+      min: -5.0
+      name: Value
+      type: SliderComponent
+      units: Amps
+      value: 0
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: LB-PC-HSTR-03
+  position:
+  - 5405
+  - 5403
+  size:
+  - 325
+  - 115
+  type: PV
+11:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -0.4341314136981964
+      max: 5.0
+      min: -5.0
+      name: Value
+      type: SliderComponent
+      units: Amps
+      value: -0.43403999999999954
+      valueType: float
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: LB-PC-HSTR-02
+  position:
+  - 5405
+  - 5282
+  size:
+  - 325
+  - 115
+  type: PV
+12:
+  components:
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      units: ''
+      value: 0
+      valueType: float
+  linksIn:
+    6: decision
+    7: decision
+    8: decision
+    9: decision
+    10: decision
+    11: decision
+    20: objective
+    21: kernel
+  linksOut:
+    23: data
+  name: Single Task GP
+  position:
+  - 6683
+  - 5615
+  size:
+  - 600
+  - 500
+  type: Single Task GP
+13:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.031425
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linksIn: {}
+  linksOut:
+    20: in
+  name: LB-DI-EBPM-07:FT:CHARGE
+  position:
+  - 5777
+  - 5995
+  size:
+  - 325
+  - 115
+  type: PV
+14:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.001927
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linksIn: {}
+  linksOut:
+    20: in
+  name: LB-DI-EBPM-06:FT:CHARGE
+  position:
+  - 5776
+  - 5876
+  size:
+  - 325
+  - 115
+  type: PV
+15:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.008196
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linksIn: {}
+  linksOut:
+    20: in
+  name: LB-DI-EBPM-05:FT:CHARGE
+  position:
+  - 5777
+  - 5750
+  size:
+  - 325
+  - 115
+  type: PV
+16:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.004236
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linksIn: {}
+  linksOut:
+    20: in
+  name: LB-DI-EBPM-04:FT:CHARGE
+  position:
+  - 5415
+  - 6115
+  size:
+  - 325
+  - 115
+  type: PV
+17:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.005613
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linksIn: {}
+  linksOut:
+    20: in
+  name: LB-DI-EBPM-02:FT:CHARGE
+  position:
+  - 5412
+  - 5872
+  size:
+  - 325
+  - 115
+  type: PV
+18:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0037089999999999996
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linksIn: {}
+  linksOut:
+    20: in
+  name: LB-DI-EBPM-03:FT:CHARGE
+  position:
+  - 5415
+  - 5995
+  size:
+  - 325
+  - 115
+  type: PV
+19:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.00402
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linksIn: {}
+  linksOut:
+    20: in
+  name: LB-DI-EBPM-01:FT:CHARGE
+  position:
+  - 5410
+  - 5750
+  size:
+  - 325
+  - 115
+  type: PV
+20:
+  components: {}
+  linksIn:
+    13: in
+    14: in
+    15: in
+    16: in
+    17: in
+    18: in
+    19: in
+  linksOut:
+    12: objective
+  name: Add
+  position:
+  - 6260
+  - 5822
+  size:
+  - 250
+  - 100
+  type: Add
+21:
+  components: {}
+  fontsize: 12
+  hyperparameters:
+    lengthscale:
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 3.0
+    scale:
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linksIn: {}
+  linksOut:
+    12: kernel
+  name: RBF Kernel
+  position:
+  - 6256
+  - 6032
+  size:
+  - 320
+  - 339
+  type: RBF Kernel
+22:
+  components: {}
+  linksIn: {}
+  linksOut: {}
+  name: Kernel Menu
+  size:
+  - 250
+  - 250
+  type: KernelMenu
+23:
+  components: {}
+  linksIn:
+    12: data
+  linksOut: {}
+  name: Save
+  position:
+  - 7514
+  - 5956
+  size:
+  - 600
+  - 300
+  type: Save

@@ -1,0 +1,171 @@
+0:
+  components: {}
+  name: MainWindow
+  type: MainWindow
+1:
+  components: {}
+  name: Workspace
+  type: Workspace
+2:
+  components: {}
+  name: Editor
+  positionInSceneCoords:
+  - 6933.200297482777
+  - 5890.594040626466
+  type: Editor
+  zoom: 0.3807765370572806
+3:
+  components: {}
+  linksIn: {}
+  linksOut: {}
+  name: EditorMenu
+  size:
+  - 350
+  - 250
+  type: EditorMenu
+4:
+  components: {}
+  name: Global Lattice
+  sceneHeight: 145
+  sceneWidth: 1600
+  type: Global Lattice
+5:
+  components: {}
+  name: Inspector
+  size:
+  - 500
+  - -1
+  type: Inspector
+7:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: -1.4599177837371826
+      max: 5.0
+      min: -5.0
+      name: Value
+      type: SliderComponent
+      units: Amps
+      value: 0.41780999999999935
+      valueType: float
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: LB-PC-HSTR-06
+  position:
+  - 6171.0
+  - 5536.0
+  size:
+  - 325
+  - 115
+  type: PV
+12:
+  components:
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      units: ''
+      value: 0
+      valueType: float
+  linksIn:
+    7: decision
+    20: objective
+    21: kernel
+  linksOut:
+    23: data
+  name: Single Task GP
+  position:
+  - 6683
+  - 5615
+  size:
+  - 600
+  - 500
+  type: Single Task GP
+13:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.008832999999999999
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linksIn: {}
+  linksOut:
+    20: in
+  name: LB-DI-EBPM-07:FT:CHARGE
+  position:
+  - 5843.0
+  - 5840.0
+  size:
+  - 325
+  - 115
+  type: PV
+20:
+  components: {}
+  linksIn:
+    13: in
+  linksOut:
+    12: objective
+  name: Add
+  position:
+  - 6260
+  - 5822
+  size:
+  - 250
+  - 100
+  type: Add
+21:
+  components: {}
+  fontsize: 12
+  hyperparameters:
+    lengthscale:
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 3.0
+    scale:
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linksIn: {}
+  linksOut:
+    12: kernel
+  name: RBF Kernel
+  position:
+  - 6256
+  - 6032
+  size:
+  - 320
+  - 339
+  type: RBF Kernel
+22:
+  components: {}
+  linksIn: {}
+  linksOut: {}
+  name: Kernel Menu
+  size:
+  - 250
+  - 250
+  type: KernelMenu
+23:
+  components: {}
+  linksIn:
+    12: data
+  linksOut: {}
+  name: Save
+  position:
+  - 7514
+  - 5956
+  size:
+  - 600
+  - 300
+  type: Save
