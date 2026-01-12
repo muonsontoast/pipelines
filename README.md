@@ -5,8 +5,8 @@ Keep in mind this is a nice tool designed for rapid ideation and testing with re
 A very early example of what you can do with the tool:
 
 <img width="2096" height="1192" alt="Screenshot 2026-01-11 222512" src="https://github.com/user-attachments/assets/98f2d898-0229-44c5-9a1e-26106020a086" />
-**Caption**: _Live Setup on the Diamond Light Source accelerator. Real-time PV values are being streamed with aioca. In the figure, a single objective BO loop is being performed with the sum of BPM charges along a transfer line the objective to maximise. The objective is filtered through a control block that halts the signal if a separate beam position PV exceeds some user-defined threshold, which the optimiser sees as a poor result. 6 steerer magnets are supplied as decision variables for this task. The result is dumped into a save folder and timestamped.
-_
+**Caption**: _Live Setup on the Diamond Light Source accelerator. Real-time PV values are being streamed with aioca. In the figure, a single objective BO loop is being performed with the sum of BPM charges along a transfer line the objective to maximise. The objective is filtered through a control block that halts the signal if a separate beam position PV exceeds some user-defined threshold, which the optimiser sees as a poor result. 6 steerer magnets are supplied as decision variables for this task. The result is dumped into a save folder and timestamped._
+
 <img width="1889" height="1136" alt="image" src="https://github.com/user-attachments/assets/ab7d5048-fc1f-451b-ae40-b99f9899cd1f" />
 
 <img width="955" height="715" alt="image" src="https://github.com/user-attachments/assets/18b27bb2-fa8b-4fcc-93af-4d40a675dbb5" />
