@@ -4,5 +4,6 @@ Keep in mind this is a nice tool designed for rapid ideation and testing with re
 
 A very early example of what you can do with the tool:
 
+<img width="2096" height="1192" alt="Screenshot 2026-01-11 222512" src="https://github.com/user-attachments/assets/98f2d898-0229-44c5-9a1e-26106020a086" />
 <img width="955" height="715" alt="image" src="https://github.com/user-attachments/assets/18b27bb2-fa8b-4fcc-93af-4d40a675dbb5" />
 <img width="1889" height="1136" alt="image" src="https://github.com/user-attachments/assets/ab7d5048-fc1f-451b-ae40-b99f9899cd1f" />
