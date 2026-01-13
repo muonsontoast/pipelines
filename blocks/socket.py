@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QFrame, QGraphicsLineItem, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QGraphicsLineItem, QHBoxLayout
 from PySide6.QtCore import QSize, QLineF
 from PySide6.QtGui import QPen, QColor
 from .socketinteractable import SocketInteractable
@@ -30,7 +30,6 @@ class Socket(QWidget):
         self.socket = SocketInteractable(self, radius * 2, socketType, alignment, acceptableTypes = acceptableTypes)
         self.layout().addWidget(self.socket)
         self.width = width
-        # self.name = name
         self.UpdateColors()
 
     def mousePressEvent(self, event):

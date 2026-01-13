@@ -6,6 +6,7 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
+import asyncio
 from ..draggable import Draggable
 from ...clickablewidget import ClickableWidget
 from ... import shared
@@ -43,9 +44,11 @@ class Kernel(Draggable):
         self.dataSharedMemoryName = self.dataSharedMemory.name
         self.dataSharedMemoryShape = self.data.shape
         self.dataSharedMemoryDType = self.data.dtype
-        self.Push()
 
-    def k(self, X1, X2):
+        if self.__class__ != Kernel: # only Push immediately if not a base class instance.
+            self.Push()
+
+    async def k(self, X1, X2):
         '''To be overriden by all subclasses inheriting from this base class.'''
         pass
 
@@ -168,18 +171,23 @@ class Kernel(Draggable):
         self.ax.set_yticklabels([])
         self.ax.set_yticks([])
 
-    def DrawFigure(self):
+    async def DrawFigure(self, ignoreDraw = False):
         x = np.linspace(-5, 5, 40)
         x = x[..., np.newaxis]
         y = np.linspace(-5, 5, 40)
         y = y[..., np.newaxis]
-        Z = self.k(x, y)
-        im = self.ax.imshow(Z, origin = 'lower', cmap = 'viridis')
+        Z = await self.k(x, y)
+        if not ignoreDraw:
+            im = self.ax.imshow(Z, origin = 'lower', cmap = 'viridis')
+        return Z
+    
+    async def DrawAndRefresh(self):
+        await self.DrawFigure()
+        self.canvas.draw()
 
     def RedrawFigure(self):
         self.ClearFigure()
-        self.DrawFigure()
-        self.canvas.draw()
+        asyncio.create_task(self.DrawAndRefresh())
 
     def DrawHyperparameterControls(self):
         rowIdx = 3

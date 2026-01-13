@@ -37,7 +37,7 @@ class RBFKernel(Kernel):
             **kwargs
         )
 
-    def k(self, X1, X2):
+    async def k(self, X1, X2):
         '''Accepts a matrix pair of X1 and X2 which are NxD arrays.\n
         Returns inner product between each pair of vectors.'''
         X1 = np.array(X1)

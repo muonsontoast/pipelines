@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QGraphicsProxyWidget, QComboBox, QListWidget, QLis
 from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QLineF, QPoint, QPointF
 import time
-import numpy as np
 from ..components.slider import SliderComponent
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
@@ -64,6 +63,7 @@ class Draggable(Entity, QWidget):
         self.main = QWidget()
         self.main.setLayout(QVBoxLayout())
         self.main.layout().setContentsMargins(0, 0, 0, 0)
+        self.main.layout().setSpacing(0)
         self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # Every draggable has a popup box hidden until 'Alt' is pressed
         self.popup = QGraphicsProxyWidget()
@@ -106,7 +106,6 @@ class Draggable(Entity, QWidget):
 
     def __setattr__(self, name, value):
         if name == 'name' and hasattr(self, 'ID'):
-            print(f'Entity {self.ID} name changed to {value}.')
             shared.workspace.assistant.PushMessage(f'Entity {self.ID} name changed to: {value}')
         super().__setattr__(name, value)
 
@@ -243,7 +242,7 @@ class Draggable(Entity, QWidget):
 
     def BaseStyling(self):
         if hasattr(self, 'header'):
-            self.header.setStyleSheet(style.WidgetStyle(color = self.headerColor, borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
+            self.header.setStyleSheet(style.WidgetStyle(color = self.headerColor, fontSize = 14, borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
 
     def SelectedStyling(self):
         pass
@@ -302,7 +301,6 @@ class Draggable(Entity, QWidget):
                 socketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopLeft = 12, borderRadiusBottomLeft = 12))
             else:
                 socketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontSize = 16, fontColor = '#c4c4c4', borderRadiusTopRight = 12, borderRadiusBottomRight = 12))
-            # socketTitle.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4'))
             socketHousing.layout().addWidget(socketTitle)
             setattr(self, f'{name}SocketTitle', socketTitle)
         setattr(self, f'{name}SocketHousing', socketHousing)
@@ -366,8 +364,8 @@ class Draggable(Entity, QWidget):
     def Stop(self):
         pass
 
-    def AddLinkIn(self, ID:int, socket, streamTypeIn:str = ''):
-        '''`socket` the source is connected to and the `ID` of its parent.'''
+    def AddLinkIn(self, ID:int, socket, streamTypeIn:str = '', **kwargs):
+        '''`socket` the source is connected to and the `ID` of its parent.\n'''
         self.linksIn[ID] = dict(link = QGraphicsLineItem(), socket = socket)
         self.settings['linksIn'][ID] = socket
         link = self.linksIn[ID]['link'].line()
@@ -407,6 +405,7 @@ class Draggable(Entity, QWidget):
         self.popupList.addItem(item)
         self.popupList.setItemWidget(item, content)
         self.popupList.sortItems(Qt.AscendingOrder)
+        return True
 
     # this can be overridden to trigger logic that should run when removing incoming links to a block.
     def RemoveLinkIn(self, ID):
@@ -431,4 +430,3 @@ class Draggable(Entity, QWidget):
             if len(self.linksOut.values()) == 0:
                 self.indicatorStyleToUse = self.indicatorStyle
                 self.ToggleStyling(active = self.active)
-                # self.widget.setStyleSheet(self.widgetStyle + self.indicatorStyleToUse)

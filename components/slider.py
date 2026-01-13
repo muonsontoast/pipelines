@@ -145,7 +145,6 @@ class SliderComponent(QWidget):
             self.pv.settings['components'][self.component]['valueType'] = float
         self.pv.settings['components'][self.component]['value'] = self.pv.settings['components'][self.component]['valueType'](v)
         if 'linkedElement' in self.pv.settings:
-            print('About to update it\'s linked element')
             self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
         else:
             if self.pv.type in self.pv.pvBlockTypes:
@@ -175,7 +174,6 @@ class SliderComponent(QWidget):
         newValue = float(self.value.text())
         self.slider.setValue(self.ToSliderValue(newValue))
         if 'linkedElement' in self.pv.settings:
-            print('About to update it\'s linked element')
             self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
         else:
             self.pv.data[0] = self.ToAbsolute(self.slider.value())
@@ -183,7 +181,6 @@ class SliderComponent(QWidget):
     def Reset(self):
         self.slider.setValue(self.ToSliderValue(self.pv.settings['components'][self.component]['default']))
         if 'linkedElement' in self.pv.settings:
-            print('About to update it\'s linked element')
             self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
         else:
             self.pv.data[0] = self.ToAbsolute(self.slider.value())
@@ -254,7 +251,6 @@ class SliderComponent(QWidget):
     
     def SetMaximum(self, override = False):
         '''`override` is a bool. Component should be updated before calling this override. '''
-        print('setting maximum ...')
         if not override:
             self.maximum.clearFocus()
             v = float(self.maximum.text())

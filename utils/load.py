@@ -6,6 +6,7 @@ import multiprocessing
 from pathlib import Path
 import numpy as np
 from .commands import blockTypes, CreateBlock
+from ..blocks.composition.composition import Composition
 from ..lattice.latticeutils import LoadLattice, GetLatticeInfo
 from ..components import BPM, errors, kickangle, link, slider
 from .. import shared
@@ -38,7 +39,8 @@ def LinkBlocks():
     for ID, v in settings.items():
         if v['type'] in blockTypes.keys():
             for sourceID, socket in v['linksIn'].items():
-                shared.entities[ID].AddLinkIn(sourceID, socket)
+                ignoreForFirstTime = isinstance(shared.entities[ID], Composition)
+                shared.entities[ID].AddLinkIn(sourceID, socket, ignoreForFirstTime = ignoreForFirstTime)
             for targetID, socket in v['linksOut'].items():
                 shared.entities[ID].AddLinkOut(targetID, socket)
     UpdateLinkedLatticeElements()
@@ -69,9 +71,10 @@ def Load(path):
                             blockTypes[v['type']], 
                             v['name'], 
                             QPoint(v['position'][0], v['position'][1]), 
-                            ID
+                            ID,
+                            size = v['size'],
                         )
-                        entity.settings['size'] = v['size']
+                        # entity.settings['size'] = v['size']
                         if 'alignment' in v:
                             entity.settings['alignment'] = v['alignment']
                         entity.setFixedSize(*v['size'])
@@ -90,6 +93,7 @@ def Load(path):
                                     v['components'][componentName]['valueType'] = valueTypeLookup[v['components'][componentName]['valueType']]
                             entity.settings['components'] = v['components']
                             if hasattr(entity, 'set'):
+                                print(entity.name)
                                 entity.set.setText(f'{v['components']['value']['value']:.3f}')
                         if 'hyperparameters' in v:
                             for hname, h in v['hyperparameters'].items():

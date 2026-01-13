@@ -18,6 +18,10 @@ from ... import style
 from ... import shared
 from ...utils import cothread
 from ...utils.multiprocessing import PerformAction, TogglePause, StopAction
+from ..composition.composition import Composition
+from ..filters.filter import Filter
+from ..kernels.kernel import Kernel
+from ..pv import PV
 
 class SingleTaskGP(Draggable):
     def __init__(self, parent, proxy, **kwargs):
@@ -80,9 +84,9 @@ class SingleTaskGP(Draggable):
         StopAction(self)
 
     def Push(self):
-        self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = ['PV', 'Corrector', 'SVD', 'Add', 'Subtract'])
-        self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = ['PV', 'BPM', 'Add', 'Subtract', 'Greater Than', 'Less Than', 'Single Control'])
-        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = ['Kernel', 'Linear Kernel', 'Anisotropic Kernel', 'Periodic Kernel', 'RBF Kernel'])
+        self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = [PV])
+        self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
+        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition])
         self.AddSocket('out', 'M')
         self.BaseStyling()
         super().Push()
@@ -167,9 +171,6 @@ class SingleTaskGP(Draggable):
                     objectives = {'f': 'MINIMIZE'},
                 )
                 executor = ThreadPoolExecutor(max_workers = 1)
-                # def dummy(dictIn):
-                #     return {'f': np.random.uniform()}
-                # evaluator = Evaluator(function = PerformActionAndWait)
 
                 async def SetDecisionsAndRecordResponse(dictIn: dict):
                     print('Setting decisions to target values')

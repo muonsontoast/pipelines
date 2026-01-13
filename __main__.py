@@ -22,7 +22,6 @@ from .inspector import Inspector
 from .ui.workspace import Workspace
 from .lattice.latticeglobal import LatticeGlobal
 from .lattice import latticeutils
-from .font import SetFontToBold
 from .utils.entity import Entity
 from .utils import memory
 from .utils.commands import ConnectShortcuts, Save, StopAllActions
@@ -199,7 +198,6 @@ class MainWindow(Entity, QMainWindow):
         quickSettings.layout().setSpacing(1)
         self.physicsEngine = QLabel(f'Physics Engine:\tPyAT {at.__version__} (Python Accelerator Toolbox)')
         self.physicsEngine.setFixedHeight(20)
-        # self.physicsEngine.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         quickSettings.layout().addWidget(self.physicsEngine, 0, 0, 1, 1)
         self.CPU = get_cpu_info()['brand_raw']
         if 'processor' in self.CPU.lower():
@@ -250,33 +248,6 @@ class MainWindow(Entity, QMainWindow):
         bottomPad = QWidget()
         bottomPad.setFixedHeight(screenPad + 5)
         self.page.layout().addWidget(bottomPad, 5, 0, 1, 10)
-        # Status text
-        # self.statusText = QLabel('Status: Idle')
-        # self.page.layout().addWidget(self.statusText, 4, 1)
-        # Progress bar
-        # self.progressBar = QProgressBar()
-        # self.progressBar.setAlignment(Qt.AlignCenter)
-        # self.progressBar.setMinimum(0)
-        # self.progressBar.setMaximum(100)
-        # self.progressBar.setValue(0)
-        # SetFontToBold(self.progressBar)
-        # self.page.layout().addWidget(self.progressBar, 4, 2, 1, 6)
-        # self.buttonHousing = QWidget()
-        # self.buttonHousing.setLayout(QHBoxLayout())
-        # self.buttonHousing.setContentsMargins(0, 0, 10, 0)
-        # Settings button
-        # self.settingsButton = QPushButton('Settings')
-        # self.settingsButton.pressed.connect(lambda state = 'pressed': style.AdjustButtonColor(self.settingsButton, state))
-        # self.settingsButton.released.connect(lambda state = 'released': style.AdjustButtonColor(self.settingsButton, state))
-        # self.settingsButton.setFixedSize(75, 30)
-        # self.toggleDarkModeButton = QPushButton()
-        # self.toggleDarkModeButton.clicked.connect(self.ToggleDisplayMode)
-        # self.toggleDarkModeButton.setText('\u26AA Light Mode')
-        # self.toggleDarkModeButton.setFixedSize(115, 30)
-        # self.buttonHousing.layout().addWidget(self.toggleDarkModeButton)
-        # self.buttonHousing.layout().addWidget(self.settingsButton, alignment = Qt.AlignRight)
-        # self.page.layout().addWidget(self.buttonHousing, 4, 8)
-        # Give the editor focus by default
         shared.activeEditor.setFocus()
 
         # Load in settings if they exist and apply to existing entities, and create new ones if they don't already exist.

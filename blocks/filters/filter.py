@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QMenu
 from PySide6.QtCore import Qt, QPointF
 import numpy as np
+from ..pv import PV
 from ..draggable import Draggable
 from ... import shared
 from ..socket import Socket
@@ -30,7 +31,7 @@ class Filter(Draggable):
     
     def Push(self):
         super().Push()
-        self.AddSocket('in', 'F', acceptableTypes = ['PV', 'Corrector', 'BPM', 'Single Task Gaussian Process', 'Less Than', 'Greater Than', 'Invert', 'Single Control', 'Add', 'Subtract', 'Composition'])
+        self.AddSocket('in', 'F', acceptableTypes = [PV])
         self.AddSocket('out', 'M')
         self.BaseStyling()
 

@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QFrame
-from PySide6.QtCore import Qt, QLineF, QRectF
+from PySide6.QtCore import Qt, QRectF
 import numpy as np
 from .. import style
 from .. import shared
@@ -42,7 +42,12 @@ class SocketInteractable(QFrame):
         self.parent.parent.canDrag = False
         self.parent.parent.hovering = False
         if shared.PVLinkSource is not None and shared.PVLinkSource != self.parent.parent and self.type in ['F', 'MF']:
-            if shared.PVLinkSource.type not in self.acceptableTypes:
+            notAllowed = True
+            for t in self.acceptableTypes:
+                if isinstance(shared.PVLinkSource, t):
+                    notAllowed = False
+                    break
+            if notAllowed:
                 shared.workspace.assistant.PushMessage(f'{shared.PVLinkSource.type} is not a valid input of {self.parent.name} socket. Acceptable types are: {', '.join(self.acceptableTypes)}.', 'Error')
                 return
             if 'free' in shared.PVLinkSource.linksOut.keys():
@@ -52,10 +57,11 @@ class SocketInteractable(QFrame):
                     shared.workspace.assistant.PushMessage(f'Link between {shared.PVLinkSource.name} and {self.parent.parent.name} already exists.', 'Warning')
                     pushMessage = False
                     shared.activeEditor.scene.removeItem(self.parent.parent.linksIn[shared.PVLinkSource.ID]['link'])
-                self.parent.parent.AddLinkIn(shared.PVLinkSource.ID, self.parent.name)
-                shared.PVLinkSource.AddLinkOut(self.parent.parent.ID, self.parent.name)
+                successfulLinkIn = self.parent.parent.AddLinkIn(shared.PVLinkSource.ID, self.parent.name) # returns False if connection fails to complete
+                if successfulLinkIn:
+                    shared.PVLinkSource.AddLinkOut(self.parent.parent.ID, self.parent.name)
                 # Update settings of the two blocks with the block IDs and the F socket the link attaches to.
-                if pushMessage:
+                if pushMessage and successfulLinkIn:
                     shared.workspace.assistant.PushMessage(f'Link created between {shared.PVLinkSource.name} and {self.parent.parent.name}.')
                 if self.parent.parent.type == 'Orbit Response':
                     if self.parent.name == 'corrector':

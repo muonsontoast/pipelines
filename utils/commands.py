@@ -222,7 +222,6 @@ def Delete():
     if len(selectedItems) > 1:
         message = f'Deleted {len(selectedItems)} items.'
     shared.activeEditor.area.selectedItems = []
-    print(f'There are now {len(shared.activeEditor.area.selectedItems)} selected items')
     shared.workspace.assistant.PushMessage(message)
     shared.inspector.mainWindowTitle.setText('')
     shared.window.inspector.Push()

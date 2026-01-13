@@ -96,7 +96,7 @@ class View(Draggable):
         self.widget.layout().addWidget(self.plot)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding)) # for spacing
         self.main.layout().addWidget(self.widget)
-        self.AddSocket('data', 'F', acceptableTypes = ['Single Task GP', 'Orbit Response', 'SVD', 'Add', 'Subtract', 'Corrector'])
+        self.AddSocket('data', 'F', acceptableTypes = [Draggable])
         self.AddSocket('out', 'M')
         super().Push()
         self.ClearCanvas()

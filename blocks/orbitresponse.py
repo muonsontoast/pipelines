@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, QPoint
 import numpy as np
 from copy import deepcopy
 from .draggable import Draggable
+from .pv import PV
 from .. import shared
 from .. import style
 from ..components.slider import SliderComponent
@@ -136,8 +137,8 @@ class OrbitResponse(Draggable):
         self.CreateSection('repeats', 'BPM measurements (0.2s wait)', 19, 0)
         # Some padding
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
-        self.AddSocket('corrector', 'F', 'Correctors', 175, acceptableTypes = ['Corrector'])
-        self.AddSocket('BPM', 'F', 'BPMs', 145, acceptableTypes = ['BPM'])
+        self.AddSocket('corrector', 'F', 'Correctors', 175, acceptableTypes = [PV])
+        self.AddSocket('BPM', 'F', 'BPMs', 145, acceptableTypes = [PV])
         # Add orbit response widget to layout
         self.main.layout().addWidget(self.widget)
         self.AddSocket('out', 'M')
