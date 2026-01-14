@@ -13,7 +13,7 @@ from ..blocks.orbitresponse import OrbitResponse
 from ..blocks.view import View
 from ..blocks.save import Save as SaveBlock
 from ..blocks.composition.add import Add
-from ..blocks.composition.subtract import Subtract
+from ..blocks.composition.multiply import Multiply
 from ..blocks.composition.svd import SVD
 from ..blocks.bayesian.singletaskgp import SingleTaskGP
 # kernels
@@ -42,7 +42,7 @@ blockTypes = {
     'View': View,
     'Save': SaveBlock,
     'Add': Add,
-    'Subtract': Subtract,
+    'Multiply': Multiply,
     'SVD': SVD,
     'Single Task GP': SingleTaskGP,
     'Group': Group,
@@ -160,8 +160,8 @@ def CreateSave(pos: QPoint):
 def CreateAdd(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Add'], 'Add', pos)
 
-def CreateSubtract(pos: QPoint):
-    proxy, widget = CreateBlock(blockTypes['Subtract'], 'Subtract', pos)
+def CreateMultiply(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Multiply'], 'Multiply', pos)
 
 def CreateSVD(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['SVD'], 'SVD', pos)
@@ -261,7 +261,7 @@ commands = {
     'View': dict(shortcut = ['Shift+V'], func = CreateView, args = [GetMousePos]),
     'Save (Block)': dict(shortcut = ['Shift+S'], func = CreateSave, args = [GetMousePos]),
     'Add (Composition)': dict(shortcut = ['Shift+A'], func = CreateAdd, args = [GetMousePos]),
-    'Subtract (Composition)': dict(shortcut = [], func = CreateSubtract, args = [GetMousePos]),
+    'Multiply (Composition)': dict(shortcut = [], func = CreateMultiply, args = [GetMousePos]),
     'SVD (Singular Value Decomposition)': dict(shortcut = [], func = CreateSVD, args = [GetMousePos]),
     'Single Task Gaussian Process': dict(shortcut = ['Shift+G'], func = CreateSingleTaskGP, args = [GetMousePos]),
     'Linear Kernel': dict(shortcut = [], func = CreateLinearKernel, args = [GetMousePos]),

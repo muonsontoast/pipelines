@@ -226,10 +226,10 @@ class SingleTaskGP(Draggable):
         else:
             shared.workspace.assistant.PushMessage(f'Online mode has been disabled because cothread is not available on your machine.', 'Warning')
 
-    def AddLinkIn(self, ID, socket):
+    def AddLinkIn(self, ID, socket, **kwargs):
         if shared.entities[ID].type == 'SVD':
-            return super().AddLinkIn(ID, socket, streamTypeIn = 'evecs')
-        return super().AddLinkIn(ID, socket)
+            return super().AddLinkIn(ID, socket, streamTypeIn = 'evecs', **kwargs)
+        return super().AddLinkIn(ID, socket, **kwargs)
 
     def BaseStyling(self):
         if shared.lightModeOn:

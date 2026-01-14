@@ -9,10 +9,10 @@ from ...utils import commands
 from ...utils.entity import Entity
 from ... import shared
 
-class Add(Composition):
+class Multiply(Composition):
     '''Add composition block.'''
     def __init__(self, parent: Entity, proxy: QGraphicsProxyWidget, **kwargs):
-        super().__init__(parent, proxy, name = kwargs.pop('name', 'Add'), type = 'Add', size = kwargs.pop('size', [250, 100]), **kwargs)
+        super().__init__(parent, proxy, name = kwargs.pop('name', 'Multiply'), type = 'Multiply', size = kwargs.pop('size', [250, 100]), **kwargs)
         self.hasBeenPushed = False
     
     def Push(self):
@@ -40,7 +40,7 @@ class Add(Composition):
             # 1. Kernel
             if numLinksIn == 1:
                 if isinstance(shared.entities[ID], Kernel):
-                    proxy, newAdd = commands.CreateBlock(commands.blockTypes['Add'], self.name, self.proxy.pos(), size = [352, 275])
+                    proxy, newAdd = commands.CreateBlock(commands.blockTypes['Multiply'], self.name, self.proxy.pos(), size = [352, 275])
                     for linkID, link in self.linksIn.items():
                         newAdd.AddLinkIn(linkID, link['socket'], ignoreForFirstTime = True)
                         shared.entities[linkID].AddLinkOut(newAdd.ID, link['socket'])
@@ -66,7 +66,7 @@ class Add(Composition):
             if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
                 self.kernel.RedrawFigure()
         else:
-            commands.CreateBlock(commands.blockTypes['Add'], self.name, self.proxy.pos(), size = [250, 100])
+            commands.CreateBlock(commands.blockTypes['Multiply'], self.name, self.proxy.pos(), size = [250, 100])
             shared.activeEditor.area.selectedItems = [self.proxy,]
             commands.Delete()
     
@@ -81,9 +81,9 @@ class Add(Composition):
         return self.data[1]
     
     async def k(self, X1, X2):
-        result = 0
+        result = 1
         for ID in self.linksIn:
-            result += await shared.entities[ID].k(X1, X2)
+            result *= await shared.entities[ID].k(X1, X2)
         return result
     
     def PushKernel(self):

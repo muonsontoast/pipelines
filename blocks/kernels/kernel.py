@@ -230,7 +230,6 @@ class Kernel(Draggable):
             edit.setAlignment(Qt.AlignCenter)
             edit.returnPressed.connect(lambda name = widgetName, e = edit: self.ChangeEditValue(name, e))
             if v['type'] == 'vec':
-                # context = QPushButton('\u26ED')
                 context = QPushButton('+')
                 setattr(context, 'draggable', self)
                 setattr(context, 'correspondingHyperparameter', k)
@@ -280,6 +279,10 @@ class Kernel(Draggable):
         widget.layout().insertWidget(editIdx, newEdit, alignment = Qt.AlignRight)
         self.settings['hyperparameters'][name.split('Widget')[0]]['value'] = float(edit.text())
         self.RedrawFigure()
+        # trigger updates in any downstream blocks attached to this that display visual information.
+        for ID in self.linksOut:
+            if callable(getattr(shared.entities[ID], 'UpdateFigure', None)):
+                shared.entities[ID].UpdateFigure()
 
     def mouseReleaseEvent(self, event):
         # Store temporary values since Draggable overwrites them in its mouseReleaseEvent override.
