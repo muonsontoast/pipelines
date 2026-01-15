@@ -22,11 +22,9 @@ class SingleTaskGPAction(Action):
         print('Checking all decision variables attached to this GP')
         try:
             for d in self.decisions:
-                print(f'Checking {d.name}')
                 await aioca.caget(d.name + ':I', timeout = self.timeout)
             print('All online GP inputs exist on the machine!')
         except Exception as e:
-            print('Some decision vars were not valid')
             shared.workspace.assistant.PushMessage(f'{e}.', 'Error')
             return False
         

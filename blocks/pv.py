@@ -51,6 +51,7 @@ class PV(Draggable):
         }
 
         self.PVMatch = False
+        self.checkStateOfDownstreamBlocks = False
         self.Push()
 
         try:
@@ -170,6 +171,7 @@ class PV(Draggable):
                 if PVName != lastMatch:
                     self.PVMatch = True
                     shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
+                    self.checkStateOfDownstreamBlocks = True
                     self.get.setText(f'{self.data[1]:.3f}')
                     self.set.setText(f'{self.data[1]:.3f}')
                     self.data[0] = self.data[1] # set the READ and SET values to be the same if the new PV name is valid
@@ -195,9 +197,11 @@ class PV(Draggable):
                             pass
             lastMatch = PVName
             # Recheck online state of any downstream blocks
-            for ID in self.linksOut:
-                if type(ID) == int:
-                    shared.entities[ID].CheckState()
+            if self.checkStateOfDownstreamBlocks:
+                for ID in self.linksOut:
+                    if type(ID) == int:
+                        shared.entities[ID].CheckState()
+                self.checkStateOfDownstreamBlocks = False
             await asyncio.sleep(.1)
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
