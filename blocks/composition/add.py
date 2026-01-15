@@ -17,6 +17,7 @@ class Add(Composition):
     def __init__(self, parent: Entity, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(parent, proxy, name = kwargs.pop('name', 'Add'), type = 'Add', size = kwargs.pop('size', [250, 100]), **kwargs)
         self.hasBeenPushed = False
+        self.timerRunning = False
     
     def Push(self):
         super().Push()
@@ -60,7 +61,12 @@ class Add(Composition):
                     self.edit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
                     self.edit.returnPressed.connect(self.ChangeEdit)
                     self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
-                    asyncio.create_task(self.Start())
+                    self.timerRunning = True
+                    def FetchPVValues():
+                        asyncio.create_task(self.Start())
+                        if self.timerRunning:
+                            QTimer.singleShot(1000, FetchPVValues())
+                    FetchPVValues()
 
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
@@ -80,6 +86,7 @@ class Add(Composition):
             if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
                 self.kernel.RedrawFigure()
         else:
+            self.timerRunning = False
             commands.CreateBlock(commands.blockTypes['Add'], self.name, self.proxy.pos(), size = [250, 100])
             shared.activeEditor.area.selectedItems = [self.proxy,]
             commands.Delete()
