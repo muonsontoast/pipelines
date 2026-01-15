@@ -6,6 +6,7 @@ import asyncio
 from .composition import Composition
 from ..draggable import Draggable
 from ..kernels.kernel import Kernel
+from ..pv import PV
 from ...utils import commands
 from ...utils.entity import Entity
 from ... import shared
@@ -50,7 +51,7 @@ class Add(Composition):
                     for linkID, link in self.linksOut.items():
                         newAdd.AddLinkOut(linkID, link['socket'])
                         shared.entities[linkID].AddLinkIn(newAdd.ID, link['socket'])
-                else: # PV
+                elif isinstance(shared.entities[ID], PV):
                     deleteAndRedraw = False
                     # add a line edit element
                     self.edit = QLineEdit()
@@ -64,16 +65,13 @@ class Add(Composition):
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
                     QTimer.singleShot(0, commands.Delete)
-
-        if not self.hasBeenPushed:
-            if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
-                self.PushKernel()
-        else:
-            if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
-                self.UpdateFigure()
+            else:
+                if isinstance(shared.entities[ID], Kernel):
+                    self.PushKernel() if not self.hasBeenPushed else self.UpdateFigure()
+                if isinstance(shared.entities[ID], PV):
+                    asyncio.create_task(self.Start())
 
         self.hasBeenPushed = True
-
         return successfulConnection
     
     def RemoveLinkIn(self, ID):
