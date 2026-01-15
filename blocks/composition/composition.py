@@ -24,6 +24,9 @@ class Composition(Draggable):
         self.AddSocket('out', 'M')
         self.ToggleStyling(active = False)
 
+    def CheckState(self):
+        pass
+
     def BaseStyling(self):
         super().BaseStyling()
         if shared.lightModeOn:

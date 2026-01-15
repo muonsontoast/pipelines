@@ -16,7 +16,10 @@ from .. import style
 
 class Save(Draggable):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
-        super().__init__(proxy, name = kwargs.pop('name', 'Save'), type = 'Save', size = kwargs.pop('size', [600, 300]), **kwargs)
+        super().__init__(
+            proxy, name = kwargs.pop('name', 'Save \u26A0'), type = 'Save', size = kwargs.pop('size', [600, 300]),
+            headerColor = '#5c5c5c', **kwargs,
+            )
         self.parent = parent
         self.rate = kwargs.get('rate', 4) # save rate in Hz
         self.timeBetweenSaves = 1 / self.rate # in seconds
@@ -58,24 +61,13 @@ class Save(Draggable):
         self.firstPass = True
 
     def Push(self):
-        self.main = QWidget()
-        self.main.setLayout(QVBoxLayout())
-        self.main.layout().setContentsMargins(0, 0, 0, 0)
+        super().Push()
         self.widget = QWidget()
         self.widget.setFocusPolicy(Qt.StrongFocus)
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.setLayout(QVBoxLayout())
         self.widget.layout().setContentsMargins(0, 0, 0, 0)
         self.widget.layout().setSpacing(0)
-        # Header
-        header = QWidget()
-        header.setLayout(QHBoxLayout())
-        header.setStyleSheet(style.WidgetStyle(color = "#828282", borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
-        header.setFixedHeight(40)
-        header.layout().setContentsMargins(15, 0, 15, 0)
-        self.title = QLabel(f'{self.settings['name']} (Disconnected)')
-        header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
-        self.widget.layout().addWidget(header)
         # Save path
         self.saveWidget = QWidget()
         self.saveWidget.setLayout(QVBoxLayout())
@@ -111,8 +103,7 @@ class Save(Draggable):
         self.widget.layout().addWidget(pathsWidget)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.main.layout().addWidget(self.widget)
-        self.AddSocket('data', 'F', acceptableTypes = ['PV', 'Corrector', 'BPM', 'Single Task GP', 'Orbit Response', 'View'])
-        super().Push()
+        self.AddSocket('data', 'F', acceptableTypes = [Draggable])
 
     def GetIndexFromString(self, pattern):
         matches = self.paths.model().match(
@@ -231,12 +222,15 @@ class Save(Draggable):
         timestamp = datetime.now() if timestamp is None else timestamp
         df.to_parquet(os.path.join(self.path, f'{self.entityNameIn} ({timestamp.strftime('%Y-%m-%d')} at {timestamp.strftime('%H-%M-%S')}).parquet'), engine = 'pyarrow', index = True)
 
-    def AddLinkIn(self, ID, socket):
+    def CheckState(self):
+        pass
+
+    def AddLinkIn(self, ID, socket, **kwargs):
         # Allow only one block to connect to a view block at any one time.
         if self.linksIn:
             super().RemoveLinkIn(next(iter(self.linksIn)))
-        super().AddLinkIn(ID, socket)
-        self.title.setText(f'{self.settings['name']} (Connected)')
+        super().AddLinkIn(ID, socket, **kwargs)
+        self.title.setText(f'{self.settings['name']}')
         entity = shared.entities[next(iter(self.linksIn))]
         if len(entity.data) > 0:
             self.firstPass = True
@@ -244,12 +238,9 @@ class Save(Draggable):
         else:
             shared.workspace.assistant.PushMessage(f'{entity.name} has been attached to {self.name} but it isn\'t holding any data', 'Warning')
 
-    def RemoveLinkIn(self, ID):
-        super().RemoveLinkIn(ID)
-        self.title.setText(f'{self.settings['name']} (Disconnected)')
-
     def BaseStyling(self):
-        self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12))
+        super().BaseStyling()
+        self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e'))
         self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
         self.savePath.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', paddingLeft = 5))
         self.paths.setStyleSheet(style.ListView(color = '#2e2e2e', hoverColor = '#363636', fontColor = '#c4c4c4', spacing = 5))

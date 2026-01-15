@@ -35,6 +35,9 @@ class Filter(Draggable):
         self.AddSocket('out', 'M')
         self.BaseStyling()
 
+    def CheckState(self):
+        pass
+
     def BaseStyling(self):
         if shared.lightModeOn:
             pass

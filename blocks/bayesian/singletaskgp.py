@@ -30,13 +30,14 @@ class SingleTaskGP(Draggable):
             components = {
                 'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float),
             },
-            headerColor = '#B54428',
+            headerColor = "#C1492B",
             **kwargs
         )
         self.timeBetweenPolls = 1000
         self.runningCircle = RunningCircle()
         self.offlineAction = OfflineAction(self)
         self.onlineAction = OnlineAction(self)
+        self.online = False
         # Main widget
         self.widget = QWidget()
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -228,8 +229,10 @@ class SingleTaskGP(Draggable):
 
     def AddLinkIn(self, ID, socket, **kwargs):
         if shared.entities[ID].type == 'SVD':
-            return super().AddLinkIn(ID, socket, streamTypeIn = 'evecs', **kwargs)
-        return super().AddLinkIn(ID, socket, **kwargs)
+            super().AddLinkIn(ID, socket, streamTypeIn = 'evecs', **kwargs)
+        else:
+            super().AddLinkIn(ID, socket, **kwargs)
+        self.CheckState()
 
     def BaseStyling(self):
         if shared.lightModeOn:

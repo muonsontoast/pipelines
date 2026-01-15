@@ -1,18 +1,14 @@
 from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QSpacerItem
-from PySide6.QtCore import Qt
-from multiprocessing.shared_memory import SharedMemory
+from PySide6.QtCore import Qt, QTimer
 import numpy as np
 import aioca
 import asyncio
-from qasync import QEventLoop
 from .draggable import Draggable
 from ..indicator import Indicator
 from ..clickablewidget import ClickableWidget
 from .. import shared
 from ..components import slider
 from ..components import link
-from ..components import kickangle
-from ..components import errors
 from .socket import Socket
 from .. import style
 
@@ -198,6 +194,10 @@ class PV(Draggable):
                         except:
                             pass
             lastMatch = PVName
+            # Recheck online state of any downstream blocks
+            for ID in self.linksOut:
+                if type(ID) == int:
+                    shared.entities[ID].CheckState()
             await asyncio.sleep(.1)
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):

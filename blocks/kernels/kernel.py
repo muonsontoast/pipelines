@@ -163,6 +163,9 @@ class Kernel(Draggable):
         self.RedrawFigure()
         self.ToggleStyling(active = False)
 
+    def CheckState(self):
+        pass
+
     def ClearFigure(self):
         self.ax.clear()
         self.ax.set_aspect('equal')
@@ -304,7 +307,6 @@ class Kernel(Draggable):
             pass
         else:
             self.widget.setStyleSheet(self.widgetStyle)
-            self.header.setStyleSheet(style.WidgetStyle(color = 'none'))
             self.title.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
             self.outSocket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
 
@@ -313,7 +315,6 @@ class Kernel(Draggable):
             pass
         else:
             self.widget.setStyleSheet(self.widgetSelectedStyle)
-            self.header.setStyleSheet(style.WidgetStyle(color = 'none'))
             self.title.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
             self.outSocket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
 

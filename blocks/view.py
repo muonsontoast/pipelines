@@ -265,6 +265,9 @@ class View(Draggable):
             state = not spine.get_visible() if not override else override
             spine.set_visible(state)
 
+    def CheckState(self):
+        pass
+
     def AddLinkIn(self, ID, socket):
         # Allow only one block to connect to a view block at any one time.
         if self.linksIn:

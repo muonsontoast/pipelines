@@ -242,7 +242,7 @@ class Draggable(Entity, QWidget):
 
     def BaseStyling(self):
         if hasattr(self, 'header'):
-            self.header.setStyleSheet(style.WidgetStyle(color = self.headerColor, fontSize = 14, borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
+            self.header.setStyleSheet(style.WidgetStyle(color = self.headerColor, fontSize = 16, borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
 
     def SelectedStyling(self):
         pass
@@ -252,6 +252,18 @@ class Draggable(Entity, QWidget):
 
     def SetRect(self):
         shared.PVs[self.ID]['rect'] = MapDraggableRectToScene(self)
+
+    def CheckState(self):
+        '''Checks whether the block will run in online or offline (physics engine) mode.'''
+        for ID in self.linksIn:
+            if hasattr(shared.entities[ID], 'PVMatch') and not shared.entities[ID].PVMatch:
+                self.online = False
+                print(f'{self.name} checked it\'s state and is now set to Offline.')
+                return
+        self.online = True
+        print(f'{self.name} checked it\'s state and is now set to Online.')
+        for ID in self.linksOut:
+            shared.entities[ID].CheckState() # propagate the CheckState forwards.
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()
