@@ -372,7 +372,7 @@ class Draggable(Entity, QWidget):
         self.header.setFixedHeight(40)
         self.header.setLayout(QHBoxLayout())
         self.header.layout().setContentsMargins(15, 0, 5, 0)
-        self.title = QLabel(f'{self.settings['name']} / ID: {self.ID}', alignment = Qt.AlignCenter)
+        self.title = QLabel(f'{self.settings['name']}', alignment = Qt.AlignCenter)
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         self.main.layout().addWidget(self.header, alignment = Qt.AlignTop)
 

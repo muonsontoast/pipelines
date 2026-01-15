@@ -19,10 +19,8 @@ class LessThan(Filter):
         )
 
     def Start(self):
-        print('Starting!')
         if len(self.linksIn) > 0:
             ID = next(iter(self.linksIn))
-            print('My value is', np.maximum(shared.entities[ID].data[1], self.settings['threshold']))
             return np.minimum(shared.entities[ID].data[1], self.settings['threshold'])
         
     def Push(self):
