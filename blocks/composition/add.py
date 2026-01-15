@@ -65,7 +65,7 @@ class Add(Composition):
                     def FetchPVValues():
                         asyncio.create_task(self.Start())
                         if self.timerRunning:
-                            QTimer.singleShot(1000, FetchPVValues())
+                            QTimer.singleShot(100, FetchPVValues())
                     FetchPVValues()
 
                 if deleteAndRedraw:
