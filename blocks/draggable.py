@@ -258,13 +258,18 @@ class Draggable(Entity, QWidget):
         print(f'>> CHECKING STATE OF {self.name.capitalize()}')
         online = True
         for ID in self.linksIn:
-            if hasattr(shared.entities[ID], 'PVMatch') and not shared.entities[ID].PVMatch:
-                online = False
-                print(f'{self.name} checked it\'s state and is now set to Offline.')
+            if hasattr(shared.entities[ID], 'PVMatch'):
+                if not shared.entities[ID].PVMatch:
+                    online = False
+            else: online = False
         self.online = online
-        print(f'{self.name} checked it\'s state and is now set to Online.')
+        if online:
+            print(f'{self.name} checked it\'s state and is now set to Online.')
+        else:
+            print(f'{self.name} checked it\'s state and is now set to Offline.')
         for ID in self.linksOut:
             if type(ID) == int:
+                print(f'Checking state of {shared.entities[ID].name} from {self.name}')
                 shared.entities[ID].CheckState() # propagate the CheckState forwards.
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):

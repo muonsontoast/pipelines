@@ -50,7 +50,7 @@ class SocketInteractable(QFrame):
             if notAllowed:
                 shared.workspace.assistant.PushMessage(f'{shared.PVLinkSource.type} is not a valid input of {self.parent.name} socket. Acceptable types are: {', '.join(self.acceptableTypes)}.', 'Error')
                 return
-            if 'free' in shared.PVLinkSource.linksOut.keys():
+            if 'free' in shared.PVLinkSource.linksOut:
                 shared.PVLinkSource.linksOut.pop('free')
                 pushMessage = True
                 if shared.PVLinkSource.ID in self.parent.parent.linksIn.keys():
@@ -74,6 +74,7 @@ class SocketInteractable(QFrame):
                     self.parent.parent.firstDraw = True # allow static elements on the canvas to be redrawn
                     self.parent.parent.DrawCanvas(next(iter(self.parent.parent.streamTypesIn.values())))
                 shared.PVLinkSource = None
+                print(f'{self.parent.parent.name} linksIn looks like: {self.parent.parent.linksIn}')
 
     def leaveEvent(self, event):
         self.entered = False

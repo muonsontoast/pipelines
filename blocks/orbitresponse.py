@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QLabel, QMenu, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QMenu, QSpacerItem, QGraphicsProxyWidget, QSizePolicy, QPushButton, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt, QPoint
 import numpy as np
 from copy import deepcopy

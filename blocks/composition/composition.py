@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QVBoxLayout, QSizePolicy, QSpacerItem
+from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QVBoxLayout, QSizePolicy
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
 from ... import style
@@ -23,6 +23,23 @@ class Composition(Draggable):
         self.main.layout().addWidget(self.widget)
         self.AddSocket('out', 'M')
         self.ToggleStyling(active = False)
+
+    def ChangeEdit(self):
+        try:
+            value = float(self.edit.text())
+        except:
+            return
+        editIdx = self.main.layout().indexOf(self.edit)
+        self.main.layout().removeWidget(self.edit)
+        self.edit.deleteLater()
+        newEdit = QLineEdit(f'{value:.3f}')
+        newEdit.setFixedSize(100, 40)
+        newEdit.setAlignment(Qt.AlignCenter)
+        newEdit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
+        newEdit.returnPressed.connect(self.ChangeEdit)
+        self.edit = newEdit
+        self.widget.layout().insertWidget(editIdx, newEdit, alignment = Qt.AlignCenter)
+        self.settings['threshold'] = value
 
     def CheckState(self):
         pass

@@ -1,13 +1,15 @@
-from PySide6.QtWidgets import QGraphicsProxyWidget
-from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QGraphicsProxyWidget, QLineEdit
+from PySide6.QtCore import Qt, QTimer
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
+import asyncio
 from .composition import Composition
 from ..draggable import Draggable
 from ..kernels.kernel import Kernel
 from ...utils import commands
 from ...utils.entity import Entity
 from ... import shared
+from ... import style
 
 class Add(Composition):
     '''Add composition block.'''
@@ -39,6 +41,7 @@ class Add(Composition):
             numLinksIn = len(self.linksIn)
             # 1. Kernel
             if numLinksIn == 1:
+                deleteAndRedraw = True
                 if isinstance(shared.entities[ID], Kernel):
                     proxy, newAdd = commands.CreateBlock(commands.blockTypes['Add'], self.name, self.proxy.pos(), size = [352, 275])
                     for linkID, link in self.linksIn.items():
@@ -47,8 +50,20 @@ class Add(Composition):
                     for linkID, link in self.linksOut.items():
                         newAdd.AddLinkOut(linkID, link['socket'])
                         shared.entities[linkID].AddLinkIn(newAdd.ID, link['socket'])
-                shared.activeEditor.area.selectedItems = [self.proxy,]
-                QTimer.singleShot(0, commands.Delete)
+                else: # PV
+                    deleteAndRedraw = False
+                    # add a line edit element
+                    self.edit = QLineEdit()
+                    self.edit.setFixedSize(100, 40)
+                    self.edit.setAlignment(Qt.AlignCenter)
+                    self.edit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
+                    self.edit.returnPressed.connect(self.ChangeEdit)
+                    self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
+                    asyncio.create_task(self.Start())
+
+                if deleteAndRedraw:
+                    shared.activeEditor.area.selectedItems = [self.proxy,]
+                    QTimer.singleShot(0, commands.Delete)
 
         if not self.hasBeenPushed:
             if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
@@ -71,14 +86,12 @@ class Add(Composition):
             commands.Delete()
     
     async def Start(self):
-        pass
-    
-    async def PVStart(self):
         result = 0
         for ID in self.linksIn:
             result += await shared.entities[ID].Start()
-        self.data[1] = result
-        return self.data[1]
+        self.data = result
+        self.edit.setText(f'{self.data:.3f}')
+        return self.data
     
     async def k(self, X1, X2):
         result = 0
@@ -97,6 +110,22 @@ class Add(Composition):
         self.kernel.k = self.k
         self.widget.layout().addWidget(self.kernel.canvas)
         self.ToggleStyling(active = False)
+
+    def ChangeEdit(self):
+        try:
+            value = float(self.edit.text())
+        except:
+            return
+        editIdx = self.widget.layout().indexOf(self.edit)
+        self.widget.layout().removeWidget(self.edit)
+        self.edit.deleteLater()
+        newEdit = QLineEdit(f'{value:.3f}')
+        newEdit.setFixedSize(100, 40)
+        newEdit.setAlignment(Qt.AlignCenter)
+        newEdit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
+        newEdit.returnPressed.connect(self.ChangeEdit)
+        self.edit = newEdit
+        self.widget.layout().insertWidget(editIdx, newEdit, alignment = Qt.AlignCenter)
 
     def UpdateFigure(self):
         # Update the kernel function to include new kernel & redraw
