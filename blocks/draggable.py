@@ -255,15 +255,17 @@ class Draggable(Entity, QWidget):
 
     def CheckState(self):
         '''Checks whether the block will run in online or offline (physics engine) mode.'''
+        print(f'>> CHECKING STATE OF {self.name.capitalize()}')
+        online = True
         for ID in self.linksIn:
             if hasattr(shared.entities[ID], 'PVMatch') and not shared.entities[ID].PVMatch:
-                self.online = False
+                online = False
                 print(f'{self.name} checked it\'s state and is now set to Offline.')
-                return
-        self.online = True
+        self.online = online
         print(f'{self.name} checked it\'s state and is now set to Online.')
         for ID in self.linksOut:
-            shared.entities[ID].CheckState() # propagate the CheckState forwards.
+            if type(ID) == int:
+                shared.entities[ID].CheckState() # propagate the CheckState forwards.
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
         housing = QWidget()
