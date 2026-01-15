@@ -69,7 +69,8 @@ class Add(Composition):
             if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
                 self.PushKernel()
         else:
-            self.UpdateFigure()
+            if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
+                self.UpdateFigure()
 
         self.hasBeenPushed = True
 
