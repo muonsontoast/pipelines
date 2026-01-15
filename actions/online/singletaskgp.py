@@ -19,11 +19,9 @@ class SingleTaskGPAction(Action):
             shared.workspace.assistant.PushMessage('Single Task GP is missing objectives.', 'Error')
             return False
         # Attempt a caget on the decision variables to see if they are valid
-        print('Checking all decision variables attached to this GP')
         try:
             for d in self.decisions:
                 await aioca.caget(d.name + ':I', timeout = self.timeout)
-            print('All online GP inputs exist on the machine!')
         except Exception as e:
             shared.workspace.assistant.PushMessage(f'{e}.', 'Error')
             return False

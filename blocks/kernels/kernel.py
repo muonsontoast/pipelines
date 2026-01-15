@@ -160,7 +160,7 @@ class Kernel(Draggable):
         self.kernelMenu.Hide()
         self.kernelMenuIsOpen = False
 
-        self.RedrawFigure()
+        self.UpdateFigure()
         self.ToggleStyling(active = False)
 
     def CheckState(self):
@@ -188,7 +188,7 @@ class Kernel(Draggable):
         await self.DrawFigure()
         self.canvas.draw()
 
-    def RedrawFigure(self):
+    def UpdateFigure(self):
         self.ClearFigure()
         asyncio.create_task(self.DrawAndRefresh())
 
@@ -281,7 +281,7 @@ class Kernel(Draggable):
         newEdit.returnPressed.connect(lambda name = name, e = newEdit: self.ChangeEditValue(name, e))
         widget.layout().insertWidget(editIdx, newEdit, alignment = Qt.AlignRight)
         self.settings['hyperparameters'][name.split('Widget')[0]]['value'] = float(edit.text())
-        self.RedrawFigure()
+        self.UpdateFigure()
         # trigger updates in any downstream blocks attached to this that display visual information.
         for ID in self.linksOut:
             if callable(getattr(shared.entities[ID], 'UpdateFigure', None)):

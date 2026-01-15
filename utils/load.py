@@ -25,6 +25,18 @@ valueTypeLookup = {
     'float': float,
 }
 
+def UpdateHyperparameters():
+    for entity in shared.entities.values():
+        if 'hyperparameters' in entity.settings:
+            for hname, h in entity.settings['hyperparameters'].items():
+                if h['type'] == 'vec':
+                    entity.settings['hyperparameters'][hname]['value'] = np.array(h['value']) if len(h['value']) > 0 else np.nan
+                    editName = f'{hname}Edit'
+                    if hasattr(entity, editName):
+                        getattr(entity, editName).setText(f'{entity.settings['hyperparameters'][hname]['value'][0]:.1f}')
+            entity.UpdateFigure()
+    print('Hyperparameters (if any) updated.')
+
 def UpdateLinkedLatticeElements():
     for entity in shared.entities.values():
         if 'components' in entity.settings:
@@ -32,12 +44,13 @@ def UpdateLinkedLatticeElements():
                 if 'type' in entity.settings['components']['value']:
                     if entity.settings['components']['value']['type'] == slider.SliderComponent:
                         entity.UpdateLinkedElement(override = entity.settings['components']['value']['value'])
+    UpdateHyperparameters()
 
 # Have to loop over entities again as they won't all be added before the prior loop.
 def LinkBlocks():
     global settings
     for ID, v in settings.items():
-        if v['type'] in blockTypes.keys():
+        if v['type'] in blockTypes:
             for sourceID, socket in v['linksIn'].items():
                 ignoreForFirstTime = isinstance(shared.entities[ID], Composition)
                 shared.entities[ID].AddLinkIn(sourceID, socket, ignoreForFirstTime = ignoreForFirstTime)
@@ -95,15 +108,9 @@ def Load(path):
                                     v['components'][componentName]['valueType'] = valueTypeLookup[v['components'][componentName]['valueType']]
                             entity.settings['components'] = v['components']
                             if hasattr(entity, 'set'):
-                                print(entity.name)
                                 entity.set.setText(f'{v['components']['value']['value']:.3f}')
                         if 'hyperparameters' in v:
-                            for hname, h in v['hyperparameters'].items():
-                                if h['type'] == 'vec':
-                                    v['hyperparameters'][hname]['value'] = np.array(h['value']) if h['value'] != [] else np.nan
-                                    getattr(entity, f'{hname}Edit').setText(f'{v['hyperparameters'][hname]['value'][0]:.1f}')
                             entity.settings['hyperparameters'] = v['hyperparameters']
-                            entity.RedrawFigure()
                 LinkBlocks()
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')
                 shared.workspace.assistant.PushMessage(f'Loaded saved session from {path}')

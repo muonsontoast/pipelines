@@ -128,8 +128,6 @@ class Draggable(Entity, QWidget):
     
     def GetType(self, ID):
         '''Drills down into tree to find leaf node type.'''
-        print('ID:', ID)
-        print(shared.entities[ID])
         if len(shared.entities[ID].linksIn) > 0:
             return self.GetType(next(iter(shared.entities[ID].linksIn)))
         fundamentalType = type(shared.entities[ID])
@@ -265,7 +263,6 @@ class Draggable(Entity, QWidget):
 
     def CheckState(self):
         '''Checks whether the block will run in online or offline (physics engine) mode.'''
-        print(f'>> CHECKING STATE OF {self.name.capitalize()}')
         online = True
         for ID in self.linksIn:
             if hasattr(shared.entities[ID], 'PVMatch'):
@@ -273,13 +270,8 @@ class Draggable(Entity, QWidget):
                     online = False
             else: online = False
         self.online = online
-        if online:
-            print(f'{self.name} checked it\'s state and is now set to Online.')
-        else:
-            print(f'{self.name} checked it\'s state and is now set to Offline.')
         for ID in self.linksOut:
             if type(ID) == int:
-                print(f'Checking state of {shared.entities[ID].name} from {self.name}')
                 shared.entities[ID].CheckState() # propagate the CheckState forwards.
 
     def CreateSection(self, name, title, sliderSteps, floatdp, disableValue = False):
@@ -380,7 +372,7 @@ class Draggable(Entity, QWidget):
         self.header.setFixedHeight(40)
         self.header.setLayout(QHBoxLayout())
         self.header.layout().setContentsMargins(15, 0, 5, 0)
-        self.title = QLabel(f'{self.settings['name']}', alignment = Qt.AlignCenter)
+        self.title = QLabel(f'{self.settings['name']} / ID: {self.ID}', alignment = Qt.AlignCenter)
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         self.main.layout().addWidget(self.header, alignment = Qt.AlignTop)
 

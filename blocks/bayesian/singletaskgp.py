@@ -93,12 +93,10 @@ class SingleTaskGP(Draggable):
         super().Push()
 
     async def Start(self, **kwargs):
-        print('Starting up single task GP')
         steps = kwargs.get('steps', 3)
         initialSamples = kwargs.get('initialSamples', 1)
         numParticles = kwargs.get('numParticles', 100000)
         self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
-        print('This GP has these decision variables:', self.decisions)
         self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
         # this will be deprecated soon
         independents = [
@@ -174,7 +172,6 @@ class SingleTaskGP(Draggable):
                 executor = ThreadPoolExecutor(max_workers = 1)
 
                 async def SetDecisionsAndRecordResponse(dictIn: dict):
-                    print('Setting decisions to target values')
                     for d in self.decisions:
                         if dictIn[d.name] < await aioca.caget(d.name + ':I'):
                             await aioca.caput(d.name + ':SETI', dictIn[d.name] - .2)

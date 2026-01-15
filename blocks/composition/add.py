@@ -25,42 +25,20 @@ class Add(Composition):
         self.AddSocket('in', 'F', acceptableTypes = [Draggable])
 
     def AddLinkIn(self, ID, socket, ignoreForFirstTime = False, **kwargs):
-        print('adding link up here to', self.name, 'with ID', self.ID, 'from', shared.entities[ID].name)
         newFundamentalType = self.GetType(ID)
         for linkID in self.linksIn:
             existingFundamentalType = self.GetType(linkID)
             if linkID != ID:
-                print('existing type:', existingFundamentalType)
-                print('new type:', newFundamentalType)
-                if existingFundamentalType == newFundamentalType or (existingFundamentalType in [Filter, Composition] and newFundamentalType in [Filter, Composition]):
-                    print('Good!')
+                if existingFundamentalType == newFundamentalType:
                     break
-                # check if both inputs are identical types - PVs
-                # if newType == existingType:
-                #     break
-                # treat filter and composition of blocks like blocks
-                # else:
-                #     existingBase = shared.entities[linkID].__class__.__base__
-                #     newBase = shared.entities[ID].__class__.__base__
-                #     if existingBase in [Filter, Composition] and newBase in [Filter, Composition]:
-                #         existingType, newType = self.GetType(linkID), self.GetType(ID)
-                #         if existingType == newType:
-                #             break
-                #         # new empty
-                #         elif existingType in [PV, Kernel] and newType not in [PV, Kernel]:
-                #             break
-                #         # existing empty
-                #         elif newType in [PV, Kernel] and existingType not in [PV, Kernel]:
-                #             break
-                #         # both empty
-                #         elif existingType not in [PV, Kernel] and newType not in [PV, Kernel]:
-                #             break
+                elif existingFundamentalType in [PV, Kernel] and newFundamentalType in [Filter, Composition]:
+                    break
+                elif newFundamentalType in [PV, Kernel] and existingFundamentalType in [Filter, Composition]:
+                    break
                 shared.workspace.assistant.PushMessage('Add operation must be performed on blocks of the same type.', 'Warning')
                 return False
 
         successfulConnection = super().AddLinkIn(ID, socket)
-        print(f'succes?', successfulConnection)
-        print('********')
 
         # Modify the widget based on the input type - only if this is the first of its kind.
         if successfulConnection: # and not ignoreForFirstTime:
@@ -117,7 +95,7 @@ class Add(Composition):
             if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
                 self.kernel.RedrawFigure()
         else:
-            self.timerRunning = False
+            self.settings.pop('hyperparameters')
             commands.CreateBlock(commands.blockTypes['Add'], self.name, self.proxy.pos(), size = [250, 100])
             shared.activeEditor.area.selectedItems = [self.proxy,]
             commands.Delete()
@@ -141,6 +119,7 @@ class Add(Composition):
         for ID in self.linksIn:
             for nm, val in shared.entities[ID].settings['hyperparameters'].items():
                 hyperparameters[f'{nm} ({shared.entities[ID].name})'] = val
+        self.settings['hyperparameters'] = hyperparameters
         self.kernel = Kernel(self, self.proxy, hyperparameters = hyperparameters)
         self.kernel.Push()
         self.kernel.k = self.k
@@ -166,7 +145,7 @@ class Add(Composition):
     def UpdateFigure(self):
         # Update the kernel function to include new kernel & redraw
         self.kernel.k = self.k
-        self.kernel.RedrawFigure()
+        self.kernel.UpdateFigure()
         # trigger updates in any downstream blocks attached to this that display visual information.
         for ID in self.linksOut:
             if callable(getattr(shared.entities[ID], 'UpdateFigure', None)):
