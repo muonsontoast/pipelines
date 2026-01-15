@@ -74,7 +74,6 @@ class SocketInteractable(QFrame):
                     self.parent.parent.firstDraw = True # allow static elements on the canvas to be redrawn
                     self.parent.parent.DrawCanvas(next(iter(self.parent.parent.streamTypesIn.values())))
                 shared.PVLinkSource = None
-                print(f'{self.parent.parent.name} linksIn looks like: {self.parent.parent.linksIn}')
 
     def leaveEvent(self, event):
         self.entered = False

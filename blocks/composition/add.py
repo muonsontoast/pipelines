@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, QTimer
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
 import asyncio
+import numpy as np
 from .composition import Composition
 from ..draggable import Draggable
 from ..kernels.kernel import Kernel
@@ -17,7 +18,6 @@ class Add(Composition):
     def __init__(self, parent: Entity, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(parent, proxy, name = kwargs.pop('name', 'Add'), type = 'Add', size = kwargs.pop('size', [250, 100]), **kwargs)
         self.hasBeenPushed = False
-        self.timerRunning = False
     
     def Push(self):
         super().Push()
@@ -60,22 +60,23 @@ class Add(Composition):
                     self.edit.setAlignment(Qt.AlignCenter)
                     self.edit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
                     self.edit.returnPressed.connect(self.ChangeEdit)
+                    self.edit.setReadOnly(True)
                     self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
                     self.timerRunning = True
-                    def FetchPVValues():
-                        asyncio.create_task(self.Start())
-                        if self.timerRunning:
-                            QTimer.singleShot(100, FetchPVValues())
-                    FetchPVValues()
-
+                    async def FetchValues():
+                        # this QTimer can run after deleting last PV so explicitly check if PVs are still linked.
+                        if len(self.linksIn) > 0:
+                            result = await self.Start()
+                            result = 'N/A' if np.isnan(result) else f'{result:.3f}'
+                            self.edit.setText(result)
+                            QTimer.singleShot(100, lambda: asyncio.create_task(FetchValues()))
+                    asyncio.create_task(FetchValues())
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
                     QTimer.singleShot(0, commands.Delete)
             else:
                 if isinstance(shared.entities[ID], Kernel):
                     self.PushKernel() if not self.hasBeenPushed else self.UpdateFigure()
-                if isinstance(shared.entities[ID], PV):
-                    asyncio.create_task(self.Start())
 
         self.hasBeenPushed = True
         return successfulConnection
@@ -96,7 +97,6 @@ class Add(Composition):
         for ID in self.linksIn:
             result += await shared.entities[ID].Start()
         self.data = result
-        self.edit.setText(f'{self.data:.3f}')
         return self.data
     
     async def k(self, X1, X2):

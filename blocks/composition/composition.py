@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QVBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QLineEdit, QVBoxLayout, QSizePolicy
+from PySide6.QtCore import Qt
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
 from ... import style
@@ -15,7 +16,6 @@ class Composition(Draggable):
         self.widget.setLayout(QVBoxLayout())
         self.widget.layout().setContentsMargins(5, 5, 5, 5)
         self.widget.layout().setSpacing(5)
-        # self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.Push()
 
     def Push(self):

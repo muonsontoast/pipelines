@@ -201,7 +201,8 @@ class PV(Draggable):
                 for ID in self.linksOut:
                     if type(ID) == int:
                         shared.entities[ID].CheckState()
-                self.checkStateOfDownstreamBlocks = False
+
+            self.checkStateOfDownstreamBlocks = False
             await asyncio.sleep(.1)
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
