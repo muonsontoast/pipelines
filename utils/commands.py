@@ -17,6 +17,7 @@ from ..blocks.composition.multiply import Multiply
 from ..blocks.composition.svd import SVD
 from ..blocks.bayesian.singletaskgp import SingleTaskGP
 # kernels
+from ..blocks.kernels.kernel import Kernel
 from ..blocks.kernels.linear import LinearKernel
 from ..blocks.kernels.anisotropic import AnisotropicKernel
 from ..blocks.kernels.periodic import PeriodicKernel
@@ -46,6 +47,7 @@ blockTypes = {
     'SVD': SVD,
     'Single Task GP': SingleTaskGP,
     'Group': Group,
+    'Kernel': Kernel,
     'Linear Kernel': LinearKernel,
     'Anisotropic Kernel': AnisotropicKernel,
     'Periodic Kernel': PeriodicKernel,

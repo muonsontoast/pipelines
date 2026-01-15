@@ -7,6 +7,7 @@ import numpy as np
 from .composition import Composition
 from ..draggable import Draggable
 from ..kernels.kernel import Kernel
+from ..filters.filter import Filter
 from ..pv import PV
 from ...utils import commands
 from ...utils.entity import Entity
@@ -24,27 +25,51 @@ class Add(Composition):
         self.AddSocket('in', 'F', acceptableTypes = [Draggable])
 
     def AddLinkIn(self, ID, socket, ignoreForFirstTime = False, **kwargs):
+        print('adding link up here to', self.name, 'with ID', self.ID, 'from', shared.entities[ID].name)
+        newFundamentalType = self.GetType(ID)
         for linkID in self.linksIn:
+            existingFundamentalType = self.GetType(linkID)
             if linkID != ID:
+                print('existing type:', existingFundamentalType)
+                print('new type:', newFundamentalType)
+                if existingFundamentalType == newFundamentalType or (existingFundamentalType in [Filter, Composition] and newFundamentalType in [Filter, Composition]):
+                    print('Good!')
+                    break
                 # check if both inputs are identical types - PVs
-                if type(shared.entities[ID]) == type(shared.entities[linkID]):
-                    break
-                # composition blocks / kernel blocks, etc. (objects with a super class below Draggable).
-                elif shared.entities[ID].__class__.__base__ == shared.entities[linkID].__class__.__base__:
-                    break
-                else:
-                    shared.workspace.assistant.PushMessage('Add operation must be performed on blocks of the same type.', 'Warning')
-                    return False
+                # if newType == existingType:
+                #     break
+                # treat filter and composition of blocks like blocks
+                # else:
+                #     existingBase = shared.entities[linkID].__class__.__base__
+                #     newBase = shared.entities[ID].__class__.__base__
+                #     if existingBase in [Filter, Composition] and newBase in [Filter, Composition]:
+                #         existingType, newType = self.GetType(linkID), self.GetType(ID)
+                #         if existingType == newType:
+                #             break
+                #         # new empty
+                #         elif existingType in [PV, Kernel] and newType not in [PV, Kernel]:
+                #             break
+                #         # existing empty
+                #         elif newType in [PV, Kernel] and existingType not in [PV, Kernel]:
+                #             break
+                #         # both empty
+                #         elif existingType not in [PV, Kernel] and newType not in [PV, Kernel]:
+                #             break
+                shared.workspace.assistant.PushMessage('Add operation must be performed on blocks of the same type.', 'Warning')
+                return False
 
         successfulConnection = super().AddLinkIn(ID, socket)
+        print(f'succes?', successfulConnection)
+        print('********')
 
         # Modify the widget based on the input type - only if this is the first of its kind.
-        if successfulConnection and not ignoreForFirstTime:
+        if successfulConnection: # and not ignoreForFirstTime:
             numLinksIn = len(self.linksIn)
             # 1. Kernel
             if numLinksIn == 1:
-                deleteAndRedraw = True
-                if isinstance(shared.entities[ID], Kernel):
+                deleteAndRedraw = False
+                if not ignoreForFirstTime and (isinstance(shared.entities[ID], Kernel) or newFundamentalType == Kernel):
+                    deleteAndRedraw = True
                     proxy, newAdd = commands.CreateBlock(commands.blockTypes['Add'], self.name, self.proxy.pos(), size = [352, 275])
                     for linkID, link in self.linksIn.items():
                         newAdd.AddLinkIn(linkID, link['socket'], ignoreForFirstTime = True)
@@ -53,7 +78,7 @@ class Add(Composition):
                         newAdd.AddLinkOut(linkID, link['socket'])
                         shared.entities[linkID].AddLinkIn(newAdd.ID, link['socket'])
                 elif isinstance(shared.entities[ID], PV):
-                    deleteAndRedraw = False
+                    deleteAndRedraw = True
                     # add a line edit element
                     self.edit = QLineEdit()
                     self.edit.setFixedSize(100, 40)
@@ -71,12 +96,17 @@ class Add(Composition):
                             self.edit.setText(result)
                             QTimer.singleShot(100, lambda: asyncio.create_task(FetchValues()))
                     asyncio.create_task(FetchValues())
+
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
                     QTimer.singleShot(0, commands.Delete)
+                else:
+                    if newFundamentalType == Kernel:
+                        if not self.hasBeenPushed:
+                            self.PushKernel()
             else:
-                if isinstance(shared.entities[ID], Kernel):
-                    self.PushKernel() if not self.hasBeenPushed else self.UpdateFigure()
+                if newFundamentalType == Kernel:
+                    self.UpdateFigure()
 
         self.hasBeenPushed = True
         return successfulConnection
@@ -137,3 +167,7 @@ class Add(Composition):
         # Update the kernel function to include new kernel & redraw
         self.kernel.k = self.k
         self.kernel.RedrawFigure()
+        # trigger updates in any downstream blocks attached to this that display visual information.
+        for ID in self.linksOut:
+            if callable(getattr(shared.entities[ID], 'UpdateFigure', None)):
+                shared.entities[ID].UpdateFigure()

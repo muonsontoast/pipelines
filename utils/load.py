@@ -67,6 +67,8 @@ def Load(path):
                     # Populate scene blocks
                     if v['type'] in blockTypes.keys():
                         '''Block type, name, position, size, (optional) override ID.'''
+                        if not 'position' in v:
+                            continue
                         proxy, entity = CreateBlock(
                             blockTypes[v['type']], 
                             v['name'], 

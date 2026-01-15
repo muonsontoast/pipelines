@@ -17,6 +17,7 @@ class Draggable(Entity, QWidget):
     def __init__(self, proxy, **kwargs):
         self.headerColor = kwargs.pop('headerColor', '#2e2e2e')
         super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), **kwargs)
+        self.fundamental = True
         self.proxy = proxy
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -124,6 +125,15 @@ class Draggable(Entity, QWidget):
         anchor = QPointF(30, socket.rect().height() / 2) # add a small horizontal pad for display tidiness
         localPos = socket.mapTo(self.proxy.widget(), anchor)
         return self.proxy.scenePos() + localPos
+    
+    def GetType(self, ID):
+        '''Drills down into tree to find leaf node type.'''
+        print('ID:', ID)
+        print(shared.entities[ID])
+        if len(shared.entities[ID].linksIn) > 0:
+            return self.GetType(next(iter(shared.entities[ID].linksIn)))
+        fundamentalType = type(shared.entities[ID])
+        return fundamentalType if self.fundamental else shared.entities[ID].__class__.__base__
 
     def ClearLayout(self):
         while self.layout() and self.layout().count():

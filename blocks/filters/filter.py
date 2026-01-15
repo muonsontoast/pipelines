@@ -18,6 +18,7 @@ class Filter(Draggable):
             headerColor = '#312244',
             **kwargs,
         )
+        self.fundamental = False
         self.parent = parent
         self.CreateEmptySharedData(np.zeros(2)) # a SET value and a READ value
         self.data[:] = np.nan
