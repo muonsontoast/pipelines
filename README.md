@@ -1,8 +1,14 @@
-An app inspired by UI from the game design industry, hopefully accelerating research in the field of particle accelerator optimisation. Drag and drop Process Variable (PV) building blocks, multiple ML models including Single and Multi-task Gaussian Processes (GPs), Variational auto-encoders (VAEs), Reinforcement Learning (RL) agents, and perform standard accelerator operations like Orbit Response Measurements (ORMs), all in one visual interactive editor. Open multiple editors at once to work with several such pipelines in one go. PVs can simultaneously define elements in a real machine as well as be linked to virtual elements inside a model. This allows you to directly compare model to machine, and gives your ML model components access to both real and virtual data pools concurrently. Query the lattice for different elements with the inspector. Filter by element type, and instantly get information on location, index, and class-specific information. Interfaces with BoTorch, GPyTorch and Xopt under-the-hood.
+Pipelines is a visual node-based editor designed for rapid testing of optimisation ideas in the control rooms of particle accelerator facilities. Drag and drop blocks inside the editor and connect them up to form simple or complex pipelines to achieve a range of optimisation objectives. Exploit your knowledge of the physics of a system by composing kernels to improve sample efficiency and converge sooner. Filters introduce control logic that can halt or permit the flow of information along pipelines. Every actionable block can be paused, resumed and reset at any time to offer the final say on safety to the user. Modify the name of PV blocks to match those in a machine to automatically stream values of real variables. Alternatively, create a .mat lattice file in PyAT (Python Accelerator Toolbox) and link PVs to elements and perform optimisation on a lattice, or fuse simulation with reality.
 
-Keep in mind this is a nice tool designed for rapid ideation and testing with real particle accelerators and offline models. It is NOT a lattice / model designer.
+Pipelines is currently being built atop the EPICS library and aioca to interface with Diamond Light Source Process Variables (PVs), though many other facilities use EPICS and the intention is to role it out over time. 
 
-A very early example of what you can do with the tool:
+To get setup, download the github repo and install the required packages by running the following command:
+
+pip install -r requirements.txt
+
+Navigate to the folder where the repo is located (not inside of it) and run the following command:
+
+python -m pipelines (optional lattice file)
 
 <img width="2096" height="1192" alt="Screenshot 2026-01-11 222512" src="https://github.com/user-attachments/assets/98f2d898-0229-44c5-9a1e-26106020a086" />
 Caption: Live setup on the Diamond Light Source accelerator. Real-time EPICS PVs are being streamed with aioca. In the figure, a single objective BO loop is being performed with the sum of BPM charges along a transfer line the objective to maximise. The objective is filtered through a control block that halts the signal if a separate beam position PV exceeds some user-defined threshold, which the optimiser sees as a poor result. 6 steerer magnets are supplied as decision variables for this task. The result is dumped into a save folder and timestamped.
