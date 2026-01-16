@@ -237,6 +237,7 @@ class Save(Draggable):
             self.Save()
         else:
             shared.workspace.assistant.PushMessage(f'{entity.name} has been attached to {self.name} but it isn\'t holding any data', 'Warning')
+        return Trues
 
     def BaseStyling(self):
         super().BaseStyling()

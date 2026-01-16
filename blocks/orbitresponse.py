@@ -238,6 +238,7 @@ class OrbitResponse(Draggable):
         super().AddLinkIn(ID, socket)
         if shared.entities[ID].type in ['Single Task GP']:
             self.streamTypesIn[ID] = 'raw'
+        return True
 
     def RemoveLinkIn(self, ID):
         if shared.entities[ID].type == 'BPM':

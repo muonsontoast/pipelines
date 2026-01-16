@@ -278,7 +278,8 @@ class View(Draggable):
         else:
             super().AddLinkIn(ID, socket)
 
-        self.title.setText('View (Connected)')
+        self.title.setText('View')
+        return True
 
     def UpdateColors(self):
         if not self.active:

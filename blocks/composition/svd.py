@@ -146,6 +146,7 @@ class SVD(Composition):
         # Update sliders
         self.truncationAmount.SetMaximum(True)
         self.truncationAmount.SetDefault(True)
+        return True
 
     def BaseStyling(self):
         if shared.lightModeOn:

@@ -58,6 +58,7 @@ class SocketInteractable(QFrame):
                     pushMessage = False
                     shared.activeEditor.scene.removeItem(self.parent.parent.linksIn[shared.PVLinkSource.ID]['link'])
                 successfulLinkIn = self.parent.parent.AddLinkIn(shared.PVLinkSource.ID, self.parent.name) # returns False if connection fails to complete
+                print(f'Link successfully created? {successfulLinkIn}')
                 if successfulLinkIn:
                     shared.PVLinkSource.AddLinkOut(self.parent.parent.ID, self.parent.name)
                 # Update settings of the two blocks with the block IDs and the F socket the link attaches to.

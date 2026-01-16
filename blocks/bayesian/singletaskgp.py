@@ -85,12 +85,12 @@ class SingleTaskGP(Draggable):
         StopAction(self)
 
     def Push(self):
+        super().Push()
         self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = [PV])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
-        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition])
+        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition, Filter])
         self.AddSocket('out', 'M')
         self.BaseStyling()
-        super().Push()
 
     async def Start(self, **kwargs):
         steps = kwargs.get('steps', 3)
@@ -230,6 +230,7 @@ class SingleTaskGP(Draggable):
         else:
             super().AddLinkIn(ID, socket, **kwargs)
         self.CheckState()
+        return True
 
     def BaseStyling(self):
         if shared.lightModeOn:
