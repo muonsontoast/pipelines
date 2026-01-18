@@ -25,8 +25,9 @@ class Kernel(Draggable):
             proxy,
             name = kwargs.pop('name', 'Kernel'),
             type = kwargs.pop('type', 'Kernel'),
-            size = kwargs.pop('size', [320, 275]),
+            size = kwargs.pop('size', [300, 275]),
             fontsize = kwargs.pop('fontsize', 12),
+            headerColor = '#3e3e3e',
             # kernel-specific hyperparameters
             hyperparameters = kwargs.pop('hyperparameters', dict()),
             components = {
@@ -115,24 +116,14 @@ class Kernel(Draggable):
         self.CloseMenu(context)
 
     def Push(self):
-        self.clickable = ClickableWidget(self)
-        self.clickable.setLayout(QVBoxLayout())
-        self.clickable.layout().setContentsMargins(0, 0, 0, 0)
-        self.clickable.setObjectName('Kernel')
+        super().Push()
         self.widget = QWidget()
+        self.main.layout().addWidget(self.widget)
         self.widget.setObjectName('kernelHousing')
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.setLayout(QGridLayout())
         self.widget.layout().setContentsMargins(5, 5, 5, 5)
         self.widget.layout().setSpacing(5)
-        self.header = QWidget()
-        self.header.setLayout(QHBoxLayout())
-        self.header.layout().setContentsMargins(5, 0, 5, 0)
-        self.title = QLabel(self.name, alignment = Qt.AlignCenter)
-        self.title.setWordWrap(True)
-        self.title.setObjectName('title')
-        self.header.layout().addWidget(self.title, alignment = Qt.AlignCenter)
-        self.widget.layout().addWidget(self.header, 0, 0, 1, 3)
         # setup figure
         self.figure = Figure(figsize = (8, 8), dpi = 100)
         self.figure.subplots_adjust(left = .015, right = .985, top = .985, bottom = .015)
@@ -143,27 +134,14 @@ class Kernel(Draggable):
         self.canvas.setStyleSheet('background: transparent')
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.layout().addWidget(self.canvas, 1, 0, 1, 3)
-        self.clickable.layout().addWidget(self.widget)
-        self.outSocket = Socket(self, 'M', 50, 25, 'right', 'out')
-        self.outSocket.setFixedHeight(65)
-        self.mainWidget = QWidget()
-        self.mainWidget.setLayout(QGridLayout())
-        self.mainWidget.layout().setSpacing(1)
-        self.mainWidget.layout().setContentsMargins(0, 0, 0, 0)
-        self.mainWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.layout().addWidget(self.mainWidget)
-        marginLeft = QWidget()
-        marginLeft.setFixedWidth(15)
-        self.mainWidget.layout().addWidget(marginLeft, 0, 0, 3, 1)
-        self.mainWidget.layout().addWidget(self.clickable, 0, 1, 3, 3)
-        self.mainWidget.layout().addWidget(self.outSocket, 0, 4, 3, 1)
+        self.AddSocket('out', 'M')
         self.DrawHyperparameterControls()
         self.kernelMenu = KernelMenu(self)
         setattr(self.kernelMenu, 'draggable', self)
         self.kernelMenu.canDrag = False
         self.kernelMenu.Hide()
         self.kernelMenuIsOpen = False
-
+        self.automatic = True # Automatic = defined over all relevant decision vars automatically, Manual = defined over a subset of relevant decision variables (useful for some kernel compositions).
         self.UpdateFigure()
         self.ToggleStyling(active = False)
 
@@ -246,7 +224,8 @@ class Kernel(Draggable):
                 rightInnerHousing.layout().addWidget(context, alignment = Qt.AlignRight)
             housing.layout().addWidget(rightInnerHousing, alignment = Qt.AlignRight)
             widget.layout().addWidget(housing, alignment = Qt.AlignVCenter)
-            self.mainWidget.layout().addWidget(widget, rowIdx, 1, 1, 3)
+            self.main.layout().addWidget(widget)
+            # self.mainWidget.layout().addWidget(widget, rowIdx, 1, 1, 3)
             rowIdx += 1
 
     def AddEdit(self, hyperparameterName):
@@ -307,18 +286,20 @@ class Kernel(Draggable):
                 shared.inspector.Push()
 
     def BaseStyling(self):
+        super().BaseStyling()
         if shared.lightModeOn:
             pass
         else:
-            self.widget.setStyleSheet(self.widgetStyle)
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadiusBottomLeft = 8, borderRadiusBottomRight = 8, borderRadiusTopLeft = 0, borderRadiusTopRight = 0))
             self.title.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
             self.outSocket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
 
     def SelectedStyling(self):
+        super().SelectedStyling()
         if shared.lightModeOn:
             pass
         else:
-            self.widget.setStyleSheet(self.widgetSelectedStyle)
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#3a3a3a', fontColor = '#c4c4c4', borderRadiusBottomLeft = 8, borderRadiusBottomRight = 8, borderRadiusTopLeft = 0, borderRadiusTopRight = 0))
             self.title.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
             self.outSocket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
 

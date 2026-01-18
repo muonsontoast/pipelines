@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 import numpy as np
+from .component import Component
 from .. import shared
 from .. import style
 
@@ -18,15 +19,16 @@ class SliderBar(QSlider):
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
 
-class SliderComponent(QWidget):
-    def __init__(self, pv, component, sliderSteps = 1000000, floatdp = 3, **kwargs):
+# class SliderComponent(QWidget):
+class SliderComponent(Component):
+    def __init__(self, pv, component, sliderSteps = 1000000, floatdp = 3, expandable = None, **kwargs):
         '''Leave `sliderSteps` at 1e6 for smooth sliding, or restrict to a low number for discrete applications.\n
         `floatdp` is the decimal precision of the line edit elements.\n
         `hideRange` allows you to supress the min and max widgets.\n
         `sliderOffset` (int) adds a horizontal offset to the slider row.\n
         `sliderRowSpacing` (int) controls width of SpacerItem between the slider and slider value.\n
         `paddingLeft` and `paddingBottom` (int) are padding for text inside line edit elements.'''
-        super().__init__()
+        super().__init__(pv, component, expandable, **kwargs)
         self.eps = 9e-4
         self.hideRange = kwargs.get('hideRange', False)
         self.sliderOffset = kwargs.get('sliderOffset', 0)
@@ -74,41 +76,47 @@ class SliderComponent(QWidget):
             self.minimumRow = QWidget()
             self.minimumRow.setLayout(QHBoxLayout())
             self.minimumRow.layout().setContentsMargins(0, 0, 0, 0)
+            self.minimumRow.layout().setSpacing(0)
             self.minimumLabel = QLabel('Minimum')
-            self.minimumLabel.setAlignment(Qt.AlignCenter)
+            self.minimumLabel.setFixedWidth(100)
+            self.minimumLabel.setAlignment(Qt.AlignLeft)
             self.minimum = QLineEdit(f'{pv.settings['components'][component]['min']:.{self.floatdp}f}')
             self.minimum.setAlignment(Qt.AlignCenter)
             self.minimum.setFixedSize(75, 25)
             self.minimum.returnPressed.connect(self.SetMinimum)
             self.minimumRow.layout().addWidget(self.minimumLabel, alignment = Qt.AlignLeft)
-            self.minimumRow.layout().addWidget(self.minimum, alignment = Qt.AlignRight)
-            self.minimumRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
+            self.minimumRow.layout().addWidget(self.minimum, alignment = Qt.AlignLeft)
+            # self.minimumRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
             # Maximum
             self.maximumRow = QWidget()
             self.maximumRow.setLayout(QHBoxLayout())
             self.maximumRow.layout().setContentsMargins(0, 0, 0, 0)
+            self.maximumRow.layout().setSpacing(0)
             self.maximumLabel = QLabel('Maximum')
-            self.maximumLabel.setAlignment(Qt.AlignCenter)
+            self.maximumLabel.setFixedWidth(100)
+            self.maximumLabel.setAlignment(Qt.AlignLeft)
             self.maximum = QLineEdit(f'{pv.settings['components'][component]['max']:.{self.floatdp}f}')
             self.maximum.setAlignment(Qt.AlignCenter)
             self.maximum.setFixedSize(75, 25)
             self.maximum.returnPressed.connect(self.SetMaximum)
             self.maximumRow.layout().addWidget(self.maximumLabel, alignment = Qt.AlignLeft)
-            self.maximumRow.layout().addWidget(self.maximum, alignment = Qt.AlignRight)
-            self.maximumRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
+            self.maximumRow.layout().addWidget(self.maximum, alignment = Qt.AlignLeft)
+            # self.maximumRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
             # Default
             self.defaultRow = QWidget()
             self.defaultRow.setLayout(QHBoxLayout())
             self.defaultRow.layout().setContentsMargins(0, 0, 0, 0)
+            self.defaultRow.layout().setSpacing(0)
             self.defaultLabel = QLabel('Default')
-            self.defaultLabel.setAlignment(Qt.AlignCenter)
-            self.defaultRow.layout().addWidget(self.defaultLabel, alignment = Qt.AlignLeft)
+            self.defaultLabel.setFixedWidth(100)
+            self.defaultLabel.setAlignment(Qt.AlignLeft)
             self.default = QLineEdit(f'{pv.settings['components'][component]['default']:.{self.floatdp}f}')
             self.default.setAlignment(Qt.AlignCenter)
             self.default.setFixedSize(75, 25)
             self.default.returnPressed.connect(self.SetDefault)
-            self.defaultRow.layout().addWidget(self.default, alignment = Qt.AlignRight)
-            self.defaultRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
+            self.defaultRow.layout().addWidget(self.defaultLabel, alignment = Qt.AlignLeft)
+            self.defaultRow.layout().addWidget(self.default, alignment = Qt.AlignLeft)
+            # self.defaultRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
             # make read-only if there is a PV match
             if self.pv.PVMatch:
                 self.minimum.setReadOnly(True)
@@ -301,12 +309,12 @@ class SliderComponent(QWidget):
             self.resetButton.setStyleSheet(style.PushButtonStyle(color = '#D2C5A0', borderColor = '#A1946D', hoverColor = '#B5AB8D', fontColor = '#1e1e1e', padding = 4))
             return
         self.slider.setStyleSheet(style.SliderStyle(backgroundColor = "#222222", fillColor = fillColorDark, handleColor = "#858585"))
-        self.value.setStyleSheet(style.LineEditStyle(color = '#222222', bold = True, fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))
+        self.value.setStyleSheet(style.LineEditStyle(color = '#222222', bold = True, fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = 0))
         if not self.hideRange:
-            self.minimum.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))
-            self.maximum.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))
+            self.minimum.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = 0))
+            self.maximum.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = 0))
+            self.default.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = 0))
             self.minimumLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
             self.maximumLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
-            self.default.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))
             self.defaultLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
         self.resetButton.setStyleSheet(style.PushButtonStyle(color = '#2e2e2e', hoverColor = '#3e3e3e', fontColor = '#c4c4c4', padding = 5))

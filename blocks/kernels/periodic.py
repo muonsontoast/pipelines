@@ -20,7 +20,7 @@ class PeriodicKernel(Kernel):
             proxy,
             name = kwargs.pop('name', 'Periodic Kernel'),
             type = kwargs.pop('type', 'Periodic Kernel'),
-            size = kwargs.pop('size', [320, 275 + additionalHeight]),
+            size = kwargs.pop('size', [300, 310 + additionalHeight]),
             fontsize = kwargs.pop('fontsize', 12),
             # kernel-specific hyperparameters
             hyperparameters = {

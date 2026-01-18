@@ -1,14 +1,16 @@
 from PySide6.QtWidgets import QWidget, QLineEdit, QCompleter, QLabel, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 from PySide6.QtCore import Qt, QStringListModel
+from .component import Component
 from .. import shared
 from .. import style
 from ..lattice import latticeutils
 
-class LinkComponent(QWidget):
-    def __init__(self, pv, component):
-        super().__init__()
+# class LinkComponent(QWidget):
+class LinkComponent(Component):
+    def __init__(self, pv, component, expandable = None, **kwargs):
+        super().__init__(pv, component, **kwargs)
         self.setLayout(QVBoxLayout())
-        self.layout().setContentsMargins(10, 10, 0, 0)
+        self.layout().setContentsMargins(0, 10, 0, 0)
         self.layout().setSpacing(10)
         self.pv = pv
         self.component = component
@@ -43,41 +45,50 @@ class LinkComponent(QWidget):
         self.type = QWidget()
         self.type.setLayout(QHBoxLayout())
         self.type.layout().setContentsMargins(0, 0, 0, 0)
+        self.type.layout().setSpacing(0)
         self.typeTitle = QLabel('Type')
+        self.typeTitle.setFixedWidth(100)
+        self.typeTitle.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.typeTitle.setAlignment(Qt.AlignLeft)
         text = 'None' if not self.pvHasLinkedElement else self.pv.settings['linkedElement'].Type
         self.typeEdit = QLineEdit(text)
         self.typeEdit.setAlignment(Qt.AlignCenter)
         self.typeEdit.setFixedWidth(100)
+        self.typeEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.typeEdit.setEnabled(False)
-        self.type.layout().addWidget(self.typeTitle, alignment = Qt.AlignLeft)
-        self.type.layout().addWidget(self.typeEdit)
-        self.type.layout().addItem(QSpacerItem(125, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
+        self.type.layout().addWidget(self.typeTitle, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        self.type.layout().addWidget(self.typeEdit, alignment = Qt.AlignLeft)
         # Element position
         self.position = QWidget()
         self.position.setLayout(QHBoxLayout())
         self.position.layout().setContentsMargins(0, 0, 0, 0)
+        self.position.layout().setSpacing(0)
         self.positionTitle = QLabel('Position (m)')
+        self.positionTitle.setFixedWidth(100)
+        self.positionTitle.setAlignment(Qt.AlignLeft)
         text = 'None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].iloc[2]:.3f}'
         self.positionEdit = QLineEdit(text)
         self.positionEdit.setAlignment(Qt.AlignCenter)
         self.positionEdit.setFixedWidth(100)
+        self.positionEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.positionEdit.setEnabled(False)
-        self.position.layout().addWidget(self.positionTitle, alignment = Qt.AlignLeft)
-        self.position.layout().addWidget(self.positionEdit)
-        self.position.layout().addItem(QSpacerItem(125, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
+        self.position.layout().addWidget(self.positionTitle, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        self.position.layout().addWidget(self.positionEdit, alignment = Qt.AlignLeft)
         # Element index
         self.index = QWidget()
         self.index.setLayout(QHBoxLayout())
         self.index.layout().setContentsMargins(0, 0, 0, 0)
+        self.index.layout().setSpacing(0)
         self.indexTitle = QLabel('Index')
+        self.indexTitle.setFixedWidth(100)
         text = 'None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].Index}'
         self.indexEdit = QLineEdit(text)
         self.indexEdit.setAlignment(Qt.AlignCenter)
         self.indexEdit.setFixedWidth(100)
+        self.indexEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.indexEdit.setEnabled(False)
-        self.index.layout().addWidget(self.indexTitle, alignment = Qt.AlignLeft)
-        self.index.layout().addWidget(self.indexEdit)
-        self.index.layout().addItem(QSpacerItem(125, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
+        self.index.layout().addWidget(self.indexTitle, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        self.index.layout().addWidget(self.indexEdit, alignment = Qt.AlignLeft)
         self.context.layout().addWidget(self.type)
         self.context.layout().addWidget(self.position)
         self.context.layout().addWidget(self.index)
@@ -131,9 +142,9 @@ class LinkComponent(QWidget):
             self.indexTitle.setStyleSheet(style.LabelStyle(fontColor = '#1e1e1e'))
         else:
             self.search.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
-            self.typeEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
+            self.typeEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 0))
             self.typeTitle.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
-            self.positionEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
+            self.positionEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 0))
             self.positionTitle.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
-            self.indexEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
+            self.indexEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 0))
             self.indexTitle.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))

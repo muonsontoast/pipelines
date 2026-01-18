@@ -52,7 +52,6 @@ class Draggable(Entity, QWidget):
         self.hovering = False
         self.startPos = None
         self.linkedElementAttrs = dict() # A dict of functions that retrieve information exposed by the linked underlying PyAT element.
-        # self.stream = None
         self.canRun = False # indicates that a block can run an action.
         self.editorWidgetsHaveBeenCached = False # ensures caching only happens once when this block is dragged at the start.
         self.FSocketWidgets = QWidget()
@@ -175,6 +174,8 @@ class Draggable(Entity, QWidget):
         event.accept()
 
     def mouseReleaseEvent(self, event):
+        if event is None:
+            return
         self.clock = None
         self.timer = None
         # Have we drawn a link?
@@ -232,6 +233,8 @@ class Draggable(Entity, QWidget):
 
     def ToggleStyling(self, **kwargs):
         '''Supply an `active` bool to force the active state.'''
+        if shared.editorSelectMode and self.type == 'PV':
+            return
         active = kwargs.get('active', None) # this is a target, rather than current state, so opposite logic to self.active
         if active is not None:
             if not active:

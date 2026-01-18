@@ -3,19 +3,21 @@ For read-only PVs like BPMs where only a single read-only numerical field should
 '''
 
 from PySide6.QtWidgets import (
-    QWidget, QLineEdit, QSlider, QLabel, QPushButton,
-    QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+    QLineEdit, QLabel,
+    QVBoxLayout, QSizePolicy
 )
 from PySide6.QtCore import Qt
+from .component import Component
 from .. import shared
 from .. import style
 
-class ValueComponent(QWidget):
-    def __init__(self, pv, component, floatdp = 3, **kwargs):
+# class ValueComponent(QWidget):
+class ValueComponent(Component):
+    def __init__(self, pv, component, floatdp = 3, expandable = None, **kwargs):
         '''Leave `sliderSteps` at 1e6 for smooth sliding, or restrict to a low number for discrete applications.\n
         `floatdp` is the decimal precision of the line edit elements.\n
         `paddingLeft` and `paddingBottom` (int) are padding for text inside line edit elements.'''
-        super().__init__()
+        super().__init__(pv, component, expandable, **kwargs)
         self.paddingLeft = kwargs.get('paddingLeft', 5)
         self.paddingBottom = kwargs.get('paddingBottom', 5)
         self.setLayout(QVBoxLayout())

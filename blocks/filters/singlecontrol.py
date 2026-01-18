@@ -19,7 +19,6 @@ class SingleControl(Filter):
         )
 
     def Start(self):
-        print('Starting!')
         count = 0
         inID = None
         controlID = None
@@ -29,12 +28,9 @@ class SingleControl(Filter):
                 inID = ID
             else:
                 controlID = ID
-        print('count is', count)
-        print('inID:', inID)
         if count < 2 or inID == None:
             return np.nan
         # returns nan if the control is not supplying a number otherwise, returns the input data.
-        print('outputting:', shared.entities[inID].data[1] if not isinstance(shared.entities[controlID].data[1], np.nan) else np.nan)
         return shared.entities[inID].data[1] if not isinstance(shared.entities[controlID].data[1], np.nan) else np.nan
         
     def Push(self):

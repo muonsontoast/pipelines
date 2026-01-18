@@ -19,7 +19,7 @@ class RBFKernel(Kernel):
             proxy,
             name = kwargs.pop('name', 'RBF Kernel'),
             type = kwargs.pop('type', 'RBF Kernel'),
-            size = kwargs.pop('size', [320, 275 + additionalHeight]),
+            size = kwargs.pop('size', [300, 310 + additionalHeight]),
             fontsize = kwargs.pop('fontsize', 12),
             # kernel-specific hyperparameters
             hyperparameters = {

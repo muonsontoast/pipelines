@@ -135,6 +135,7 @@ def PushButtonBorderlessStyle(**kwargs):
     border-radius: 3px;
     margin-top: {kwargs.get('marginTop', 0)}px;
     margin-bottom: {kwargs.get('marginBottom', 0)}px;
+    text-align: center;
     }}
     QPushButton:hover {{
     background-color: {kwargs.get('hoverColor', buttonHoverColor)};
@@ -338,6 +339,7 @@ def LabelStyle(**kwargs):
     return f'''
     QLabel {{
     border: none;
+    background-color: {kwargs.get('color', 'none')};
     color: {kwargs.get('fontColor', fontColor)};
     font-size: {kwargs.get('fontSize', fontSize)}px;
     font-family: {kwargs.get('fontFamily', fontFamily)};

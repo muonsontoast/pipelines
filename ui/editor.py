@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, QPoint, QRectF
 from PySide6.QtGui import QPainter, QCursor, QPixmap
 from .editormenu import EditorMenu
 from .boxselect import BoxSelect
+from ..blocks.pv import PV
 from ..utils.entity import Entity
 from ..utils.commands import DetailedView
 from .. import shared
@@ -95,6 +96,16 @@ class Editor(Entity, QGraphicsView):
         else:
             for item in self.scene.items():
                 item.setCacheMode(QGraphicsItem.NoCache)
+
+    def GetEntityWidgetAtClick(self, widget):
+        current = widget
+        proxy = None
+        while current and not proxy:
+            proxy = current.graphicsProxyWidget()
+            try:
+                current = current.parent()
+            except: break
+        return current
 
     def mousePressEvent(self, event):
         '''Another PV may already be selected so handle this here.'''
@@ -216,24 +227,29 @@ class Editor(Entity, QGraphicsView):
                             if _item != item:
                                 _item.widget().ToggleStyling(active = False)
                         self.area.selectedItems = [item]
+                        if shared.editorSelectMode:
+                            widget = self.GetEntityWidgetAtClick(proxyChildUnderCursor)
+                            if not isinstance(widget, PV):
+                                shared.editorSelectMode = False
+                                shared.activeEditor.setStyleSheet(style.WidgetStyle(color = "#1a1a1a"))
+                                for ID in shared.PVIDs:
+                                    shared.entities[ID].BaseStyling()
+                            else:
+                                return event.accept()
         else:
             if ds.x() ** 2 + ds.y() ** 2 < shared.cursorTolerance ** 2: # cursor has been moved.
                 if shared.kernelMenu is not None:
-                    # shared.kernelMenu.draggable.kernelMenuIsOn = False
-                    # shared.kernelMenu.Hide()
-                    # shared.kernelMenu = None
                     shared.kernelMenu.draggable.CloseMenu(shared.kernelContext)
                 for item in self.area.selectedItems:
                     item.widget().ToggleStyling(active = False)
+                if shared.editorSelectMode:
+                    shared.editorSelectMode = False
+                    shared.activeEditor.setStyleSheet(style.WidgetStyle(color = "#1a1a1a"))
+                    for ID in shared.PVIDs:
+                        shared.entities[ID].BaseStyling()
                 self.area.selectedItems = []
                 shared.inspector.Push()
 
-        # this will be added in later
-        # get bounding rect of selected items and place a draggable handle nearby
-        # if len(self.area.selectedItems) > 1:
-        #     selectionBoundingRect = MultiSceneBoundingRect()
-        #     self.grabHandle.setPos(selectionBoundingRect.topRight() + QPoint(10, -20))
-        #     self.grabHandle.show()
         self.SetCacheMode('None')
         super().mouseReleaseEvent(event) # the event needs to propagate beyond the editor to allow drag functionality.
 

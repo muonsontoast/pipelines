@@ -45,7 +45,7 @@ class Expandable(QWidget):
         self.content.setVisible(False)
         self.layout().addWidget(self.content)
         self.parent.setSizeHint(QSize(self.width, self.headerHeight + 10))
-        self.widget = self.pv.settings['components'][self.componentKey]['type'](self.pv, self.componentKey) # Instantiate the widget
+        self.widget = self.pv.settings['components'][self.componentKey]['type'](self.pv, self.componentKey, expandable = self) # Instantiate the widget
         self.UpdateColors()
 
     def UpdateColors(self):
@@ -64,19 +64,19 @@ class Expandable(QWidget):
         shared.app.processEvents()
         expandedHeight = 0
         if not self.showingContent:
-            self.header.setText(f'\u25BC    {self.name}')
+            self.header.setText(f'\u25BC    {' '.join(self.header.text().split()[1:])}')
             # Is this the first time drawing widgets for this expandable?
             if not self.widgetsDrawn:
                 item = QListWidgetItem()
-                self.widget.setFixedWidth(self.list.viewport().width() - 20)
-                item.setSizeHint(self.widget.sizeHint())
+                self.widget.setFixedWidth(335)
+                item.setSizeHint(QSize(335, self.widget.sizeHint().height()))
                 self.content.addItem(item)
                 self.content.setItemWidget(item, self.widget)
             expandedHeight += self.widget.sizeHint().height()
             self.widgetsDrawn = True
             self.content.setVisible(True)
         else:
-            self.header.setText(f'\u25BA    {self.name}')
+            self.header.setText(f'\u25BA    {' '.join(self.header.text().split()[1:])}')
             self.content.setVisible(False)
         
         self.content.setFixedHeight(expandedHeight)

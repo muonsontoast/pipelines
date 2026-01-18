@@ -58,7 +58,7 @@ class Composition(Draggable):
                 deleteAndRedraw = False
                 if not ignoreForFirstTime and (isinstance(shared.entities[ID], Kernel) or newFundamentalType == Kernel):
                     deleteAndRedraw = True
-                    proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [352, 275])
+                    proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [350, 295])
                     for linkID, link in self.linksIn.items():
                         newAdd.AddLinkIn(linkID, link['socket'], ignoreForFirstTime = True)
                         shared.entities[linkID].AddLinkOut(newAdd.ID, link['socket'])
