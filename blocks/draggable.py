@@ -187,6 +187,9 @@ class Draggable(Entity, QWidget):
             shared.selectedPV = self
             if not self.cursorMoved:
                 self.ToggleStyling()
+                if self.active:
+                    shared.selected.extend([self])
+                else: shared.selected.pop(shared.selected.index(self))
             else:
                 finalPos = self.proxy.pos()
                 self.settings['position'] = [finalPos.x(), finalPos.y()]

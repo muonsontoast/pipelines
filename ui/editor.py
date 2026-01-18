@@ -235,6 +235,7 @@ class Editor(Entity, QGraphicsView):
                                 for ID in shared.PVIDs:
                                     shared.entities[ID].BaseStyling()
                             else:
+                                print(f'** current selected entities are: {[entity.name for entity in shared.selected]}')
                                 return event.accept()
         else:
             if ds.x() ** 2 + ds.y() ** 2 < shared.cursorTolerance ** 2: # cursor has been moved.

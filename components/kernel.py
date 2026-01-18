@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QWidget, QListWidgetItem, QCompleter, QLineEdit, QPushButton, QLabel, QVBoxLayout, QSpacerItem, QSizePolicy, QHBoxLayout
-from PySide6.QtCore import Qt, QStringListModel, QTimer
-from PySide6.QtGui import QBrush, QColor
+from PySide6.QtCore import Qt, QStringListModel
 from .component import Component
 from ..blocks.draggable import Draggable
 from ..blocks.pv import PV
@@ -54,6 +53,31 @@ class KernelComponent(Component):
             self.searchWidget.layout().addWidget(self.search)
             self.searchWidget.layout().addWidget(self.editorSelect, alignment = Qt.AlignRight)
             self.layout().addWidget(self.searchWidget)
+            # list of attached PVs
+            linkedPVs = self.pv.settings['linkedPVs']
+            for ID in linkedPVs:
+                widget = QWidget()
+                widget.setLayout(QHBoxLayout())
+                widget.layout().setContentsMargins(0, 0, 0, 0)
+                widget.layout().setSpacing(2)
+                label = QLabel(f'{shared.entities[ID].name} (ID: {shared.entities[ID].ID})')
+                optimisationLowerLimit = QLineEdit(f'{shared.entities[ID].settings['components']['value']['min']:.3f}')
+                optimisationLowerLimit.setFixedWidth(75)
+                optimisationLowerLimit.setAlignment(Qt.AlignCenter)
+                optimisationLowerLimit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', borderRadius = 4))
+                widget.layout().addWidget(label)
+                widget.layout().addWidget(optimisationLowerLimit)
+                toLabel = QLabel('  to  ')
+                toLabel.setAlignment(Qt.AlignCenter)
+                toLabel.setStyleSheet(style.LabelStyle(color = '#2e2e2e', fontColor = '#c4c4c4'))
+                widget.layout().addWidget(toLabel)
+                optimisationUpperLimit = QLineEdit(f'{shared.entities[ID].settings['components']['value']['max']:.3f}')
+                optimisationUpperLimit.setFixedWidth(75)
+                optimisationUpperLimit.setAlignment(Qt.AlignCenter)
+                optimisationUpperLimit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', borderRadius = 4))
+                widget.layout().addWidget(optimisationUpperLimit)
+                self.layout().addWidget(widget)
+
         self.UpdateColors()
 
     def SwitchMode(self):

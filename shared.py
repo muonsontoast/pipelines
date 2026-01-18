@@ -46,3 +46,4 @@ kernelContext = None # a reference to the button that opened the kernel context 
 lastActionPerformed = None
 editorMenuOffset = QPoint(30, 30)
 editorSelectMode = False
+selected = [] # list of selected entities

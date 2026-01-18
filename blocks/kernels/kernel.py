@@ -33,6 +33,7 @@ class Kernel(Draggable):
             components = {
                 'dimensions': dict(name = 'Dimensions', type = KernelComponent),
             },
+            linkedPVs = dict(),
             **kwargs
         )
         for k, val in self.settings['hyperparameters'].items():
