@@ -90,6 +90,7 @@ class SingleTaskGP(Draggable):
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
         self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition, Filter])
         self.AddSocket('out', 'M')
+        
         self.BaseStyling()
 
     async def Start(self, **kwargs):

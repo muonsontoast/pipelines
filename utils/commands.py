@@ -26,7 +26,7 @@ from ..blocks.filters.greaterthan import GreaterThan
 from ..blocks.filters.lessthan import LessThan
 from ..blocks.filters.singlecontrol import SingleControl
 from ..blocks.filters.invert import Invert
-from ..ui.group import Group
+from ..ui.groupmenu import GroupMenu
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
 from .. import shared
@@ -46,7 +46,9 @@ blockTypes = {
     'Multiply': Multiply,
     'SVD': SVD,
     'Single Task GP': SingleTaskGP,
-    'Group': Group,
+    'Group': None,
+    # 'Group': Group,
+    'Group Menu': GroupMenu,
     'Kernel': Kernel,
     'Linear Kernel': LinearKernel,
     'Anisotropic Kernel': AnisotropicKernel,
@@ -216,6 +218,8 @@ def Delete():
             shared.entities[ID].RemoveLinkIn(widget.ID)
         shared.entities.pop(widget.ID)
         shared.PVs.pop(widget.ID)
+        if widget.type == 'PV':
+            shared.PVIDs.remove(widget.ID)
         shared.selectedPV = None
         if widget in shared.activePVs:
             shared.activePVs.remove(widget)
@@ -253,7 +257,7 @@ commands = {
     'Paste': dict(shortcut = ['Ctrl+V'], func = Paste, args = []),
     'Save': dict(shortcut = ['Ctrl+S'], func = SaveSettings, args = []),
     # 'Area Select': dict(shortcut = ['Shift+LMB'], func = lambda: None, args = []),
-    'Group': dict(shortcut = ['Ctrl+G'], func = CreateGroup, args = []),
+    # 'Group': dict(shortcut = ['Ctrl+G'], func = CreateGroup, args = []),
     # 'Snip': dict(shortcut = ['Ctrl+S'], func = Snip, args = []),
     'PV (Process Variable)': dict(shortcut = ['Shift+P'], func = CreatePV, args = [GetMousePos]),
     'Corrector': dict(shortcut = ['Shift+C'], func = CreateCorrector, args = [GetMousePos]),

@@ -20,6 +20,7 @@ from datetime import datetime
 from pathlib import Path
 from .inspector import Inspector
 from .ui.workspace import Workspace
+from .ui.groupmenu import GroupMenu
 from .lattice.latticeglobal import LatticeGlobal
 from .lattice import latticeutils
 from .utils.entity import Entity
@@ -249,6 +250,8 @@ class MainWindow(Entity, QMainWindow):
         bottomPad.setFixedHeight(screenPad + 5)
         self.page.layout().addWidget(bottomPad, 5, 0, 1, 10)
         shared.activeEditor.setFocus()
+        # Add a group menu over the editor
+        # shared.groupMenu = GroupMenu(shared.workspace)
 
         # Load in settings if they exist and apply to existing entities, and create new ones if they don't already exist.
         print('Loading settings from:', settingsPath)

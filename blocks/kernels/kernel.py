@@ -8,6 +8,7 @@ import matplotlib.style as mplstyle
 mplstyle.use('fast')
 import asyncio
 from ..draggable import Draggable
+from ...components.kernel import KernelComponent
 from ...clickablewidget import ClickableWidget
 from ... import shared
 from ..socket import Socket
@@ -28,6 +29,9 @@ class Kernel(Draggable):
             fontsize = kwargs.pop('fontsize', 12),
             # kernel-specific hyperparameters
             hyperparameters = kwargs.pop('hyperparameters', dict()),
+            components = {
+                'dimensions': dict(name = 'Dimensions', type = KernelComponent),
+            },
             **kwargs
         )
         for k, val in self.settings['hyperparameters'].items():

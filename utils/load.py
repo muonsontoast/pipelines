@@ -8,7 +8,7 @@ import numpy as np
 from .commands import blockTypes, CreateBlock
 from ..blocks.composition.composition import Composition
 from ..lattice.latticeutils import LoadLattice, GetLatticeInfo
-from ..components import BPM, errors, kickangle, link, slider
+from ..components import BPM, errors, kickangle, link, slider, kernel
 from .. import shared
 
 settings = None
@@ -19,6 +19,7 @@ componentsLookup = {
     'ErrorsComponent': errors.ErrorsComponent,
     'BPMComponent': BPM.BPMComponent,
     'SliderComponent': slider.SliderComponent,
+    'KernelComponent': kernel.KernelComponent,
 }
 valueTypeLookup = {
     'int': int,

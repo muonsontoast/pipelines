@@ -102,6 +102,8 @@ class Draggable(Entity, QWidget):
         self.setStyleSheet(style.WidgetStyle())
         if kwargs.pop('addToShared', True):
             shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))
+        if self.type == 'PV':
+            shared.PVIDs.extend([self.ID])
         self.setMouseTracking(True)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
 
@@ -116,6 +118,14 @@ class Draggable(Entity, QWidget):
         self.AddHeader()
         self.layout().addWidget(self.main)
         self.layout().addWidget(self.MSocketWidgets)
+        if any(match in self.type for match in ['GP', 'Orbit Response']):
+            self.main.setStyleSheet('')
+            self.widget = QWidget()
+            self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.widget.setContentsMargins(0, 0, 0, 0)
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadiusBottomLeft = 12, borderRadiusBottomRight = 12))
+            self.main.layout().addWidget(self.widget)
+            self.AddButtons()
 
     def GetSocketPos(self, name):
         try: 
@@ -250,6 +260,7 @@ class Draggable(Entity, QWidget):
 
     def BaseStyling(self):
         if hasattr(self, 'header'):
+            self.main.setStyleSheet('')
             self.header.setStyleSheet(style.WidgetStyle(color = self.headerColor, fontSize = 16, borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
 
     def SelectedStyling(self):

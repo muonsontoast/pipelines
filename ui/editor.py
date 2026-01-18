@@ -1,11 +1,12 @@
-from PySide6.QtWidgets import QFrame, QWidget, QLabel, QPushButton, QGraphicsProxyWidget, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem, QSizePolicy
+from PySide6.QtWidgets import QFrame, QWidget, QLabel, QPushButton, QGraphicsProxyWidget, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsLineItem, QSizePolicy, QSpacerItem, QHBoxLayout, QVBoxLayout
 from PySide6.QtCore import Qt, QPoint, QRectF
 from PySide6.QtGui import QPainter, QCursor, QPixmap
 from .editormenu import EditorMenu
-from ..utils.entity import Entity
 from .boxselect import BoxSelect
+from ..utils.entity import Entity
 from ..utils.commands import DetailedView
 from .. import shared
+from .. import style
 
 class Editor(Entity, QGraphicsView):
     def __init__(self, window, minScale = 3, maxScale = .15):
@@ -55,6 +56,25 @@ class Editor(Entity, QGraphicsView):
         self.positionInSceneCoords = self.mapToScene(self.viewport().rect().center())
         self.coordsTitle.setText(f'Editor center: ({self.positionInSceneCoords.x():.0f}, {self.positionInSceneCoords.y():.0f})')
         self.zoomTitle.setText(f'Zoom: {self.transform().m11() * 100:.0f}%')
+
+        # add a groups overlay widget to the graphics view
+        self.setLayout(QHBoxLayout())
+        self.groupsWidget = QWidget()
+        self.layout().addWidget(self.groupsWidget, alignment = Qt.AlignRight | Qt.AlignTop)
+        self.groupsWidget.setFixedSize(65, 35)
+        self.groupsWidget.setLayout(QVBoxLayout())
+        self.groupsWidget.setContentsMargins(0, 0, 0, 0)
+        self.groupsWidget.layout().setContentsMargins(0, 0, 0, 0)
+        header = QWidget()
+        header.setLayout(QVBoxLayout())
+        header.setContentsMargins(0, 0, 0, 0)
+        label = QLabel('Groups')
+        label.setAlignment(Qt.AlignCenter)
+        label.setStyleSheet(style.LabelStyle(padding = 0))
+        header.layout().addWidget(label)
+        self.groupsWidget.layout().addWidget(header)
+        self.groupsWidget.setStyleSheet(style.WidgetStyle(color = 'none'))
+        header.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadius = 4))
 
     # this draw override prevents widget artefacting when dragging blocks around a scene
     def drawBackground(self, painter, rect):

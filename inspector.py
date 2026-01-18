@@ -57,7 +57,6 @@ class Inspector(Entity, QTabWidget):
         if not pv:
             self.mainWindowTitleWidget.hide()
             self.main.hide()
-            print('No PV supplied to the inspector.')
             return
 
         if not component:
@@ -76,8 +75,6 @@ class Inspector(Entity, QTabWidget):
         self.items = dict()
         self.expandables = dict()
 
-        # Add an alignment item at the top if one is needed by the component.
-        # if pv.type in ['Corrector', 'BPM']:
         if 'alignment' in pv.settings:
             self.items['alignment'] = QListWidgetItem()
             if pv.settings['alignment'] == 'Horizontal':
@@ -107,7 +104,7 @@ class Inspector(Entity, QTabWidget):
                 name = c['name']
             self.items[k] = QListWidgetItem()
             self.expandables[k] = Expandable(self.main, self.items[k], name, pv, k)
-            if c['name'] == component or c['name'] == 'Linked Lattice Element':
+            if c['name'] == component or c['name'] == 'Linked Lattice Element' or len(pv.settings['components']) == 1:
                 self.expandables[k].ToggleContent()
             self.items[k].setSizeHint(self.expandables[k].sizeHint())
             self.main.addItem(self.items[k])

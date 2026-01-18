@@ -19,6 +19,7 @@ editorOpenIdx = -1;
 controlPVs = None
 objectivePVs = None
 entities = dict() # store each entity along with its ID for sorting and ID assignment reasons.
+PVIDs = [] # easy lookup list so entity iterations aren't necessary.
 entityTypes = ['PV', 'GUI'] # can be more than just PVs, anything you might want to save the state of.
 cursorTolerance = 2.5 # tolerance with which to ignore cursor moves due to hand shake.
 # PVs = []

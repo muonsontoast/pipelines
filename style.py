@@ -333,7 +333,7 @@ def FrameStyle(**kwargs):
 
 def LabelStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `textAlign`, `padding`, `bold`, `fontColor`, `fontSize`, `fontFamily`'''
+    `textAlign`, `padding`, `borderRadius`, `bold`, `fontColor`, `fontSize`, `fontFamily`'''
     bold = 'font-weight: bold' if kwargs.get('bold', True) else ''
     return f'''
     QLabel {{
@@ -343,6 +343,7 @@ def LabelStyle(**kwargs):
     font-family: {kwargs.get('fontFamily', fontFamily)};
     padding-left: {kwargs.get('padding', 10)}px;
     text-align: {kwargs.get('textAlign', 'center')};
+    border-radius: {kwargs.get('borderRadius', 0)};
     {bold}
     }}'''
 
@@ -688,7 +689,7 @@ def Dark01():
         if hasattr(e, 'popup'):
             e.popup.UpdateColors()
     # shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#1a1a1a')) # controls color of the inspector.
-    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#1a1a1a", borderColor = '#1a1a1a', fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#09BC8A", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#222222') + TabStyle(color = "#1a1a1a", hoverColor = "#B26A17", selectedColor = "#312244", fontColor = '#C4C4C4') + TabWidgetStyle(color = "#1a1a1a", fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
+    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#1a1a1a", borderColor = '#1a1a1a', fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#09BC8A", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#222222') + TabStyle(color = "#1a1a1a", hoverColor = "#B26A17", selectedColor = "#39393A", fontColor = '#C4C4C4') + TabWidgetStyle(color = "#1a1a1a", fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
 
 def socketStyle(radius, color = tabSelectedColor, alignment = 'left'):
     '''`alignment` is the side of the widget the socket sits on.'''
