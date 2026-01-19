@@ -33,7 +33,8 @@ class Kernel(Draggable):
             components = {
                 'dimensions': dict(name = 'Dimensions', type = KernelComponent),
             },
-            linkedPVs = dict(),
+            linkedPVs = kwargs.pop('linkedPVs', dict()),
+            automatic = kwargs.pop('automatic', True), # Automatic = defined over all relevant decision vars automatically, Manual = defined over a subset of relevant decision variables (useful for some kernel compositions).
             **kwargs
         )
         for k, val in self.settings['hyperparameters'].items():
@@ -50,6 +51,7 @@ class Kernel(Draggable):
         self.dataSharedMemoryName = self.dataSharedMemory.name
         self.dataSharedMemoryShape = self.data.shape
         self.dataSharedMemoryDType = self.data.dtype
+        shared.kernels.extend([self.ID])
 
         if self.__class__ != Kernel: # only Push immediately if not a base class instance.
             self.Push()
@@ -57,6 +59,22 @@ class Kernel(Draggable):
     async def k(self, X1, X2):
         '''To be overriden by all subclasses inheriting from this base class.'''
         pass
+
+    def AddLinkedPV(self, ID):
+        entity = shared.entities[ID]
+        if ID in self.settings['linkedPVs']:
+            return
+        self.settings['linkedPVs'][ID] = [entity.settings['components']['value']['min'], entity.settings['components']['value']['max']]
+        shared.workspace.assistant.PushMessage(f'Added {entity.name} as a dimension of {self.name}')
+
+    def RemoveLinkedPV(self, ID):
+        if ID not in self.settings['linkedPVs']:
+            return
+        self.settings['linkedPVs'].pop(ID)
+        entity = shared.entities[ID]
+        if shared.editorSelectMode:
+            entity.widget.setStyleSheet(style.WidgetStyle(color = "#1157A1", fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16))
+        shared.workspace.assistant.PushMessage(f'Removed {entity.name} as a dimension of {self.name}')
 
     def ShowMenu(self, context):
         if shared.kernelMenu is not None:
@@ -142,7 +160,6 @@ class Kernel(Draggable):
         self.kernelMenu.canDrag = False
         self.kernelMenu.Hide()
         self.kernelMenuIsOpen = False
-        self.automatic = True # Automatic = defined over all relevant decision vars automatically, Manual = defined over a subset of relevant decision variables (useful for some kernel compositions).
         self.UpdateFigure()
         self.ToggleStyling(active = False)
 

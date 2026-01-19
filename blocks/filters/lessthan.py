@@ -25,10 +25,6 @@ class LessThan(Filter):
         
     def Push(self):
         super().Push()
-        self.widget = QWidget()
-        self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.widget.setLayout(QVBoxLayout())
-        self.widget.layout().setContentsMargins(10, 10, 10, 20)
         # add a label
         self.thresholdLabel = QLabel('Threshold')
         self.thresholdLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 14, padding = 0))

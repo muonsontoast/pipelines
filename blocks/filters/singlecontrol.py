@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QSizePolicy, QGraphicsProxyWidget
 import numpy as np
 from .filter import Filter
+from ..composition.composition import Composition
 from ..pv import PV
 from ... import shared
-from ... import style
 
 class SingleControl(Filter):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
@@ -35,7 +35,7 @@ class SingleControl(Filter):
         
     def Push(self):
         super().Push()
-        self.AddSocket('control', 'F', 'Control', 135, acceptableTypes = [PV, Filter])
+        self.AddSocket('control', 'F', 'Control', 135, acceptableTypes = [PV, Filter, Composition])
         self.widget = QWidget()
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.setLayout(QVBoxLayout())

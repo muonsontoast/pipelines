@@ -4,6 +4,7 @@ from PySide6.QtGui import QPainter, QCursor, QPixmap
 from .editormenu import EditorMenu
 from .boxselect import BoxSelect
 from ..blocks.pv import PV
+from ..blocks.kernels.kernel import Kernel
 from ..utils.entity import Entity
 from ..utils.commands import DetailedView
 from .. import shared
@@ -175,7 +176,6 @@ class Editor(Entity, QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         mousePos = self.mapToScene(event.position().toPoint())
-        # ds = mousePos - self.startPos
         globalMousePos = event.position()
         ds = globalMousePos - self.globalStartPos
         # fetch all selected proxies
@@ -235,7 +235,17 @@ class Editor(Entity, QGraphicsView):
                                 for ID in shared.PVIDs:
                                     shared.entities[ID].BaseStyling()
                             else:
-                                print(f'** current selected entities are: {[entity.name for entity in shared.selected]}')
+                                for ID in shared.selected:
+                                    if isinstance(shared.entities[ID], Kernel):
+                                        if not widget.ID in shared.entities[ID].settings['linkedPVs']:
+                                            shared.entities[ID].AddLinkedPV(widget.ID)
+                                            widget.widget.setStyleSheet(style.WidgetStyle(color = "#0B9735", fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16))
+                                        else:
+                                            shared.entities[ID].RemoveLinkedPV(widget.ID)
+                                            widget.widget.setStyleSheet(style.WidgetStyle(color = "#1157A1", fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16))
+                                        widget.indicator.setStyleSheet(style.IndicatorStyle(8, color = "#E0A159", borderColor = "#E7902D"))
+                                if len(shared.selected) == 1:
+                                    shared.inspector.Push(shared.entities[ID])
                                 return event.accept()
         else:
             if ds.x() ** 2 + ds.y() ** 2 < shared.cursorTolerance ** 2: # cursor has been moved.
@@ -248,6 +258,7 @@ class Editor(Entity, QGraphicsView):
                     shared.activeEditor.setStyleSheet(style.WidgetStyle(color = "#1a1a1a"))
                     for ID in shared.PVIDs:
                         shared.entities[ID].BaseStyling()
+                    shared.selected = []
                 self.area.selectedItems = []
                 shared.inspector.Push()
 

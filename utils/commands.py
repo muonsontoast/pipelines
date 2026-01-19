@@ -220,6 +220,10 @@ def Delete():
         shared.PVs.pop(widget.ID)
         if widget.type == 'PV':
             shared.PVIDs.remove(widget.ID)
+            for ID in shared.kernels:
+                shared.entities[ID].RemoveLinkedPV(widget.ID)
+        elif isinstance(widget, Kernel):
+            shared.kernels.pop(shared.kernels.index(widget.ID))
         shared.selectedPV = None
         if widget in shared.activePVs:
             shared.activePVs.remove(widget)

@@ -1,10 +1,8 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QMenu
-from PySide6.QtCore import Qt, QPointF
+from PySide6.QtWidgets import QGraphicsProxyWidget, QWidget, QVBoxLayout, QSizePolicy
 import numpy as np
 from ..pv import PV
 from ..draggable import Draggable
 from ... import shared
-from ..socket import Socket
 from ... import style
 
 class Filter(Draggable):
@@ -32,16 +30,21 @@ class Filter(Draggable):
     
     def Push(self):
         super().Push()
-        self.AddSocket('in', 'F', acceptableTypes = [PV])
+        self.AddSocket('in', 'F', acceptableTypes = [PV, Filter])
         self.AddSocket('out', 'M')
+        self.widget = QWidget()
+        self.widget.setLayout(QVBoxLayout())
+        self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.widget.layout().setContentsMargins(10, 10, 10, 20)
+        self.widget.layout().setSpacing(2)
         self.BaseStyling()
 
     def CheckState(self):
         pass
 
     def BaseStyling(self):
+        super().BaseStyling()
         if shared.lightModeOn:
             pass
         else:
-            self.main.setStyleSheet(self.widgetStyle)
-        super().BaseStyling()
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadiusBottomLeft = 8, borderRadiusBottomRight = 8))

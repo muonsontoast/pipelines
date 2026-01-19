@@ -56,35 +56,38 @@ class Composition(Draggable):
             # 1. Kernel
             if numLinksIn == 1:
                 deleteAndRedraw = False
-                if not ignoreForFirstTime and (isinstance(shared.entities[ID], Kernel) or newFundamentalType == Kernel):
+                if not ignoreForFirstTime:
                     deleteAndRedraw = True
-                    proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [350, 295])
+                    if (isinstance(shared.entities[ID], Kernel) or newFundamentalType == Kernel):
+                        proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [350, 295])
+                    elif isinstance(shared.entities[ID], PV):
+                        proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = self.settings['size'])
+                    # Attach links on existing block to the new block.
                     for linkID, link in self.linksIn.items():
                         newAdd.AddLinkIn(linkID, link['socket'], ignoreForFirstTime = True)
                         shared.entities[linkID].AddLinkOut(newAdd.ID, link['socket'])
                     for linkID, link in self.linksOut.items():
                         newAdd.AddLinkOut(linkID, link['socket'])
                         shared.entities[linkID].AddLinkIn(newAdd.ID, link['socket'])
-                elif isinstance(shared.entities[ID], PV):
-                    deleteAndRedraw = True
-                    # add a line edit element
-                    self.edit = QLineEdit()
-                    self.edit.setFixedSize(100, 40)
-                    self.edit.setAlignment(Qt.AlignCenter)
-                    self.edit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
-                    self.edit.returnPressed.connect(self.ChangeEdit)
-                    self.edit.setReadOnly(True)
-                    self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
-                    self.timerRunning = True
-                    async def FetchValues():
-                        # this QTimer can run after deleting last PV so explicitly check if PVs are still linked.
-                        if len(self.linksIn) > 0:
-                            result = await self.Start()
-                            result = 'N/A' if np.isnan(result) else f'{result:.3f}'
-                            self.edit.setText(result)
-                            QTimer.singleShot(100, lambda: asyncio.create_task(FetchValues()))
-                    asyncio.create_task(FetchValues())
-
+                else:
+                    if isinstance(shared.entities[ID], PV):
+                        # add a line edit element
+                        self.edit = QLineEdit()
+                        self.edit.setFixedSize(100, 40)
+                        self.edit.setAlignment(Qt.AlignCenter)
+                        self.edit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
+                        self.edit.returnPressed.connect(self.ChangeEdit)
+                        self.edit.setReadOnly(True)
+                        self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
+                        self.timerRunning = True
+                        async def FetchValues():
+                            # this QTimer can run after deleting last PV so explicitly check if PVs are still linked.
+                            if len(self.linksIn) > 0:
+                                result = await self.Start()
+                                result = 'N/A' if np.isnan(result) else f'{result:.3f}'
+                                self.edit.setText(result)
+                                QTimer.singleShot(100, lambda: asyncio.create_task(FetchValues()))
+                        asyncio.create_task(FetchValues())
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
                     QTimer.singleShot(0, commands.Delete)
@@ -103,9 +106,10 @@ class Composition(Draggable):
         super().RemoveLinkIn(ID)
         if len(self.linksIn) > 0:
             if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
-                self.kernel.RedrawFigure()
+                self.kernel.UpdateFigure()
         else:
-            self.settings.pop('hyperparameters')
+            if 'hyperparameters' in self.settings:
+                self.settings.pop('hyperparameters')
             commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [250, 100])
             shared.activeEditor.area.selectedItems = [self.proxy,]
             commands.Delete()

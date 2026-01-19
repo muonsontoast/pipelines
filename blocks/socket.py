@@ -36,12 +36,10 @@ class Socket(QWidget):
         if self.type == 'F':
             super().mousePressEvent(event)
             return
-        print('creating a link')
         self.parent.linksOut['free'] = dict(link = QGraphicsLineItem(), socket = None)
         self.parent.linksOut['free']['link'].setZValue(-20)
         self.parent.linksOut['free']['link'].setPen(QPen(QColor("#454545"), 12))
         shared.activeEditor.scene.addItem(self.parent.linksOut['free']['link'])
-        print('link added to scene')
         self.parent.dragging = True
         self.parent.canDrag = False
         shared.PVLinkSource = self.parent

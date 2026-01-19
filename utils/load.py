@@ -89,6 +89,8 @@ def Load(path):
                             QPoint(v['position'][0], v['position'][1]), 
                             ID,
                             size = v['size'],
+                            automatic = v['automatic'] if 'automatic' in v else None,
+                            linkedPVs = v['linkedPVs'] if 'linkedPVs' in v else None,
                         )
                         # entity.settings['size'] = v['size']
                         if 'alignment' in v:

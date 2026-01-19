@@ -19,7 +19,7 @@ class PV(Draggable):
             proxy,
             name = kwargs.pop('name', 'PV'),
             type = kwargs.pop('type', 'PV'),
-            size = kwargs.pop('size', [325, 115]),
+            size = kwargs.pop('size', [350, 115]),
             components = {
                 'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', type = slider.SliderComponent),
                 'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
@@ -31,7 +31,7 @@ class PV(Draggable):
         self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, marginRight = 0, fontSize = 16)
         self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 16)
         self.indicatorStyle = style.IndicatorStyle(8, color = '#c4c4c4', borderColor = "#b7b7b7")
-        self.indicatorSelectedStyle = style.IndicatorStyle(8, color = "#E0A159", borderColor = "#E7902D")
+        self.indicatorSelectedStyle = style.IndicatorStyle(8, color = "#E0A159", borderColor = "#E7902D") 
         self.indicatorStyleToUse = self.indicatorStyle
         
         # force a PV's scalar output to be shared at instantiation so modifications are seen by all connected blocks
@@ -76,7 +76,8 @@ class PV(Draggable):
         self.header.layout().setSpacing(20)
         self.indicator = Indicator(self, 8)
         self.header.layout().addWidget(self.indicator, alignment = Qt.AlignLeft)
-        self.title = QLabel(self.name, alignment = Qt.AlignCenter)
+        self.title = QLabel(self.name, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        self.title.setFixedWidth(235)
         self.title.setWordWrap(True)
         self.title.setObjectName('title')
         self.header.layout().addWidget(self.title)

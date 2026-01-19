@@ -48,7 +48,7 @@ class SocketInteractable(QFrame):
                     notAllowed = False
                     break
             if notAllowed:
-                shared.workspace.assistant.PushMessage(f'{shared.PVLinkSource.type} is not a valid input of {self.parent.name} socket. Acceptable types are: {', '.join(self.acceptableTypes)}.', 'Error')
+                shared.workspace.assistant.PushMessage(f'{shared.PVLinkSource.type} is not a valid input of {self.parent.name} socket. Acceptable types are: {', '.join([a.__name__ for a in self.acceptableTypes])}.', 'Error')
                 return
             if 'free' in shared.PVLinkSource.linksOut:
                 shared.PVLinkSource.linksOut.pop('free')
@@ -58,7 +58,6 @@ class SocketInteractable(QFrame):
                     pushMessage = False
                     shared.activeEditor.scene.removeItem(self.parent.parent.linksIn[shared.PVLinkSource.ID]['link'])
                 successfulLinkIn = self.parent.parent.AddLinkIn(shared.PVLinkSource.ID, self.parent.name) # returns False if connection fails to complete
-                print(f'Link successfully created? {successfulLinkIn}')
                 if successfulLinkIn:
                     shared.PVLinkSource.AddLinkOut(self.parent.parent.ID, self.parent.name)
                 # Update settings of the two blocks with the block IDs and the F socket the link attaches to.
