@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QGraphicsProxyWidget, QWidget, QVBoxLayout, QSizePolicy
 import numpy as np
-from ..pv import PV
 from ..draggable import Draggable
 from ... import shared
 from ... import style
@@ -30,7 +29,7 @@ class Filter(Draggable):
     
     def Push(self):
         super().Push()
-        self.AddSocket('in', 'F', acceptableTypes = [PV, Filter])
+        self.AddSocket('in', 'F', acceptableTypes = [Draggable])
         self.AddSocket('out', 'M')
         self.widget = QWidget()
         self.widget.setLayout(QVBoxLayout())

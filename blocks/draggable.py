@@ -98,7 +98,6 @@ class Draggable(Entity, QWidget):
         self.popup.setWidget(self.popupContainer)
         self.popup.hide()
 
-        self.setStyleSheet(style.WidgetStyle())
         if kwargs.pop('addToShared', True):
             shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))
         if self.type == 'PV':
@@ -118,8 +117,8 @@ class Draggable(Entity, QWidget):
         self.layout().addWidget(self.main)
         self.layout().addWidget(self.MSocketWidgets)
         if any(match in self.type for match in ['GP', 'Orbit Response']):
-            self.main.setStyleSheet('')
             self.widget = QWidget()
+            self.widget.setLayout(QVBoxLayout())
             self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.widget.setContentsMargins(0, 0, 0, 0)
             self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadiusBottomLeft = 12, borderRadiusBottomRight = 12))

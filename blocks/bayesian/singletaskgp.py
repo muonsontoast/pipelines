@@ -38,17 +38,6 @@ class SingleTaskGP(Draggable):
         self.offlineAction = OfflineAction(self)
         self.onlineAction = OnlineAction(self)
         self.online = False
-        # Main widget
-        self.widget = QWidget()
-        self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.widget.setLayout(QVBoxLayout())
-        self.widget.layout().setContentsMargins(0, 0, 0, 0)
-        self.widget.layout().setSpacing(0)
-        # Content widget inside main
-        self.content = QWidget()
-        self.content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.content.setLayout(QVBoxLayout())
-        self.content.layout().setSpacing(0)
 
         self.streams = {
             'raw': lambda: {
@@ -90,6 +79,13 @@ class SingleTaskGP(Draggable):
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
         self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition, Filter])
         self.AddSocket('out', 'M')
+
+        # Content widget inside main
+        self.content = QWidget()
+        self.content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.content.setLayout(QVBoxLayout())
+        self.content.layout().setSpacing(0)
+        self.widget.layout().addWidget(self.content)
         
         self.BaseStyling()
 
