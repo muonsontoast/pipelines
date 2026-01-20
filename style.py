@@ -1,29 +1,29 @@
 from PySide6.QtGui import QColor
 from . import shared
 
-backgroundColor = "#181818"
-tabColor = "#282523"
-PVSelectedColor = "#74BC80"
-tabSelectedColor = "#c4c4c4"
-tabHoverColor = "#303F33"
-buttonColor = "#1E1E1E"
-buttonSelectedColor = "#313131"
-buttonHoverColor = "#252525"
-buttonBorderColor = "#141414"
-editorButtonColor = "#5B4981"
-inspectorExpandableColor = "#342D2A"
-inspectorNameBackgroundColor = "#407549"
-fontColor = "#C4C4C4"
+backgroundColor = '#181818'
+tabColor = '#282523'
+PVSelectedColor = '#74BC80'
+tabSelectedColor = '#c4c4c4'
+tabHoverColor = '#303F33'
+buttonColor = '#1E1E1E'
+buttonSelectedColor = '#313131'
+buttonHoverColor = '#252525'
+buttonBorderColor = '#141414'
+editorButtonColor = '#5B4981'
+inspectorExpandableColor = '#342D2A'
+inspectorNameBackgroundColor = '#407549'
+fontColor = '#C4C4C4'
 checkColor = '#5B4981'
 fontSize = '12px'
 fontFamily = 'Roboto'
 
 # Light color theme.
 light01 = {
-'backgroundColor': "#E4D9CA",
-'tabColor': "#282523",
-'tabHoverColor': "#303F33",
-'tabSelectedColor': "#3F5142",
+'backgroundColor': '#E4D9CA',
+'tabColor': '#282523',
+'tabHoverColor': '#303F33',
+'tabSelectedColor': '#3F5142',
 'buttonColor': '#1e1e1e',
 'buttonSelectedColor': '#313131',
 'buttonHoverColor': '#252525',
@@ -31,7 +31,7 @@ light01 = {
 'editorButtonColor': '#5b4981',
 'inspectorExpandableColor': '#342d2a',
 'inspectorNameBackgroundColor': '#407549',
-'fontColor': "#1e1e1e",
+'fontColor': '#1e1e1e',
 'checkColor': '#5b4981',
 'fontSize': '12px',
 'fontFamily': 'Roboto',
@@ -41,7 +41,7 @@ dark01 = {
 'backgroundColor': '#181818',
 'tabColor': '#282523',
 'tabHoverColor': '#303f33',
-'tabSelectedColor': "#513f3f",
+'tabSelectedColor': '#513f3f',
 'buttonColor': '#1e1e1e',
 'buttonSelectedColor': '#313131',
 'buttonHoverColor': '#252525',
@@ -71,10 +71,10 @@ def WidgetStyle(**kwargs):
         border-bottom-left-radius: {kwargs.get('borderRadiusBottomLeft', '0')}px;
         '''
     borders = f'''
-    border-left: {"none" if "left" not in borders else borderThickness};
-    border-top: {"none" if "top" not in borders else borderThickness};
-    border-right: {"none" if "right" not in borders else borderThickness};
-    border-bottom: {"none" if "bottom" not in borders else borderThickness};
+    border-left: {'none' if 'left' not in borders else borderThickness};
+    border-top: {'none' if 'top' not in borders else borderThickness};
+    border-right: {'none' if 'right' not in borders else borderThickness};
+    border-bottom: {'none' if 'bottom' not in borders else borderThickness};
     '''
     return f'''
     QWidget {{
@@ -195,17 +195,30 @@ def ToolButtonStyle(**kwargs):
 
 def ComboStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`'''
+    `color`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`, `borderRadius`'''
     return f'''
     QComboBox {{
-    background-color: {kwargs.get('color', buttonColor)};
-    color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)}px;
-    font-family: {kwargs.get('fontFamily', fontFamily)};
-    font-weight: bold;
-    padding: 5px;
-    border-radius: 0px;
-    border: none;
+        background-color: {kwargs.get('color', buttonColor)};
+        color: {kwargs.get('fontColor', fontColor)};
+        font-size: {kwargs.get('fontSize', fontSize)}px;
+        font-family: {kwargs.get('fontFamily', fontFamily)};
+        font-weight: bold;
+        border-radius: {kwargs.get('borderRadius', 0)}px;
+        border: none;
+    }}
+    QComboBox::drop-down {{
+        border: none;
+        background: transparent;
+    }}
+    QComboBox QAbstractItemView {{
+        color: {kwargs.get('color', '#1e1e1e')};
+        border: 3px solid {kwargs.get('color', '#1e1e1e')};
+        border-radius: 0px;
+        padding: 2px;
+        margin-left: -1px;
+        margin-top: -1px;
+        margin-right: -1px;
+        margin-bottom: -1px;
     }}'''
 
 def LineEditStyle(**kwargs):
@@ -677,7 +690,7 @@ def Light01():
     shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#E5DFCC'))
     shared.inspector.mainWindowTitle.setStyleSheet(LabelStyle(fontColor = '#1e1e1e', fontSize = 16))
     shared.workspace.UpdateColors()
-    return WidgetStyle(color = "#D8D3C0", fontColor = "#1C1C1C") + FrameStyle(color = "#E5DFCC", fontColor = "#1C1C1C") + ScrollBarStyle(handleColor = '#B5AB8D', backgroundColor = "#C9C3B1") + PushButtonStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', padding = '0px', fontColor = "#1C1C1C") + PushButtonBorderlessStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', fontColor = '#1e1e1e') + ToolButtonStyle(color = "#D7CDAB", fontColor = "#1C1C1C") + ComboStyle() + LineEditStyle(color = '#D2C5A0') + TabStyle(color = "#E5DFCC", hoverColor = "#B5AB8D", selectedColor = "#D2C5A0", fontColor = '#1C1C1C') + TabWidgetStyle(fontColor = '#1C1C1C') + EditorStyle() + LabelStyle(fontColor = '#1c1c1c') + ProgressBarStyle(color = '#E5DFCC', borderColor = '#D2C5A0', borderRadius = 5, fontColor = '#1e1e1e')
+    return WidgetStyle(color = '#D8D3C0', fontColor = '#1C1C1C') + FrameStyle(color = '#E5DFCC', fontColor = '#1C1C1C') + ScrollBarStyle(handleColor = '#B5AB8D', backgroundColor = '#C9C3B1') + PushButtonStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', padding = '0px', fontColor = '#1C1C1C') + PushButtonBorderlessStyle(color = '#D2C5A0', hoverColor = '#B5AB8D', fontColor = '#1e1e1e') + ToolButtonStyle(color = '#D7CDAB', fontColor = '#1C1C1C') + ComboStyle() + LineEditStyle(color = '#D2C5A0') + TabStyle(color = '#E5DFCC', hoverColor = '#B5AB8D', selectedColor = '#D2C5A0', fontColor = '#1C1C1C') + TabWidgetStyle(fontColor = '#1C1C1C') + EditorStyle() + LabelStyle(fontColor = '#1c1c1c') + ProgressBarStyle(color = '#E5DFCC', borderColor = '#D2C5A0', borderRadius = 5, fontColor = '#1e1e1e')
 
 def Dark01():
     shared.lightModeOn = not shared.lightModeOn
@@ -691,7 +704,7 @@ def Dark01():
         if hasattr(e, 'popup'):
             e.popup.UpdateColors()
     # shared.inspector.mainWindow.setStyleSheet(WidgetStyle(color = '#1a1a1a')) # controls color of the inspector.
-    return WidgetStyle(color = "#1e1e1e", fontColor = "#C4C4C4") + FrameStyle(color = "#1a1a1a", borderColor = '#1a1a1a', fontColor = "#C4C4C4") + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = "#363636") + PushButtonStyle(color = "#262626", hoverColor = "#3D3D3D", padding = '0px', fontColor = "#C4C4C4") + PushButtonBorderlessStyle(color = '#262626', hoverColor = "#3D3D3D", fontColor = '#c4c4c4') + ToolButtonStyle(color = "#09BC8A", fontColor = "#C4C4C4") + ComboStyle() + LineEditStyle(color = '#222222') + TabStyle(color = "#1a1a1a", hoverColor = "#B26A17", selectedColor = "#39393A", fontColor = '#C4C4C4') + TabWidgetStyle(color = "#1a1a1a", fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = "#262626", borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
+    return WidgetStyle(color = '#1e1e1e', fontColor = '#C4C4C4') + FrameStyle(color = '#1a1a1a', borderColor = '#1a1a1a', fontColor = '#C4C4C4') + ScrollBarStyle(handleColor = '#2d2d2d', backgroundColor = '#363636') + PushButtonStyle(color = '#262626', hoverColor = '#3D3D3D', padding = '0px', fontColor = '#C4C4C4') + PushButtonBorderlessStyle(color = '#262626', hoverColor = '#3D3D3D', fontColor = '#c4c4c4') + ToolButtonStyle(color = '#09BC8A', fontColor = '#C4C4C4') + ComboStyle() + LineEditStyle(color = '#222222') + TabStyle(color = '#1a1a1a', hoverColor = '#B26A17', selectedColor = '#39393A', fontColor = '#C4C4C4') + TabWidgetStyle(color = '#1a1a1a', fontColor = '#C4C4C4') + EditorStyle() + LabelStyle(fontColor = '#C4C4C4') + ProgressBarStyle(color = '#262626', borderColor = '#3C4048', borderRadius = 5, fontColor = '#c4c4c4')
 
 def socketStyle(radius, color = tabSelectedColor, alignment = 'left'):
     '''`alignment` is the side of the widget the socket sits on.'''

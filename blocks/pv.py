@@ -28,8 +28,8 @@ class PV(Draggable):
         )
         self.parent = parent
         self.indicator = None
-        self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, marginRight = 0, fontSize = 16)
-        self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 16)
+        self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16)
+        self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16)
         self.indicatorStyle = style.IndicatorStyle(8, color = '#c4c4c4', borderColor = "#b7b7b7")
         self.indicatorSelectedStyle = style.IndicatorStyle(8, color = "#E0A159", borderColor = "#E7902D") 
         self.indicatorStyleToUse = self.indicatorStyle
@@ -246,17 +246,19 @@ class PV(Draggable):
         if shared.lightModeOn:
             pass
         else:
-            self.widget.setStyleSheet(self.widgetStyle + self.indicatorStyleToUse)
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16) + self.indicatorStyleToUse)
             self.outSocket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
             self.title.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
-            self.set.setStyleSheet(style.LineEditStyle(color = "#2e2e2e"))
-            self.get.setStyleSheet(style.LineEditStyle(color = "#1e1e1e"))
+            self.setWidget.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
+            self.set.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', fontColor = '#c4c4c4'))
+            self.getWidget.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
+            self.get.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4'))
 
     def SelectedStyling(self):
         if shared.lightModeOn:
             pass
         else:
-            self.widget.setStyleSheet(self.widgetSelectedStyle + self.indicatorStyleToUse)
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16) + self.indicatorStyleToUse)
             self.outSocket.setStyleSheet(style.WidgetStyle(marginLeft = 2))
             self.title.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
 

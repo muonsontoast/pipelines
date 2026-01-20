@@ -43,6 +43,7 @@ class Expandable(QWidget):
         self.content.setSelectionMode(QListWidget.NoSelection)
         self.content.setStyleSheet(style.InspectorSectionStyle())
         self.content.setVisible(False)
+        self.content.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.layout().addWidget(self.content)
         self.parent.setSizeHint(QSize(self.width, self.headerHeight + 10))
         self.widget = self.pv.settings['components'][self.componentKey]['type'](self.pv, self.componentKey, expandable = self) # Instantiate the widget
@@ -72,7 +73,7 @@ class Expandable(QWidget):
                 item.setSizeHint(QSize(335, self.widget.sizeHint().height()))
                 self.content.addItem(item)
                 self.content.setItemWidget(item, self.widget)
-            expandedHeight += self.widget.sizeHint().height()
+            expandedHeight += self.widget.sizeHint().height() + 15
             self.widgetsDrawn = True
             self.content.setVisible(True)
         else:

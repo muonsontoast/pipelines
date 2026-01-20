@@ -120,8 +120,8 @@ class Draggable(Entity, QWidget):
             self.widget = QWidget()
             self.widget.setLayout(QVBoxLayout())
             self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            self.widget.setContentsMargins(0, 0, 0, 0)
-            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadiusBottomLeft = 12, borderRadiusBottomRight = 12))
+            self.widget.setContentsMargins(0, 5, 0, 5)
+            self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadiusBottomLeft = 12, borderRadiusBottomRight = 12))
             self.main.layout().addWidget(self.widget)
             self.AddButtons()
 
@@ -265,7 +265,6 @@ class Draggable(Entity, QWidget):
 
     def BaseStyling(self):
         if hasattr(self, 'header'):
-            self.main.setStyleSheet('')
             self.header.setStyleSheet(style.WidgetStyle(color = self.headerColor, fontSize = 16, borderRadiusTopLeft = 8, borderRadiusTopRight = 8))
 
     def SelectedStyling(self):
@@ -351,7 +350,7 @@ class Draggable(Entity, QWidget):
             self.MSocketWidgets.layout().addWidget(getattr(self, f'{name}SocketHousing'), alignment = Qt.AlignLeft)
 
     def AddButtons(self, *args):
-        '''Specify buttons not to draw by including `<start/pause/stop/clear>` as str args.'''
+        '''Specify buttons not to draw by including `<start/pause/reset/clear>` as str args.'''
         # Control buttons
         self.buttons = QWidget()
         buttonsHeight = 35
@@ -370,12 +369,12 @@ class Draggable(Entity, QWidget):
             self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
             self.pause.clicked.connect(lambda: self.Pause())
             self.buttons.layout().addWidget(self.pause)
-        if 'stop' not in args:
-            self.stop = QPushButton('Stop')
-            self.stop.setFixedHeight(buttonsHeight)
-            self.stop.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-            self.stop.clicked.connect(lambda: self.Stop())
-            self.buttons.layout().addWidget(self.stop)
+        if 'reset' not in args:
+            self.reset = QPushButton('Reset')
+            self.reset.setFixedHeight(buttonsHeight)
+            self.reset.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
+            self.reset.clicked.connect(lambda: self.Reset())
+            self.buttons.layout().addWidget(self.reset)
         if 'clear' not in args:
             self.clear = QPushButton('Clear')
             self.clear.setFixedHeight(buttonsHeight)
@@ -398,7 +397,7 @@ class Draggable(Entity, QWidget):
     def Pause(self):
         pass
 
-    def Stop(self):
+    def Reset(self):
         pass
 
     def AddLinkIn(self, ID:int, socket, streamTypeIn:str = '', **kwargs):

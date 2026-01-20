@@ -21,6 +21,8 @@ class Entity:
                 continue
             elif k == 'components':
                 componentsSpecified = True
+            elif v is None:
+                continue
             self.settings[k] = v
         # define an empty component dict if none is specified.
         if not componentsSpecified:

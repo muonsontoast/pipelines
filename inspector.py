@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QTabWidget, QListWidget, QListWidgetItem, QLabel, QLineEdit, QPushButton,
+    QApplication, QWidget, QTabWidget, QListWidget, QListWidgetItem, QLineEdit,
     QVBoxLayout, QHBoxLayout, QSizePolicy
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QSize
 from .expandable import Expandable
 from .utils.entity import Entity
 from . import shared

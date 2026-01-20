@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
+from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
 from PySide6.QtCore import Qt, QTimer
+from datetime import datetime
 import numpy as np
 import time
 import aioca
@@ -25,11 +26,17 @@ from ..pv import PV
 
 class SingleTaskGP(Draggable):
     def __init__(self, parent, proxy, **kwargs):
+        print(f'At init, numSteps in GP looks like: {kwargs.get('numSteps'), None}')
         super().__init__(
-            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 500]), 
+            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 525]), 
             components = {
                 'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float),
             },
+            acqFunction = kwargs.pop('acqFunction', 'UCB'),
+            acqHyperparameter = kwargs.pop('acqHyperparameter', 2),
+            numSamples = kwargs.pop('numSamples', 5),
+            numSteps = kwargs.pop('numSteps', 20),
+            mode = kwargs.pop('mode', 'maximise'),
             headerColor = "#C1492B",
             **kwargs
         )
@@ -75,19 +82,260 @@ class SingleTaskGP(Draggable):
 
     def Push(self):
         super().Push()
+        self.widget.layout().setContentsMargins(5, 10, 20, 10)
+        self.widget.layout().setSpacing(25)
         self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = [PV])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
         self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition, Filter])
         self.AddSocket('out', 'M')
-
-        # Content widget inside main
-        self.content = QWidget()
-        self.content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.content.setLayout(QVBoxLayout())
-        self.content.layout().setSpacing(0)
-        self.widget.layout().addWidget(self.content)
+        # settings section
+        settings = QWidget()
+        settings.setFixedHeight(200)
+        settings.setLayout(QVBoxLayout())
+        settings.layout().setContentsMargins(0, 5, 5, 0)
+        settingsLabel = QLabel('<b>SETTINGS</b>')
+        settingsLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 13))
+        settings.layout().addWidget(settingsLabel, alignment = Qt.AlignLeft)
+        # acquisition
+        acquisition = QWidget()
+        acquisition.setFixedHeight(30)
+        acquisition.setLayout(QHBoxLayout())
+        acquisition.layout().setContentsMargins(5, 0, 0, 0)
+        acquisitionLabel = QLabel('Acquisition Function')
+        acquisitionLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        acquisitionLabel.setAlignment(Qt.AlignLeft)
+        acquisition.layout().addWidget(acquisitionLabel, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        acquisitionSelect = QComboBox()
+        acquisitionSelect.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        acquisitionSelect.setStyleSheet(style.ComboStyle(color = '#1e1e1e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 12))
+        funcs = {
+            '    UCB': self.SelectUCB,
+            '    EI': self.SelectEI,
+        }
+        acquisitionSelect.addItems(funcs.keys())
+        idx = 0 if self.settings['acqFunction'] == 'UCB' else 1
+        acquisitionSelect.setCurrentIndex(idx)
+        acquisitionSelect.currentTextChanged.connect(lambda: funcs[acquisitionSelect.currentText()]())
+        acquisition.layout().addWidget(acquisitionSelect)
+        settings.layout().addWidget(acquisition)
+        # exploration parameter
+        self.exploration = QWidget()
+        self.exploration.setFixedHeight(30)
+        self.exploration.setLayout(QHBoxLayout())
+        self.exploration.layout().setContentsMargins(5, 0, 0, 0)
+        explorationLabel = QLabel('Trade-off Parameter')
+        explorationLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        explorationLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.exploration.layout().addWidget(explorationLabel)
+        self.explorationEdit = QLineEdit(f'{self.settings['acqHyperparameter']:.1f}')
+        self.explorationEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.explorationEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6, paddingLeft = 13))
+        self.explorationEdit.returnPressed.connect(self.ChangeAcqHyperparameter)
+        self.exploration.layout().addWidget(self.explorationEdit)
+        settings.layout().addWidget(self.exploration)
+        # random samples
+        self.samples = QWidget()
+        self.samples.setFixedHeight(30)
+        self.samples.setLayout(QHBoxLayout())
+        self.samples.layout().setContentsMargins(5, 0, 0, 0)
+        samplesLabel = QLabel('Random Samples')
+        samplesLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        samplesLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.samples.layout().addWidget(samplesLabel)
+        self.samplesEdit = QLineEdit(f'{self.settings['numSamples']}')
+        self.samplesEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6, paddingLeft = 13))
+        self.samplesEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.samplesEdit.returnPressed.connect(self.ChangeSamples)
+        self.samples.layout().addWidget(self.samplesEdit)
+        settings.layout().addWidget(self.samples)
+        # steps
+        self.steps = QWidget()
+        self.steps.setFixedHeight(30)
+        self.steps.setLayout(QHBoxLayout())
+        self.steps.layout().setContentsMargins(5, 0, 0, 0)
+        stepsLabel = QLabel('Steps')
+        stepsLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        self.steps.layout().addWidget(stepsLabel)
+        self.stepsEdit = QLineEdit(f'{self.settings['numSteps']}')
+        self.stepsEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6, paddingLeft = 13))
+        self.stepsEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.stepsEdit.returnPressed.connect(self.ChangeSteps)
+        self.steps.layout().addWidget(self.stepsEdit)
+        settings.layout().addWidget(self.steps)
+        # mode
+        self.modeWidget = QWidget()
+        self.modeWidget.setFixedHeight(30)
+        self.modeWidget.setLayout(QHBoxLayout())
+        self.modeWidget.layout().setContentsMargins(5, 0, 0, 0)
+        self.modeLabel = QLabel(f'Mode:\t{self.settings['mode'].upper()}')
+        self.modeLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        self.modeWidget.layout().addWidget(self.modeLabel)
+        self.modeButton = QPushButton('Switch')
+        self.modeButton.setStyleSheet(style.PushButtonBorderlessStyle(color = '#3e3e3e', hoverColor = '#3c3c3c', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6))
+        self.modeButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.modeButton.pressed.connect(self.ChangeMode)
+        self.modeWidget.layout().addWidget(self.modeButton)
+        settings.layout().addWidget(self.modeWidget)
+        # spacer
+        settings.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
+        self.widget.layout().addWidget(settings)
+        
+        # metrics section
+        metrics = QWidget()
+        metrics.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        metrics.setLayout(QVBoxLayout())
+        metrics.layout().setContentsMargins(0, 5, 5, 0)
+        metricsLabel = QLabel('<b>METRICS</b>')
+        metricsLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 13))
+        metrics.layout().addWidget(metricsLabel, alignment = Qt.AlignLeft)
+        # time start
+        timeStart = QWidget()
+        timeStart.setFixedHeight(30)
+        timeStart.setLayout(QHBoxLayout())
+        timeStart.layout().setContentsMargins(5, 0, 0, 0)
+        timeStartLabel = QLabel(f'Time at Start (H/M/S)')
+        timeStartLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        timeStart.layout().addWidget(timeStartLabel)
+        self.timestamp = QLineEdit(f'N/A')
+        self.timestamp.setReadOnly(True)
+        self.timestamp.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        self.timestamp.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        timeStart.layout().addWidget(self.timestamp)
+        metrics.layout().addWidget(timeStart)
+        # run time
+        runTime = QWidget()
+        runTime.setFixedHeight(30)
+        runTime.setLayout(QHBoxLayout())
+        runTime.layout().setContentsMargins(5, 0, 0, 0)
+        runTimeLabel = QLabel('Run Time (s)')
+        runTimeLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        runTime.layout().addWidget(runTimeLabel)
+        runTimeEdit = QLineEdit('N/A')
+        runTimeEdit.setReadOnly(True)
+        runTimeEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        runTimeEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        runTime.layout().addWidget(runTimeEdit)
+        metrics.layout().addWidget(runTime)
+        # progress
+        progress = QWidget()
+        progress.setFixedHeight(30)
+        progress.setLayout(QHBoxLayout())
+        progress.layout().setContentsMargins(5, 0, 0, 0)
+        progressLabel = QLabel('Progress (%)')
+        progressLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        progress.layout().addWidget(progressLabel)
+        progressEdit = QLineEdit('N/A')
+        progressEdit.setReadOnly(True)
+        progressEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        progressEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        progress.layout().addWidget(progressEdit)
+        metrics.layout().addWidget(progress)
+        # best
+        best = QWidget()
+        best.setFixedHeight(30)
+        best.setLayout(QHBoxLayout())
+        best.layout().setContentsMargins(5, 0, 0, 0)
+        bestLabel = QLabel('Best Result')
+        bestLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        best.layout().addWidget(bestLabel)
+        bestEdit = QLineEdit('N/A')
+        bestEdit.setReadOnly(True)
+        bestEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        bestEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        best.layout().addWidget(bestEdit)
+        metrics.layout().addWidget(best)
+        # average
+        average = QWidget()
+        average.setFixedHeight(30)
+        average.setLayout(QHBoxLayout())
+        average.layout().setContentsMargins(5, 0, 0, 0)
+        averageLabel = QLabel('Moving Average')
+        averageLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        average.layout().addWidget(averageLabel)
+        averageEdit = QLineEdit('N/A')
+        averageEdit.setReadOnly(True)
+        averageEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        averageEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        average.layout().addWidget(averageEdit)
+        metrics.layout().addWidget(average)
+        # spacer
+        metrics.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
+        self.widget.layout().addWidget(metrics)
         
         self.BaseStyling()
+
+    def Timestamp(self):
+        pass
+
+    def ChangeMode(self):
+        self.settings['mode'] = 'maximise' if self.settings['mode'] == 'minimise' else 'minimise'
+        self.modeLabel.setText(f'Mode:\t{self.settings['mode'].upper()}')
+        shared.workspace.assistant.PushMessage(f'Successfully changed mode of {self.name} to {self.settings['mode'].upper()}.')
+
+    def ChangeAcqHyperparameter(self):
+        try:
+            val = float(self.explorationEdit.text())
+        except:
+            shared.workspace.assistant.PushMessage(f'Failed to change the acquisition function exploration hyperparameter of {self.name} because it isn\'t an int or float.', 'Error')
+            return
+        idx = self.exploration.layout().indexOf(self.explorationEdit)
+        self.exploration.layout().removeWidget(self.explorationEdit)
+        self.explorationEdit.deleteLater()
+        newText = f'{val:.1f}'
+        newExplorationEdit = QLineEdit(newText)
+        newExplorationEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6, paddingLeft = 13))
+        newExplorationEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        newExplorationEdit.returnPressed.connect(self.ChangeAcqHyperparameter)
+        self.exploration.layout().insertWidget(idx, newExplorationEdit)
+        self.explorationEdit = newExplorationEdit
+        self.settings['acqHyperparameter'] = float(newText)
+        shared.workspace.assistant.PushMessage(f'Successfully changed the acquisition function exploration hyperparameter of {self.name} to {newText}.')
+
+    def ChangeSamples(self):
+        try:
+            val = round(float(self.samplesEdit.text()))
+        except:
+            shared.workspace.assistant.PushMessage(f'Failed to change the number of initial random samples of {self.name} because it isn\'t an int or float.', 'Error')
+            return
+        idx = self.samples.layout().indexOf(self.samplesEdit)
+        self.samples.layout().removeWidget(self.samplesEdit)
+        self.samplesEdit.deleteLater()
+        newText = f'{val}'
+        newSamplesEdit = QLineEdit(newText)
+        newSamplesEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6, paddingLeft = 13))
+        newSamplesEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        newSamplesEdit.returnPressed.connect(self.ChangeSamples)
+        self.samples.layout().insertWidget(idx, newSamplesEdit)
+        self.samplesEdit = newSamplesEdit
+        self.settings['numSamples'] = val
+        shared.workspace.assistant.PushMessage(f'Successfully changed the number of initial random samples of {self.name} to {newText}.')
+
+    def ChangeSteps(self):
+        try:
+            val = round(float(self.stepsEdit.text()))
+        except:
+            shared.workspace.assistant.PushMessage(f'Failed to change the number of steps of {self.name} because it isn\'t an int or float.', 'Error')
+            return
+        idx = self.steps.layout().indexOf(self.stepsEdit)
+        self.steps.layout().removeWidget(self.stepsEdit)
+        self.stepsEdit.deleteLater()
+        newText = f'{val}'
+        newStepsEdit = QLineEdit(newText)
+        newStepsEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6, paddingLeft = 13))
+        newStepsEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        newStepsEdit.returnPressed.connect(self.ChangeSteps)
+        self.steps.layout().insertWidget(idx, newStepsEdit)
+        self.stepsEdit = newStepsEdit
+        self.settings['numSteps'] = val
+        shared.workspace.assistant.PushMessage(f'Successfully changed the maximum number of steps of {self.name} to {newText}.')
+
+    def SelectUCB(self):
+        self.settings['acqFunction'] = 'UCB'
+        shared.workspace.assistant.PushMessage(f'Successfully changed the acquisition function of {self.name} to UCB (Upper Confidence Bound).')
+
+    def SelectEI(self):
+        self.settings['acqFunction'] = 'EI'
+        shared.workspace.assistant.PushMessage(f'Successfully changed the acquisition function of {self.name} to EI (Expected Improvement).')
 
     async def Start(self, **kwargs):
         steps = kwargs.get('steps', 3)
@@ -233,7 +481,7 @@ class SingleTaskGP(Draggable):
         if shared.lightModeOn:
             pass
         else:
-            self.main.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, fontColor = '#c4c4c4', fontSize = 16))
+            self.main.setStyleSheet(style.WidgetStyle(color = 'none', borderRadius = 12, fontColor = '#c4c4c4', fontSize = 16))
         super().BaseStyling()
 
     def SelectedStyling(self):

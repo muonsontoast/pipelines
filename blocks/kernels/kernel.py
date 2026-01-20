@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QMenu
+from PySide6.QtWidgets import QWidget, QPushButton, QLabel, QGridLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget
 from PySide6.QtCore import Qt, QPointF
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -9,9 +9,7 @@ mplstyle.use('fast')
 import asyncio
 from ..draggable import Draggable
 from ...components.kernel import KernelComponent
-from ...clickablewidget import ClickableWidget
 from ... import shared
-from ..socket import Socket
 from ...ui.kernelmenu import KernelMenu
 from ... import style
 
@@ -225,7 +223,7 @@ class Kernel(Draggable):
             rightInnerHousing.layout().setSpacing(5)
             setattr(self, editName, QLineEdit('1.00'))
             edit = getattr(self, editName)
-            edit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12))
+            edit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12, bold = True))
             rightInnerHousing.layout().addWidget(edit, alignment = Qt.AlignRight)
             numEdits += 1
             setattr(self, numEditName, numEdits)
