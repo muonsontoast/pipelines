@@ -1,32 +1,37 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
 from PySide6.QtCore import Qt, QTimer
-from datetime import datetime
 import numpy as np
-import time
 import aioca
 import asyncio
-from xopt.vocs import VOCS
-from xopt.evaluator import Evaluator
-from xopt.generators.bayesian import UpperConfidenceBoundGenerator
-from xopt import Xopt
+import operator
+from functools import reduce
+from datetime import datetime
+from xopt import Xopt, VOCS, Evaluator
+from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
+# rename gpytorch kernels to avoid conflict with pipelines objects
+from gpytorch.kernels import RBFKernel as _RBFKernel, PeriodicKernel as _PeriodicKernel, ScaleKernel
+from xopt.generators.bayesian.models.standard import StandardModelConstructor
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
 from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
 from ...actions.online.singletaskgp import SingleTaskGPAction as OnlineAction
-from ... import style
-from ... import shared
 from ...utils import cothread
 from ...utils.multiprocessing import PerformAction, TogglePause, StopAction
 from ..composition.composition import Composition
+from ..composition.add import Add
+from ..composition.multiply import Multiply
 from ..filters.filter import Filter
 from ..kernels.kernel import Kernel
+from ..kernels.rbf import RBFKernel
+from ..kernels.periodic import PeriodicKernel
 from ..pv import PV
+from ... import style
+from ... import shared
 
 class SingleTaskGP(Draggable):
     def __init__(self, parent, proxy, **kwargs):
-        print(f'At init, numSteps in GP looks like: {kwargs.get('numSteps'), None}')
         super().__init__(
             proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 525]), 
             components = {
@@ -265,7 +270,7 @@ class SingleTaskGP(Draggable):
         self.BaseStyling()
 
     def Timestamp(self):
-        pass
+        return datetime.now().strftime('%H:%M:%S')
 
     def ChangeMode(self):
         self.settings['mode'] = 'maximise' if self.settings['mode'] == 'minimise' else 'minimise'
@@ -337,9 +342,38 @@ class SingleTaskGP(Draggable):
         self.settings['acqFunction'] = 'EI'
         shared.workspace.assistant.PushMessage(f'Successfully changed the acquisition function of {self.name} to EI (Expected Improvement).')
 
+    def ConstructKernel(self):
+        '''Traces the kernel structure up the pipeline and returns an Xopt compatible composition.'''
+        # fetch the block attached to the kernel socket
+        kernel = [ID for ID, link in self.linksIn.items() if link['socket'] == 'kernel'][0] # assume a single match for now ... (will be replaced)
+        return self.GetKernelStructure(kernel)
+
+    def GetKernelStructureString(self, ID):
+        '''Will need to be extended in the future.'''
+        entity = shared.entities[ID]
+        if len(entity.linksIn) > 0:
+            # assume this is a composition for now ...
+            if isinstance(entity, Add):
+                return [self.GetKernelStructure(ID) for ID in entity.linksIn]
+            return tuple(self.GetKernelStructure(ID) for ID in entity.linksIn)
+        return entity.__class__
+    
+    def GetKernelStructure(self, ID):
+        '''Will need to be extended in the future.'''
+        entity = shared.entities[ID]
+        if len(entity.linksIn) > 0:
+            # assume this is a composition for now ...
+            if isinstance(entity, Add):
+                result = reduce(operator.add, [self.GetKernelStructure(ID) for ID in entity.linksIn])
+                return result
+            return reduce(operator.mul, [self.GetKernelStructure(ID) for ID in entity.linksIn])
+        # return a GPytorch kernel object
+        if isinstance(entity, RBFKernel):
+            return ScaleKernel(_RBFKernel())
+        elif isinstance(entity, PeriodicKernel):
+            return ScaleKernel(_PeriodicKernel())
+
     async def Start(self, **kwargs):
-        steps = kwargs.get('steps', 3)
-        initialSamples = kwargs.get('initialSamples', 1)
         numParticles = kwargs.get('numParticles', 100000)
         self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
         self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
@@ -360,102 +394,187 @@ class SingleTaskGP(Draggable):
                 break
 
         async def WaitUntilInputsRead():
-            nonlocal initialSamples, numParticles, waiting
-            if waiting:
-                if not actionToRun.resultsWritten:
-                    return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
-                waiting = False
-                return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
-            else:
-                if not await actionToRun.CheckForValidInputs():
-                    return
-
-                independentsToSet = {
-                    d.ID: d.streams[self.streamTypesIn[d.ID]]() for d in self.decisions
-                }
-                
-                counter = 0
-                    
-                def PerformActionAndWait(inDict: dict):
-                    '''Called on a separate worker thread so will not block the UI thread.'''
-                    nonlocal counter, actionToRun
-                    # Set the values of the decisions
-                    actionToRun.SetIndependents(independentsToSet, inDict)
-                    # crank the handle
-                    PerformAction(
-                        self,
-                        # Raw data held by the GP block will be output from tracking simulations
-                        np.empty((6, numParticles, len(shared.lattice), 1)),
-                        numSteps = steps,
-                        currentStep = counter,
-                        numParticles = numParticles,
-                    )
-                    while np.isnan(self.data).any():
-                        time.sleep(self.timeBetweenPolls / 1e3)
-
-                    counter += 1
-                    # Read the value of the objective by feeding this GP's data upstream
-                    actionToRun.ReadDependents([{'ID': self.objectives[0].ID, 'stream': self.streamTypesIn[self.objectives[0].ID]}], self.data)
-
-                    while not actionToRun.resultsWritten:
-                        time.sleep(self.timeBetweenPolls / 1e3)
-
-                    return {'f': self.objectives[0].streams[self.streamTypesIn[self.objectives[0].ID]]()['data']}
-                    
-                variables = dict()
-                # for d in self.decisions:
-                #     stream = d.streams[self.streamTypesIn[d.ID]]()
-                #     for dim in range(stream['data'].shape[0]): # each row is a new singular vector for SVD, otherwise a 1x1 for a PV.
-                #         variables[f'{d.ID}-{dim}'] = [-3, 3] # values get sent through tanh so restrict to sensible domain
-                for d in self.decisions:
-                    variables[f'{d.name}'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
-
-                vocs = VOCS(
-                    variables = variables,
-                    objectives = {'f': 'MINIMIZE'},
+            mode = 'MAXIMIZE' if self.settings['mode'] == 'maximise' else 'MINIMIZE'
+            variables = dict()
+            for d in self.decisions:
+                variables[f'{d.name} (ID: {d.ID})'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
+            vocs = VOCS(
+                variables = variables,
+                objectives = {
+                    f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': mode,
+                },
+            )
+            kernels = [shared.entities[ID] for ID, link in self.linksIn.items() if link['socket'] == 'kernel']
+            kernel = self.ConstructKernel()
+            constructor = StandardModelConstructor(
+                covar_modules = {
+                    f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': kernel,
+                },
+            )
+            if self.settings['acqFunction'] == 'UCB':
+                generator = UpperConfidenceBoundGenerator(
+                    vocs = vocs,
+                    gp_constructor = constructor,
+                    beta = self.settings['acqHyperparameter'],
                 )
-                executor = ThreadPoolExecutor(max_workers = 1)
-
-                async def SetDecisionsAndRecordResponse(dictIn: dict):
+            else:
+                generator = ExpectedImprovementGenerator(
+                    vocs = vocs,
+                    gp_constructor = constructor,
+                )
+            
+            async def SetDecisionsAndRecordResponse(dictIn: dict):
+                try:
                     for d in self.decisions:
-                        if dictIn[d.name] < await aioca.caget(d.name + ':I'):
-                            await aioca.caput(d.name + ':SETI', dictIn[d.name] - .2)
+                        dictName = f'{d.name} + (ID: {d.ID})'
+                        if dictIn[dictName] < await aioca.caget(d.name + ':I'):
+                            await aioca.caput(d.name + ':SETI', dictIn[dictName] - .2)
                     await aioca.sleep(2)
-                    await aioca.caput(d.name + ':SETI', dictIn[d.name])
+                    await aioca.caput(d.name + ':SETI', dictIn[dictName])
                     await aioca.sleep(1)
 
                     result = await self.objectives[0].Start()
-                    return {'f': result}
+                except:
+                    result = -1
+                return {f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': result}
+            
+            def Evaluate(dictIn: dict):
+                dictOut = asyncio.run(SetDecisionsAndRecordResponse(dictIn))
+                return dictOut
+            
+            evaluator = Evaluator(function = Evaluate)
+            X = Xopt(
+                vocs = vocs,
+                generator = generator,
+                evaluator = evaluator,
+            )
 
-                def Evaluate(dictIn: dict):
-                    dictOut = asyncio.create_task(SetDecisionsAndRecordResponse(dictIn))
-                    return dictOut
+            try:
+                await asyncio.wait_for(
+                    aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
+                    timeout = 2,
+                )
+                shared.workspace.assistant.PushMessage(f'Optimisation beginning and LINAC successfully activated.')
+            except Exception as e:
+                shared.workspace.assistant.PushMessage(f'Failed to start up the LINAC due to a PV timeout.', 'Error')
+                return
+                
+            executor = ThreadPoolExecutor(max_workers = 1)
+            job = executor.submit(X.random_evaluate, self.settings['numSamples'])
+            job.result()
 
-                evaluator = Evaluator(function = Evaluate)
-                generator = UpperConfidenceBoundGenerator(vocs = vocs)
-                self.X = Xopt(evaluator = evaluator, generator = generator, vocs = vocs)
+            try:
+                await asyncio.wait_for(
+                    aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
+                    timeout = 2,
+                )
+                shared.workspace.assistant.PushMessage(f'Optimisation complete and LINAC successfully deactivated.')
+            except Exception as e:
+                shared.workspace.assistant.PushMessage(f'Failed to stop up the LINAC due to a PV timeout. User should manually stop it now.', 'Error')
+                return
 
-                totalSamples = steps + initialSamples
-                job = executor.submit(self.X.random_evaluate, initialSamples)
+        # RE-ENABLE THIS ...
+        # async def WaitUntilInputsRead():
+        #     nonlocal numParticles, waiting
+        #     # RE-ENABLE THIS ...
+        #     # if waiting:
+        #     #     if not actionToRun.resultsWritten:
+        #     #         return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
+        #     #     waiting = False
+        #     #     return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
+        #     # else:
+        #     #     if not await actionToRun.CheckForValidInputs():
+        #     #         print('Failed to Start Optimisation (Returning ...)')
+        #     #         return
 
-                def StepUntilComplete():
-                    '''Steps through optimisation steps until finish criterion satisfied.'''
-                    if len(self.X.data) < totalSamples:
-                        print(f'On step {len(self.X.data) - initialSamples + 1}/{steps}')
-                        self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
-                        job = executor.submit(self.X.step)
-                        job.add_done_callback(lambda _: StepUntilComplete())
-                    else:
-                        # temporarily save the data automatically here
-                        print('GP data temporarily saved to:', Path(shared.cwd) / 'datadump' / f'{self.name}.csv')
-                        self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{self.name}.csv', index = False)
-                        QTimer.singleShot(0, lambda: executor.shutdown(wait = True))
+        #         independentsToSet = {
+        #             d.ID: d.streams[self.streamTypesIn[d.ID]]() for d in self.decisions
+        #         }
+                
+        #         counter = 0
+                    
+        #         # def PerformActionAndWait(inDict: dict):
+        #         #     '''Called on a separate worker thread so will not block the UI thread.'''
+        #         #     nonlocal counter, actionToRun
+        #         #     # Set the values of the decisions
+        #         #     actionToRun.SetIndependents(independentsToSet, inDict)
+        #         #     # crank the handle
+        #         #     PerformAction(
+        #         #         self,
+        #         #         # Raw data held by the GP block will be output from tracking simulations
+        #         #         np.empty((6, numParticles, len(shared.lattice), 1)),
+        #         #         numSteps = steps,
+        #         #         currentStep = counter,
+        #         #         numParticles = numParticles,
+        #         #     )
+        #         #     while np.isnan(self.data).any():
+        #         #         time.sleep(self.timeBetweenPolls / 1e3)
 
-                await aioca.caput('LI-TI-MTGEN-01:START', 1, timeout = 2)
-                print('LINAC active!')
-                job.add_done_callback(lambda _: StepUntilComplete())
-                await aioca.caput('LI-TI-MTGEN-01:STOP', 1, timeout = 2)
-                print('LINAC deactivated!')
+        #         #     counter += 1
+        #         #     # Read the value of the objective by feeding this GP's data upstream
+        #         #     actionToRun.ReadDependents([{'ID': self.objectives[0].ID, 'stream': self.streamTypesIn[self.objectives[0].ID]}], self.data)
+
+        #         #     while not actionToRun.resultsWritten:
+        #         #         time.sleep(self.timeBetweenPolls / 1e3)
+
+        #         #     return {'f': self.objectives[0].streams[self.streamTypesIn[self.objectives[0].ID]]()['data']}
+                    
+        #         variables = dict()
+        #         # for d in self.decisions:
+        #         #     stream = d.streams[self.streamTypesIn[d.ID]]()
+        #         #     for dim in range(stream['data'].shape[0]): # each row is a new singular vector for SVD, otherwise a 1x1 for a PV.
+        #         #         variables[f'{d.ID}-{dim}'] = [-3, 3] # values get sent through tanh so restrict to sensible domain
+        #         for d in self.decisions:
+        #             variables[f'{d.name} (ID: {d.ID})'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
+        #         vocs = VOCS(
+        #             variables = variables,
+        #             objectives = {'f': 'MINIMIZE'},
+        #         )
+        #         print('All Done!')
+
+        #         # RE-ENABLE THIS ...
+        #         # executor = ThreadPoolExecutor(max_workers = 1)
+
+        #         # async def SetDecisionsAndRecordResponse(dictIn: dict):
+        #         #     for d in self.decisions:
+        #         #         if dictIn[d.name] < await aioca.caget(d.name + ':I'):
+        #         #             await aioca.caput(d.name + ':SETI', dictIn[d.name] - .2)
+        #         #     await aioca.sleep(2)
+        #         #     await aioca.caput(d.name + ':SETI', dictIn[d.name])
+        #         #     await aioca.sleep(1)
+
+        #         #     result = await self.objectives[0].Start()
+        #         #     return {'f': result}
+
+        #         # def Evaluate(dictIn: dict):
+        #         #     dictOut = asyncio.create_task(SetDecisionsAndRecordResponse(dictIn))
+        #         #     return dictOut
+
+        #         # evaluator = Evaluator(function = Evaluate)
+        #         # generator = UpperConfidenceBoundGenerator(vocs = vocs)
+        #         # self.X = Xopt(evaluator = evaluator, generator = generator, vocs = vocs)
+
+        #         # totalSamples = steps + initialSamples
+        #         # job = executor.submit(self.X.random_evaluate, initialSamples)
+
+        #         # def StepUntilComplete():
+        #         #     '''Steps through optimisation steps until finish criterion satisfied.'''
+        #         #     if len(self.X.data) < totalSamples:
+        #         #         print(f'On step {len(self.X.data) - initialSamples + 1}/{steps}')
+        #         #         self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
+        #         #         job = executor.submit(self.X.step)
+        #         #         job.add_done_callback(lambda _: StepUntilComplete())
+        #         #     else:
+        #         #         # temporarily save the data automatically here
+        #         #         print('GP data temporarily saved to:', Path(shared.cwd) / 'datadump' / f'{self.name}.csv')
+        #         #         self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{self.name}.csv', index = False)
+        #         #         QTimer.singleShot(0, lambda: executor.shutdown(wait = True))
+
+        #         # await aioca.caput('LI-TI-MTGEN-01:START', 1, timeout = 2)
+        #         # print('LINAC active!')
+        #         # job.add_done_callback(lambda _: StepUntilComplete())
+        #         # await aioca.caput('LI-TI-MTGEN-01:STOP', 1, timeout = 2)
+        #         # print('LINAC deactivated!')
         await WaitUntilInputsRead()
 
     def SwitchMode(self):
@@ -474,6 +593,7 @@ class SingleTaskGP(Draggable):
             super().AddLinkIn(ID, socket, streamTypeIn = 'evecs', **kwargs)
         else:
             super().AddLinkIn(ID, socket, **kwargs)
+        
         self.CheckState()
         return True
 

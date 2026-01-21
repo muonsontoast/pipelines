@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QGraphicsProxyWidget, QComboBox, QListWidget, QLis
 from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QLineF, QPoint, QPointF
 import time
+import asyncio
 from ..components.slider import SliderComponent
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
@@ -361,7 +362,7 @@ class Draggable(Entity, QWidget):
             self.start = QPushButton('Start')
             self.start.setFixedHeight(buttonsHeight)
             self.start.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-            self.start.clicked.connect(lambda: self.Start())
+            self.start.clicked.connect(lambda: asyncio.create_task(self.Start()))
             self.buttons.layout().addWidget(self.start)
         if 'pause' not in args:
             self.pause = QPushButton('Pause')
@@ -391,7 +392,7 @@ class Draggable(Entity, QWidget):
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         self.main.layout().addWidget(self.header, alignment = Qt.AlignTop)
 
-    def Start(self, **kwargs):
+    async def Start(self, **kwargs):
         pass
 
     def Pause(self):
