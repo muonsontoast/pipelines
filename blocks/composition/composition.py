@@ -86,7 +86,7 @@ class Composition(Draggable):
                                 result = await self.Start()
                                 result = 'N/A' if np.isnan(result) else f'{result:.3f}'
                                 self.edit.setText(result)
-                                QTimer.singleShot(100, lambda: asyncio.create_task(FetchValues()))
+                                QTimer.singleShot(200, lambda: asyncio.create_task(FetchValues()))
                         asyncio.create_task(FetchValues())
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]

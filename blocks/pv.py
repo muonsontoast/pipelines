@@ -204,7 +204,7 @@ class PV(Draggable):
                         shared.entities[ID].CheckState()
 
             self.checkStateOfDownstreamBlocks = False
-            await asyncio.sleep(.1)
+            await asyncio.sleep(.2)
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
         '''`event` should be a mouseReleaseEvent if it needs to be called.'''

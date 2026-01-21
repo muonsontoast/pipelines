@@ -1,10 +1,11 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 import numpy as np
 import aioca
 import asyncio
 import operator
 from functools import reduce
+import time
 from datetime import datetime
 from xopt import Xopt, VOCS, Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
@@ -74,15 +75,18 @@ class SingleTaskGP(Draggable):
             },
         }
         shared.runnableBlocks[self.ID] = self
+        self.activeDims = dict() # matches each PV ID to its corresponding dimension inside the optimiser (necessary when constructing composite kernels)
 
         self.Push()
         self.ToggleStyling(active = False)
 
     def Pause(self):
+        print('Pausing!')
         TogglePause(self, True)
         shared.workspace.assistant.PushMessage(f'{self.name} action is paused.')
 
     def Stop(self):
+        print('Stopping!')
         StopAction(self)
 
     def Push(self):
@@ -215,11 +219,11 @@ class SingleTaskGP(Draggable):
         runTimeLabel = QLabel('Run Time (s)')
         runTimeLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
         runTime.layout().addWidget(runTimeLabel)
-        runTimeEdit = QLineEdit('N/A')
-        runTimeEdit.setReadOnly(True)
-        runTimeEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
-        runTimeEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        runTime.layout().addWidget(runTimeEdit)
+        self.runTimeEdit = QLineEdit('N/A')
+        self.runTimeEdit.setReadOnly(True)
+        self.runTimeEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        self.runTimeEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        runTime.layout().addWidget(self.runTimeEdit)
         metrics.layout().addWidget(runTime)
         # progress
         progress = QWidget()
@@ -229,11 +233,11 @@ class SingleTaskGP(Draggable):
         progressLabel = QLabel('Progress (%)')
         progressLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
         progress.layout().addWidget(progressLabel)
-        progressEdit = QLineEdit('N/A')
-        progressEdit.setReadOnly(True)
-        progressEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
-        progressEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        progress.layout().addWidget(progressEdit)
+        self.progressEdit = QLineEdit('N/A')
+        self.progressEdit.setReadOnly(True)
+        self.progressEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        self.progressEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        progress.layout().addWidget(self.progressEdit)
         metrics.layout().addWidget(progress)
         # best
         best = QWidget()
@@ -243,11 +247,11 @@ class SingleTaskGP(Draggable):
         bestLabel = QLabel('Best Result')
         bestLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
         best.layout().addWidget(bestLabel)
-        bestEdit = QLineEdit('N/A')
-        bestEdit.setReadOnly(True)
-        bestEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
-        bestEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        best.layout().addWidget(bestEdit)
+        self.bestEdit = QLineEdit('N/A')
+        self.bestEdit.setReadOnly(True)
+        self.bestEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        self.bestEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        best.layout().addWidget(self.bestEdit)
         metrics.layout().addWidget(best)
         # average
         average = QWidget()
@@ -257,11 +261,11 @@ class SingleTaskGP(Draggable):
         averageLabel = QLabel('Moving Average')
         averageLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
         average.layout().addWidget(averageLabel)
-        averageEdit = QLineEdit('N/A')
-        averageEdit.setReadOnly(True)
-        averageEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
-        averageEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        average.layout().addWidget(averageEdit)
+        self.averageEdit = QLineEdit('N/A')
+        self.averageEdit.setReadOnly(True)
+        self.averageEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        self.averageEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        average.layout().addWidget(self.averageEdit)
         metrics.layout().addWidget(average)
         # spacer
         metrics.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
@@ -336,10 +340,14 @@ class SingleTaskGP(Draggable):
 
     def SelectUCB(self):
         self.settings['acqFunction'] = 'UCB'
+        self.explorationEdit.setText(f'{self.settings['acqHyperparameter']:.1f}')
+        self.explorationEdit.setReadOnly(False)
         shared.workspace.assistant.PushMessage(f'Successfully changed the acquisition function of {self.name} to UCB (Upper Confidence Bound).')
 
     def SelectEI(self):
         self.settings['acqFunction'] = 'EI'
+        self.explorationEdit.setText('N/A')
+        self.explorationEdit.setReadOnly(True)
         shared.workspace.assistant.PushMessage(f'Successfully changed the acquisition function of {self.name} to EI (Expected Improvement).')
 
     def ConstructKernel(self):
@@ -369,9 +377,17 @@ class SingleTaskGP(Draggable):
             return reduce(operator.mul, [self.GetKernelStructure(ID) for ID in entity.linksIn])
         # return a GPytorch kernel object
         if isinstance(entity, RBFKernel):
-            return ScaleKernel(_RBFKernel())
+            if entity.settings['automatic']:
+                return ScaleKernel(_RBFKernel())
+            print('Returing a manual RBF Kernel with these active dims:')
+            print([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])
+            return ScaleKernel(_RBFKernel(active_dims = [self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']]))
         elif isinstance(entity, PeriodicKernel):
-            return ScaleKernel(_PeriodicKernel())
+            if entity.settings['automatic']:
+                return ScaleKernel(_PeriodicKernel())
+            print('Returing a manual Periodic Kernel with these active dims:')
+            print([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])
+            return ScaleKernel(_PeriodicKernel(active_dims = [self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']]))
 
     async def Start(self, **kwargs):
         numParticles = kwargs.get('numParticles', 100000)
@@ -396,7 +412,8 @@ class SingleTaskGP(Draggable):
         async def WaitUntilInputsRead():
             mode = 'MAXIMIZE' if self.settings['mode'] == 'maximise' else 'MINIMIZE'
             variables = dict()
-            for d in self.decisions:
+            for _, d in enumerate(self.decisions):
+                self.activeDims[d.ID] = _
                 variables[f'{d.name} (ID: {d.ID})'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
             vocs = VOCS(
                 variables = variables,
@@ -404,7 +421,6 @@ class SingleTaskGP(Draggable):
                     f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': mode,
                 },
             )
-            kernels = [shared.entities[ID] for ID, link in self.linksIn.items() if link['socket'] == 'kernel']
             kernel = self.ConstructKernel()
             constructor = StandardModelConstructor(
                 covar_modules = {
@@ -422,7 +438,6 @@ class SingleTaskGP(Draggable):
                     vocs = vocs,
                     gp_constructor = constructor,
                 )
-            
             async def SetDecisionsAndRecordResponse(dictIn: dict):
                 try:
                     for d in self.decisions:
@@ -437,8 +452,13 @@ class SingleTaskGP(Draggable):
                 except:
                     result = -1
                 return {f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': result}
-            
+            self.progress = 0
+            self.total = self.settings['numSamples'] + self.settings['numSteps']
+            self.t0 = time.time()
             def Evaluate(dictIn: dict):
+                self.progress += 1
+                self.progressEdit.setText(f'{self.progress / self.total * 100:.1f}')
+                self.runTimeEdit.setText(f'{round(time.time() - self.t0)}')
                 dictOut = asyncio.run(SetDecisionsAndRecordResponse(dictIn))
                 return dictOut
             
@@ -454,6 +474,7 @@ class SingleTaskGP(Draggable):
                     aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
                     timeout = 2,
                 )
+                self.runTimeEdit.setText(self.Timestamp())
                 shared.workspace.assistant.PushMessage(f'Optimisation beginning and LINAC successfully activated.')
             except Exception as e:
                 shared.workspace.assistant.PushMessage(f'Failed to start up the LINAC due to a PV timeout.', 'Error')
