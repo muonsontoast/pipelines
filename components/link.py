@@ -102,9 +102,9 @@ class LinkComponent(Component):
         self.dtypesWidget.layout().setSpacing(0)
         descriptionWidget = QWidget()
         descriptionWidget.setLayout(QVBoxLayout())
-        descriptionWidget.layout().setContentsMargins(10, 0, 10, 0)
+        descriptionWidget.layout().setContentsMargins(10, 0, 0, 0)
         description = QLabel(
-            f'(<span style = "color: #308dc2">?</span>) Discriminate between available data subtypes of lattice elements with multiple outputs. Default is \'Raw\' for single output elements.'
+            f'(<span style = "color: #308dc2">?</span>) Specify which beam attribute is passed forward by this lattice element. This is ignored when the element is a decision variable.'
         )
         description.setWordWrap(True)
         description.setFixedHeight(65)
@@ -116,12 +116,13 @@ class LinkComponent(Component):
         self.dtypesWidget.layout().addWidget(self.dtypesTitle, alignment = Qt.AlignLeft | Qt.AlignVCenter)
         # select text for the data edit
         self.dataComboBox = QComboBox()
-        self.dataComboBox.setFixedWidth(100)
+        self.dataComboBox.setFixedWidth(150)
         self.dataComboBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.dataComboBox.view().parentWidget().setStyleSheet('color: transparent; background-color: transparent;')
         self.dataComboBox.addItems([f'    {dtype.upper()}' for dtype in self.pv.settings['dtypes']])
         idx = self.pv.settings['dtypes'].index(self.pv.settings['dtype'])
         self.dataComboBox.setCurrentIndex(idx)
+        self.dataComboBox.currentTextChanged.connect(self.ChangeDataSubtype)
         self.dtypesWidget.layout().addWidget(self.dataComboBox, alignment = Qt.AlignLeft)
         self.context.layout().addWidget(self.dtypesWidget)
         self.context.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
@@ -131,6 +132,11 @@ class LinkComponent(Component):
         self.defaultNames = ['PV', 'QUAD', 'VSTR', 'HSTR', 'BPM', 'AP', 'DRIFT', 'COLL']
 
         self.UpdateColors()
+
+    def ChangeDataSubtype(self):
+        newdtype = self.dataComboBox.currentText().split()[0]
+        self.pv.settings['dtype'] = newdtype
+        shared.workspace.assistant.PushMessage(f'{self.pv.name} data subtype changed to {newdtype}.')
 
     def Select(self):
         self.search.clearFocus()
@@ -169,7 +175,15 @@ class LinkComponent(Component):
             self.pv.settings['name'] = newName
             self.pv.name = newName
             self.pv.title.setText(newName)
-        print(self.linkedElement.Name)
+        # Handle data subtypes
+        # Since this component is only relevant for simulation, allow access to full beam information at every element.
+        if self.linkedElement.Name == 'BPM':
+            self.pv.settings['dtype'] = 'CHARGE'
+        elif self.linkedElement.Name == 'HSTR':
+            self.pv.settings['dtype'] = 'X'
+        elif self.linkedElement.Name == 'VSTR':
+            self.pv.settings['dtype'] = 'Y'
+        
         shared.inspector.Push(self.pv)
 
     def UpdateColors(self):

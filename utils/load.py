@@ -96,8 +96,8 @@ def Load(path):
                             numSamples = v.get('numSamples', None),
                             numSteps = v.get('numSteps', None),
                             mode = v.get('mode', None),
+                            dtype = v.get('dtype', None),
                         )
-                        # entity.settings['size'] = v['size']
                         if 'alignment' in v:
                             entity.settings['alignment'] = v['alignment']
                         entity.setFixedSize(*v['size'])

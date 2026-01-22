@@ -17,7 +17,9 @@ class Draggable(Entity, QWidget):
 
     def __init__(self, proxy, **kwargs):
         self.headerColor = kwargs.pop('headerColor', '#2e2e2e')
-        super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), dtype = kwargs.pop('dtype', 'raw'), dtypes = kwargs.pop('dtypes', ['raw']), **kwargs)
+        dtypes = kwargs.pop('dtypes', ['CHARGE', 'X', 'Y', 'PX', 'PY'])
+        dtype = kwargs.pop('dtype', dtypes[0])
+        super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), dtype = dtype, dtypes = dtypes, **kwargs)
         self.fundamental = True
         self.proxy = proxy
         self.setLayout(QHBoxLayout())

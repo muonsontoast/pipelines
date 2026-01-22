@@ -21,7 +21,7 @@ class KernelComponent(Component):
         # Automatic status
         descriptionWidget = QWidget()
         descriptionWidget.setLayout(QVBoxLayout())
-        descriptionWidget.layout().setContentsMargins(10, 0, 10, 0)
+        descriptionWidget.layout().setContentsMargins(10, 0, 0, 0)
         description = QLabel(f'(<span style = "color: #308dc2">?</span>) An automatic kernel acts over all dimensions, whereas manual is over a user-defined subset.')
         description.setWordWrap(True)
         description.setFixedHeight(65)
