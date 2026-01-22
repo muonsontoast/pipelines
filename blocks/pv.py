@@ -36,7 +36,7 @@ class PV(Draggable):
         
         # force a PV's scalar output to be shared at instantiation so modifications are seen by all connected blocks
         self.CreateEmptySharedData(np.zeros(2)) # a SET value and a READ value
-        self.data[:] = np.nan
+        self.data[:] = np.inf
         # store the shared memory name and attrs which get copied across instances
         self.dataSharedMemoryName = self.dataSharedMemory.name
         self.dataSharedMemoryShape = self.data.shape
@@ -173,6 +173,7 @@ class PV(Draggable):
                     self.PVMatch = True
                     shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
                     self.checkStateOfDownstreamBlocks = True
+                    self.online = True
                     self.get.setText(f'{self.data[1]:.3f}')
                     self.set.setText(f'{self.data[1]:.3f}')
                     self.data[0] = self.data[1] # set the READ and SET values to be the same if the new PV name is valid
@@ -185,8 +186,9 @@ class PV(Draggable):
                     await self.UpdateInspectorLimits(PVName)
             except:
                 self.PVMatch = False
-                if not np.isnan(self.data[1]):
-                    self.data[1] = np.nan
+                self.online  = False
+                if not np.isinf(self.data[1]):
+                    self.data[1] = np.inf
                     self.get.setText('N/A')
                     self.settings['components']['value']['units'] = ''
                     if self.active:

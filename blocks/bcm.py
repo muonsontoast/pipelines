@@ -28,8 +28,8 @@ class BCM(PV):
     def Start(self, downstreamData:np.ndarray = None, **kwargs):
         if not self.online:
             # Only count the particles that are still alive in both x AND y
-            xMask = np.isnan(downstreamData[0, :, self.settings['linkedElement'].Index])
-            yMask = np.isnan(downstreamData[2, :, self.settings['linkedElement'].Index])
+            xMask = np.isinf(downstreamData[0, :, self.settings['linkedElement'].Index])
+            yMask = np.isinf(downstreamData[2, :, self.settings['linkedElement'].Index])
             finalMask = ~xMask & ~yMask # bitwise AND on the negated xMask and yMask, so only entries that are not NaN in both are recorded.
             self.data = finalMask.sum()
 

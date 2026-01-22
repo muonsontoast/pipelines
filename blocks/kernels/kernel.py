@@ -44,7 +44,7 @@ class Kernel(Draggable):
         self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 16)
         # force a PV's scalar output to be shared at instantiation so modifications are seen by all connected blocks
         self.CreateEmptySharedData(np.zeros(2)) # a SET value and a READ value
-        self.data[:] = np.nan
+        self.data[:] = np.inf
         # store the shared memory name and attrs which get copied across instances
         self.dataSharedMemoryName = self.dataSharedMemory.name
         self.dataSharedMemoryShape = self.data.shape

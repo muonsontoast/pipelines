@@ -21,8 +21,7 @@ class Invert(Filter):
         '''Returns NaN if there is signal in otherwise returns 1.'''
         if len(self.linksIn) > 0:
             ID = next(iter(self.linksIn))
-            print(np.nan if not np.isnan(shared.entities[ID].data[1]) and shared.entities[ID].data[1] != 0 else 1)
-            return np.nan if not np.isnan(shared.entities[ID].data[1]) and shared.entities[ID].data[1] != 0 else 1
+            return np.inf if not np.isinf(shared.entities[ID].data[1]) and shared.entities[ID].data[1] != 0 else 1
         
     def Push(self):
         super().Push()

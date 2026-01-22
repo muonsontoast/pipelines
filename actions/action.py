@@ -64,10 +64,8 @@ class Action:
         # wait for dependents that have been run to finish -- needs more work to be error aware
         def CheckDependentsRunning():
             for d in dependents:
-                if np.isnan(shared.entities[d['ID']].data[1]).any():
+                if np.isinf(shared.entities[d['ID']].data[1]).any():
                     return QTimer.singleShot(self.timeBetweenPolls, CheckDependentsRunning)
-                # if np.isinf(shared.entities[d['ID']].streams[d['stream']]()['data']).any():
-                #     return QTimer.singleShot(self.timeBetweenPolls, CheckDependentsRunning)
             self.resultsWritten = True
         CheckDependentsRunning()
         print(f'{self.parent.name} is done running dependents!')

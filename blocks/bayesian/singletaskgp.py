@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
 from PySide6.QtCore import Qt
+import gc
 import numpy as np
 import aioca
 import asyncio
@@ -19,6 +20,7 @@ from ...ui.runningcircle import RunningCircle
 from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
 from ...actions.online.singletaskgp import SingleTaskGPAction as OnlineAction
 from ...utils import cothread
+# PerformAction is invoked when running tasks in offline mode to keep the UI responsive.
 from ...utils.multiprocessing import PerformAction, TogglePause, StopAction
 from ..composition.composition import Composition
 from ..composition.add import Add
@@ -33,6 +35,13 @@ from ... import shared
 
 class SingleTaskGP(Draggable):
     def __init__(self, parent, proxy, **kwargs):
+        # sim numerical precision set to fp32 by default to allow much higher particle populations.
+        simPrecision = kwargs.pop('simPrecision', None)
+        if simPrecision is None or simPrecision == 'fp32':
+            simPrecision = 'fp32'
+        elif simPrecision == 'fp64':
+            simPrecision = 'fp64'
+
         super().__init__(
             proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 525]), 
             components = {
@@ -43,6 +52,8 @@ class SingleTaskGP(Draggable):
             numSamples = kwargs.pop('numSamples', 5),
             numSteps = kwargs.pop('numSteps', 20),
             mode = kwargs.pop('mode', 'maximise'),
+            numParticles = kwargs.pop('numParticles', 10000),
+            simPrecision = simPrecision,
             headerColor = "#C1492B",
             **kwargs
         )
@@ -392,24 +403,34 @@ class SingleTaskGP(Draggable):
             return ScaleKernel(_PeriodicKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
 
     async def Start(self, **kwargs):
-        numParticles = kwargs.get('numParticles', 100000)
         self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
         self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
         # this will be deprecated soon
-        independents = [
-            {'ID': d.ID, 'stream': self.streamTypesIn[d.ID]} for d in self.decisions
-        ]
-        waiting = False
+        # independents = [
+        #     {'ID': d.ID, 'stream': self.streamTypesIn[d.ID]} for d in self.decisions
+        # ]
+        # waiting = False
         # force it online for now ...
         self.online = True
         actionToRun = self.offlineAction if not self.online else self.onlineAction
         actionToRun.decisions = self.decisions
+        # for decision in self.decisions:
+        #     if decision.type not in self.pvBlockTypes and np.isinf(decision.streams[self.streamTypesIn[decision.ID]]()['data']).any():
+        #         waiting = True
+        #         self.title.setText(f'{self.title.text().split(' (')[0]} (Waiting)')
+        #         await actionToRun.ReadDependents(independents)
+        #         break
+
+        # Check states of decision variables. All must share the same online / offline state. If online, check they are streaming values.
         for decision in self.decisions:
-            if decision.type not in self.pvBlockTypes and np.isinf(decision.streams[self.streamTypesIn[decision.ID]]()['data']).any():
-                waiting = True
-                self.title.setText(f'{self.title.text().split(' (')[0]} (Waiting)')
-                await actionToRun.ReadDependents(independents)
-                break
+            if decision.online != self.decisions[0].online:
+                shared.workspace.assistant.PushMessage(f'All decision variables of {self.name} must share the same Online or Offline state.', 'Error')
+                return
+            if decision.online:
+                if np.isinf(decision.data[1]):
+                    shared.workspace.assistant.PushMessage(f'{decision.name} is not supplying a live value to {self.name}.', 'Error')
+                    return
+        self.online = self.decisions[0].online
 
         async def WaitUntilInputsRead():
             mode = 'MAXIMIZE' if self.settings['mode'] == 'maximise' else 'MINIMIZE'
@@ -440,61 +461,71 @@ class SingleTaskGP(Draggable):
                     vocs = vocs,
                     gp_constructor = constructor,
                 )
-            async def SetDecisionsAndRecordResponse(dictIn: dict):
-                try:
-                    for d in self.decisions:
-                        dictName = f'{d.name} + (ID: {d.ID})'
-                        if dictIn[dictName] < await aioca.caget(d.name + ':I'):
-                            await aioca.caput(d.name + ':SETI', dictIn[dictName] - .2)
-                    await aioca.sleep(2)
-                    await aioca.caput(d.name + ':SETI', dictIn[dictName])
-                    await aioca.sleep(1)
 
-                    result = await self.objectives[0].Start()
-                except:
-                    result = -1
-                return {f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': result}
             self.progress = 0
             self.total = self.settings['numSamples'] + self.settings['numSteps']
             self.t0 = time.time()
-            def Evaluate(dictIn: dict):
-                self.progress += 1
-                self.progressEdit.setText(f'{self.progress / self.total * 100:.1f}')
-                self.runTimeEdit.setText(f'{round(time.time() - self.t0)}')
-                dictOut = asyncio.run(SetDecisionsAndRecordResponse(dictIn))
-                return dictOut
+
+            if self.online:
+                await self.OnlineOptimisation(vocs, generator)
+            else:
+                print('Offline Optimisation for the win!')
+                await self.OfflineOptimisation(vocs, generator)
+            # async def SetDecisionsAndRecordResponse(dictIn: dict):
+            #     try:
+            #         for d in self.decisions:
+            #             dictName = f'{d.name} + (ID: {d.ID})'
+            #             if dictIn[dictName] < await aioca.caget(d.name + ':I'):
+            #                 await aioca.caput(d.name + ':SETI', dictIn[dictName] - .2)
+            #         await aioca.sleep(2)
+            #         await aioca.caput(d.name + ':SETI', dictIn[dictName])
+            #         await aioca.sleep(1)
+
+            #         result = await self.objectives[0].Start()
+            #     except:
+            #         result = -1
+            #     return {f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': result}
+            # self.progress = 0
+            # self.total = self.settings['numSamples'] + self.settings['numSteps']
+            # self.t0 = time.time()
+            # def Evaluate(dictIn: dict):
+            #     self.progress += 1
+            #     self.progressEdit.setText(f'{self.progress / self.total * 100:.1f}')
+            #     self.runTimeEdit.setText(f'{round(time.time() - self.t0)}')
+            #     dictOut = asyncio.run(SetDecisionsAndRecordResponse(dictIn))
+            #     return dictOut
             
-            evaluator = Evaluator(function = Evaluate)
-            X = Xopt(
-                vocs = vocs,
-                generator = generator,
-                evaluator = evaluator,
-            )
+            # evaluator = Evaluator(function = Evaluate)
+            # X = Xopt(
+            #     vocs = vocs,
+            #     generator = generator,
+            #     evaluator = evaluator,
+            # )
 
-            try:
-                await asyncio.wait_for(
-                    aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
-                    timeout = 2,
-                )
-                self.runTimeEdit.setText(self.Timestamp())
-                shared.workspace.assistant.PushMessage(f'Optimisation beginning and LINAC successfully activated.')
-            except Exception as e:
-                shared.workspace.assistant.PushMessage(f'Failed to start up the LINAC due to a PV timeout.', 'Error')
-                return
+            # try:
+            #     await asyncio.wait_for(
+            #         aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
+            #         timeout = 2,
+            #     )
+            #     self.runTimeEdit.setText(self.Timestamp())
+            #     shared.workspace.assistant.PushMessage(f'Optimisation beginning and LINAC successfully activated.')
+            # except Exception as e:
+            #     shared.workspace.assistant.PushMessage(f'Failed to start up the LINAC due to a PV timeout.', 'Error')
+            #     return
                 
-            executor = ThreadPoolExecutor(max_workers = 1)
-            job = executor.submit(X.random_evaluate, self.settings['numSamples'])
-            job.result()
+            # executor = ThreadPoolExecutor(max_workers = 1)
+            # job = executor.submit(X.random_evaluate, self.settings['numSamples'])
+            # job.result()
 
-            try:
-                await asyncio.wait_for(
-                    aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
-                    timeout = 2,
-                )
-                shared.workspace.assistant.PushMessage(f'Optimisation complete and LINAC successfully deactivated.')
-            except Exception as e:
-                shared.workspace.assistant.PushMessage(f'Failed to stop up the LINAC due to a PV timeout. User should manually stop it now.', 'Error')
-                return
+            # try:
+            #     await asyncio.wait_for(
+            #         aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
+            #         timeout = 2,
+            #     )
+            #     shared.workspace.assistant.PushMessage(f'Optimisation complete and LINAC successfully deactivated.')
+            # except Exception as e:
+            #     shared.workspace.assistant.PushMessage(f'Failed to stop up the LINAC due to a PV timeout. User should manually stop it now.', 'Error')
+            #     return
 
         # RE-ENABLE THIS ...
         # async def WaitUntilInputsRead():
@@ -599,6 +630,90 @@ class SingleTaskGP(Draggable):
         #         # await aioca.caput('LI-TI-MTGEN-01:STOP', 1, timeout = 2)
         #         # print('LINAC deactivated!')
         await WaitUntilInputsRead()
+
+    async def OnlineOptimisation(self, vocs, generator):
+        async def SetDecisionsAndRecordResponse(dictIn: dict):
+            try:
+                for d in self.decisions:
+                    dictName = f'{d.name} + (ID: {d.ID})'
+                    if dictIn[dictName] < await aioca.caget(d.name + ':I'):
+                        await aioca.caput(d.name + ':SETI', dictIn[dictName] - .2)
+                await aioca.sleep(2)
+                await aioca.caput(d.name + ':SETI', dictIn[dictName])
+                await aioca.sleep(1)
+
+                result = await self.objectives[0].Start()
+            except:
+                result = -1
+            return {f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': result}
+
+        def Evaluate(dictIn: dict):
+            self.progress += 1
+            self.progressEdit.setText(f'{self.progress / self.total * 100:.1f}')
+            self.runTimeEdit.setText(f'{round(time.time() - self.t0)}')
+            dictOut = asyncio.run(SetDecisionsAndRecordResponse(dictIn))
+            return dictOut
+        
+        evaluator = Evaluator(function = Evaluate)
+        X = Xopt(
+            vocs = vocs,
+            generator = generator,
+            evaluator = evaluator,
+        )
+
+        try:
+            await asyncio.wait_for(
+                aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
+                timeout = 2,
+            )
+            self.runTimeEdit.setText(self.Timestamp())
+            shared.workspace.assistant.PushMessage(f'Optimisation beginning and LINAC successfully activated.')
+        except Exception as e:
+            shared.workspace.assistant.PushMessage(f'Failed to start up the LINAC due to a PV timeout.', 'Error')
+            return
+            
+        executor = ThreadPoolExecutor(max_workers = 1)
+        job = executor.submit(X.random_evaluate, self.settings['numSamples'])
+        job.result()
+
+        try:
+            await asyncio.wait_for(
+                aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
+                timeout = 2,
+            )
+            shared.workspace.assistant.PushMessage(f'Optimisation complete and LINAC successfully deactivated.')
+        except Exception as e:
+            shared.workspace.assistant.PushMessage(f'Failed to stop up the LINAC due to a PV timeout. User should manually stop it now.', 'Error')
+            return
+
+    async def OfflineOptimisation(self, vocs, generator):
+        print(f'--- Offline Optimiser ---')
+        def Evaluate(dictIn: dict):
+            return dict()
+
+        evaluator = Evaluator(function = Evaluate)
+        X = Xopt(
+            vocs = vocs,
+            generator = generator,
+            evaluator = evaluator,
+        )
+        gc.collect()
+        print('Taking initial samples')
+
+        # Assume 10 repeats per setting
+        precision = np.float32 if self.settings['simPrecision'] == 'fp32' else np.float64
+        # try:
+        emptyArray = np.empty((10, 6, 50000, len(shared.lattice), 1), dtype = precision)
+        # random samples
+        PerformAction(
+            self,
+            emptyArray,
+            numRepeats = 10,
+            numParticles = 50000,
+        )
+        # except:
+        #     shared.workspace.assistant.PushMessage(f'Not enough system memory available to run numerical simulator for {self.name}. Try running at a lower fidelity.', 'Critical Error')
+        #     return
 
     def SwitchMode(self):
         if cothread.AVAILABLE:

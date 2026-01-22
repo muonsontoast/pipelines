@@ -1,4 +1,5 @@
 import os
+import gc
 import yaml
 import numpy as np
 from copy import deepcopy
@@ -26,6 +27,7 @@ def Save():
             settings[entity.ID] = entitySettings
             if entity.sharingData:
                 entity.CleanUp() # remove the shared memory data from memory to stop persistance.
+        gc.collect()
         yaml.dump(settings, f)
         print('Dumped session settings to disk.')
 

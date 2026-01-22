@@ -56,23 +56,36 @@ class SingleTaskGPAction(Action):
         return True
 
     def Run(self, pause, stop, error, sharedMemoryName, shape, dtype, **kwargs):
-        initialSamples = kwargs.get('initialSamples')
-        repeats = kwargs.get('repeats')
-        numParticles = kwargs.get('numParticles', 10000)
-        self.simulator.numParticles = numParticles
-        sharedMemory = SharedMemory(name = sharedMemoryName)
-        data = np.ndarray(shape, dtype, buffer = sharedMemory.buf)
-        trackingData, _ = self.simulator.TrackBeam()
-        np.copyto(data, trackingData)
+        try: # make sure the process is guaranteed to exit
+            numRepeats = 10
+            numSamples = kwargs.get('numSamples')
+            numParticles = kwargs.get('numParticles')
+            numSteps = kwargs.get('numSteps')
 
-        # check for interrupts
-        while pause.is_set():
+            self.simulator.numParticles = numParticles
+            sharedMemory = SharedMemory(name = sharedMemoryName)
+            data = np.ndarray(shape, dtype, buffer = sharedMemory.buf)
+
+            # how to construct Xopt optimiser inside this action? - don't, make this the evaluation inside the Single Task block.
+
+            trackingData, _ = self.simulator.TrackBeam(numParticles)
+            print(f'Here is the shape of the tracking data: {data.shape}')
+
+            np.copyto(data, trackingData)
+
+            # check for interrupts
+            while pause.is_set():
+                if stop.is_set():
+                    sharedMemory.close()
+                    sharedMemory.unlink()
+                    return
+                time.sleep(.1)
             if stop.is_set():
                 sharedMemory.close()
+                sharedMemory.unlink()
                 return
-            time.sleep(.1)
-        if stop.is_set():
             sharedMemory.close()
-            return
-
-        sharedMemory.close()
+            sharedMemory.unlink()
+        except:
+            sharedMemory.close()
+            sharedMemory.unlink()
