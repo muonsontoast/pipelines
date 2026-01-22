@@ -1,5 +1,6 @@
 import gc # garbage collection
-from multiprocessing import Queue, Process, Event
+from multiprocessing import Queue, Process, Event, Value
+from ctypes import c_float
 import multiprocessing as mp
 mp.set_start_method('spawn', force = True) # force linux machines to call __getstate__ and __setstate__ methods attached to actions.
 import threading
@@ -30,40 +31,32 @@ def TogglePause(entity, override = None):
             state = False if runningActions[entity.ID][0].is_set() else True
     if not state:
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Paused)')
-        entity.runningCircle.Stop()
     else:
-        entity.title.setText(f'{entity.title.text().split(' (')[0]} (Running)')
-        entity.runningCircle.Start()
+        entity.title.setText(entity.name)
     return state
 
 def StopAction(entity):
     '''Stop an entity's action if it is running. Returns true if successful else false.'''
     if entity.ID in runningActions:
         runningActions[entity.ID][1].set()
-        entity.title.setText(f'{entity.name.split(' (')[0]} (Stopped)')
-        entity.runningCircle.Stop()
+        entity.title.setText(entity.name)
         return True
     else:
-        print(f'{entity.name} has no running action to stop.')
-        shared.workspace.assistant.PushMessage(f'{entity.name} is not running.', 'Error')
         return False
 
 def StopActions():
     '''Stop all currently running actions.'''
     IDs = list(runningActions.keys())
     for ID in IDs:
-        shared.entities[ID].title.setText(f'{shared.entities[ID].name.split(' (')[0]} (Stopped)')
-        shared.entities[ID].runningCircle.Stop()
+        shared.entities[ID].title.setText(shared.entities[ID].name)
         runningActions[ID][1].set()
-        if len(runningActions[ID]) == 4:
-            runningActions[ID][3].set()
 
-def RunProcess(action, queue, pause, stop, error, sharedMemoryName, shape, dtype, **kwargs):
+def RunProcess(action, queue, pause, stop, error, progress, sharedMemoryName, shape, dtype, **kwargs):
     '''Accepts an entity `ID`, and other `args` to pass to the Run() method of the entity's action.'''
     pause.clear()
     stop.clear()
     error.clear()
-    queue.put(action.Run(pause, stop, error, sharedMemoryName, shape, dtype, **kwargs))
+    queue.put(action.Run(pause, stop, error, progress, sharedMemoryName, shape, dtype, **kwargs))
 
 def WaitForSaveToFinish(entity, saveProcess, deltaTime, lastTime):
     deltaTime += time.time() - lastTime
@@ -84,27 +77,28 @@ def WaitForSaveToFinish(entity, saveProcess, deltaTime, lastTime):
 
 def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, getRawData = True, saving = False):
     if queue.empty():
-        threading.Timer(.1, CheckProcess, args = (entity, process, saveProcess, queue, getRawData, saving)).start()
+        threading.Timer(.25, CheckProcess, args = (entity, process, saveProcess, queue, getRawData, saving)).start()
+        if entity.ID in shared.runnableBlocks:
+            if hasattr(entity, 'progressBar'):
+                if not runningActions[entity.ID][2].is_set():
+                    entity.progressBar.CheckProgress(runningActions[entity.ID][3].value)
         return
     # Has an error occured to cause the stop?
     if runningActions[entity.ID][2].is_set():
         print(f'A critical error occurred inside {entity.name}')
         shared.workspace.assistant.PushMessage(queue.get(), 'Critical Error')
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Corrupted)')
-        # entity.runningCircle.Stop()
     else:
         # Has the action completed successfully?
         if not runningActions[entity.ID][1].is_set():
-            # entity.title.setText(f'{entity.title.text().split(' (')[0]} (Holding Data)')
-            # entity.runningCircle.Stop()
             shared.workspace.assistant.PushMessage(f'{entity.name} has finished and is no longer running.')
+            entity.progressBar.CheckProgress(1)
         else:
             StopAction(entity)
-            shared.workspace.assistant.PushMessage('Stopped action(s).')
-        print('Finished running the offline action(s) :)!')
+            shared.workspace.assistant.PushMessage(f'Stopped and reset {entity.name}.')
 
-    # if saving:
-    #     WaitForSaveToFinish(entity, saveProcess, 0, time.time())
+    if saving:
+        WaitForSaveToFinish(entity, saveProcess, 0, time.time())
 
     # close the shared memory of the entity to free up system resources.
     process.terminate()
@@ -130,6 +124,8 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             return True
         else:
             return False
+    if hasattr(entity, 'progressBar'):
+        entity.progressBar.Reset()
     kwargs['getRawData'] = kwargs.pop('getRawData', True)
     postProcessedDataName = kwargs.pop('postProcessedDataName', None)
     if postProcessedDataName:
@@ -141,7 +137,6 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             kwargs['postProcessedShape'] = emptyPostProcessedDataArray.shape
             kwargs['postProcessedDType'] = emptyPostProcessedDataArray.dtype
         else: # user has supplied a name for the post process but not an empty array, so raise an error.
-            print('Post processing attribute name was supplied without also providing an empty numpy array!')
             return
     entity.CreateEmptySharedData(emptyDataArray) # share the data with the process.
     entity.data[:] = np.inf # Initialise data array to infs.
@@ -149,12 +144,12 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
     
     queue = Queue()
     action = entity.offlineAction if not entity.online else entity.onlineAction
-    # Define the pause and stop events and add them to the runningActions dict.
-    runningActions[entity.ID] = [Event(), Event(), Event()] # pause, stop, error
+    # Define the pause and stop events and progress and add them to the runningActions dict.
+    runningActions[entity.ID] = [Event(), Event(), Event(), Value(c_float, 0.0)] # pause, stop, error, progress
     # Instantiate a process
     process = Process(
         target = RunProcess,
-        args = (action, queue, runningActions[entity.ID][0], runningActions[entity.ID][1], runningActions[entity.ID][2], entity.dataSharedMemory.name, emptyDataArray.shape, emptyDataArray.dtype),
+        args = (action, queue, runningActions[entity.ID][0], runningActions[entity.ID][1], runningActions[entity.ID][2], runningActions[entity.ID][3], entity.dataSharedMemory.name, emptyDataArray.shape, emptyDataArray.dtype),
         kwargs = kwargs
     )
     # Check if this block is attached to a save block
@@ -175,8 +170,6 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             )
             saveProcess.start()
             break
-    # entity.runningCircle.Start()
-    # entity.title.setText(f'{entity.name.split(' (')[0]} (Running)')
     process.start()
     # periodically check if the action has finished ...
     threading.Timer(.1, CheckProcess, args = (entity, process, saveProcess, queue, kwargs['getRawData'], saving)).start()

@@ -30,6 +30,7 @@ from ..kernels.kernel import Kernel
 from ..kernels.rbf import RBFKernel
 from ..kernels.periodic import PeriodicKernel
 from ..pv import PV
+from ..progress import Progress
 from ... import style
 from ... import shared
 
@@ -43,7 +44,7 @@ class SingleTaskGP(Draggable):
             simPrecision = 'fp64'
 
         super().__init__(
-            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 525]), 
+            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 565]), 
             components = {
                 'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float),
             },
@@ -103,11 +104,16 @@ class SingleTaskGP(Draggable):
     def Push(self):
         super().Push()
         self.widget.layout().setContentsMargins(5, 10, 20, 10)
-        self.widget.layout().setSpacing(25)
+        self.widget.layout().setSpacing(15)
         self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = [PV])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
         self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition, Filter])
         self.AddSocket('out', 'M')
+        self.content = QWidget()
+        self.content.setLayout(QVBoxLayout())
+        self.content.layout().setContentsMargins(0, 0, 0, 0)
+        self.content.layout().setSpacing(25)
+        self.widget.layout().addWidget(self.content)
         # settings section
         settings = QWidget()
         settings.setFixedHeight(200)
@@ -204,8 +210,7 @@ class SingleTaskGP(Draggable):
         settings.layout().addWidget(self.modeWidget)
         # spacer
         settings.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
-        self.widget.layout().addWidget(settings)
-        
+        self.content.layout().addWidget(settings)
         # metrics section
         metrics = QWidget()
         metrics.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -284,10 +289,15 @@ class SingleTaskGP(Draggable):
         self.averageEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         average.layout().addWidget(self.averageEdit)
         metrics.layout().addWidget(average)
-        # spacer
-        metrics.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
-        self.widget.layout().addWidget(metrics)
-        
+        self.content.layout().addWidget(metrics)
+        # progress bar
+        progressWidget = QWidget()
+        progressWidget.setLayout(QVBoxLayout())
+        progressWidget.layout().setContentsMargins(15, 0, 0, 0)
+        self.progressBar = Progress()
+        progressWidget.layout().addWidget(self.progressBar)
+        self.widget.layout().addWidget(progressWidget)
+        self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.BaseStyling()
 
     def Timestamp(self):
@@ -687,7 +697,6 @@ class SingleTaskGP(Draggable):
             return
 
     async def OfflineOptimisation(self, vocs, generator):
-        print(f'--- Offline Optimiser ---')
         def Evaluate(dictIn: dict):
             return dict()
 
@@ -698,22 +707,24 @@ class SingleTaskGP(Draggable):
             evaluator = evaluator,
         )
         gc.collect()
-        print('Taking initial samples')
 
         # Assume 10 repeats per setting
         precision = np.float32 if self.settings['simPrecision'] == 'fp32' else np.float64
-        # try:
-        emptyArray = np.empty((10, 6, 50000, len(shared.lattice), 1), dtype = precision)
-        # random samples
-        PerformAction(
-            self,
-            emptyArray,
-            numRepeats = 10,
-            numParticles = 50000,
-        )
-        # except:
-        #     shared.workspace.assistant.PushMessage(f'Not enough system memory available to run numerical simulator for {self.name}. Try running at a lower fidelity.', 'Critical Error')
-        #     return
+        try:
+            numRepeats = 2000
+            numParticles = 1000
+            emptyArray = np.empty((numRepeats, 6, numParticles, len(shared.lattice), 1), dtype = precision)
+            # random samples
+            PerformAction(
+                self,
+                emptyArray,
+                numRepeats = numRepeats,
+                numParticles = numParticles,
+            )
+            shared.workspace.assistant.PushMessage(f'Starting {self.name}.')
+        except:
+            shared.workspace.assistant.PushMessage(f'Not enough system memory available to run numerical simulator for {self.name}. Try running at a lower fidelity.', 'Critical Error')
+            return
 
     def SwitchMode(self):
         if cothread.AVAILABLE:
@@ -740,6 +751,9 @@ class SingleTaskGP(Draggable):
             pass
         else:
             self.main.setStyleSheet(style.WidgetStyle(color = 'none', borderRadius = 12, fontColor = '#c4c4c4', fontSize = 16))
+            self.progressBar.setStyleSheet(style.WidgetStyle(color = "#3e3e3e", borderRadius = 6))
+            self.progressBar.innerWidget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 5))
+            self.progressBar.bar.setStyleSheet(style.WidgetStyle(color = '#c4c4c4', borderRadius = 4))
         super().BaseStyling()
 
     def SelectedStyling(self):

@@ -8,9 +8,12 @@ class Assistant:
         self.message = 'Assistant: '
         self.messageTitle = messageTitle
         self.messageTimeout = messageTimeout * 1e3
+        self.ignoreRequests = False
 
     def PushMessage(self, message, messageType: str = 'Normal'):
         '''`message` can be of types <Normal/Warning/Error/Critical Error>'''
+        if self.ignoreRequests:
+            return
         prefix = ''
         spanPrefix = ''
         spanSuffix = ''

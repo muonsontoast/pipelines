@@ -55,9 +55,9 @@ class SingleTaskGPAction(Action):
         print('All decision variables and objectives are linked to lattice elements.')
         return True
 
-    def Run(self, pause, stop, error, sharedMemoryName, shape, dtype, **kwargs):
+    def Run(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, **kwargs):
         try: # make sure the process is guaranteed to exit
-            numRepeats = 10
+            numRepeats = kwargs.get('numRepeats')
             numSamples = kwargs.get('numSamples')
             numParticles = kwargs.get('numParticles')
             numSteps = kwargs.get('numSteps')
@@ -68,24 +68,25 @@ class SingleTaskGPAction(Action):
 
             # how to construct Xopt optimiser inside this action? - don't, make this the evaluation inside the Single Task block.
 
-            trackingData, _ = self.simulator.TrackBeam(numParticles)
-            print(f'Here is the shape of the tracking data: {data.shape}')
+            # np.copyto(data, trackingData)
 
-            np.copyto(data, trackingData)
-
-            # check for interrupts
-            while pause.is_set():
+            for r in range(numRepeats):
+                trackingData, _ = self.simulator.TrackBeam(numParticles)
+                data[r] = trackingData
+                # check for interrupts
+                while pause.is_set():
+                    if stop.is_set():
+                        sharedMemory.close()
+                        sharedMemory.unlink()
+                        return
+                    time.sleep(.1)
                 if stop.is_set():
                     sharedMemory.close()
                     sharedMemory.unlink()
                     return
-                time.sleep(.1)
-            if stop.is_set():
-                sharedMemory.close()
-                sharedMemory.unlink()
-                return
-            sharedMemory.close()
-            sharedMemory.unlink()
-        except:
-            sharedMemory.close()
-            sharedMemory.unlink()
+                
+                progress.value = (r + 1) / numRepeats
+        except Exception as e:
+            print(e)
+        sharedMemory.close()
+        sharedMemory.unlink()

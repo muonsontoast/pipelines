@@ -83,14 +83,18 @@ async def ToggleAllActions():
         _toggleState = False
     _toggleState = not _toggleState
 
-    stateText = 'running' if _toggleState else 'paused'
     if _toggleState:
+        shared.workspace.assistant.ignoreRequests = True
         for r in shared.runnableBlocks.values():
             await r.Start()
+        shared.workspace.assistant.ignoreRequests = False
+        shared.workspace.assistant.PushMessage('All actionable block(s) have been started.')
     else:
+        shared.workspace.assistant.ignoreRequests = True
         for r in shared.runnableBlocks.values():
             TogglePause(r)
-    shared.workspace.assistant.PushMessage(f'All valid actions are {stateText}.')
+        shared.workspace.assistant.ignoreRequests = False
+        shared.workspace.assistant.PushMessage('All actionable block(s) have been paused.')
 
 def PauseAllActions():
     for r in shared.runnableBlocks.values():

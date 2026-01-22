@@ -7,6 +7,7 @@ from ..components.slider import SliderComponent
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
 from .socket import Socket
+from ..utils.multiprocessing import TogglePause, StopAction
 from .. import style
 from .. import shared
 
@@ -402,10 +403,12 @@ class Draggable(Entity, QWidget):
         pass
 
     def Pause(self):
-        pass
+        TogglePause(self)
 
     def Reset(self):
-        pass
+        StopAction(self)
+        if hasattr(self, 'progressBar'):
+            self.progressBar.Reset()
 
     def AddLinkIn(self, ID:int, socket, streamTypeIn:str = '', **kwargs):
         '''`socket` the source is connected to and the `ID` of its parent.\n'''

@@ -41,8 +41,11 @@ class Entity:
     def CleanUp(self):
         # remove the data from memory to stop it persisting after closing the application.
         if hasattr(self, 'dataSharedMemory'):
-            self.dataSharedMemory.close()
-            self.dataSharedMemory.unlink()
+            try:
+                self.dataSharedMemory.close()
+                self.dataSharedMemory.unlink()
+            except:
+                pass
 
     def Register(self, overrideID = None):
         '''Registers this object as an entity inside the shared entity list.'''
