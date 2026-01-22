@@ -39,6 +39,8 @@ def StopAction(entity):
     '''Stop an entity's action if it is running. Returns true if successful else false.'''
     if entity.ID in runningActions:
         runningActions[entity.ID][1].set()
+        if hasattr(entity, 'actionFinished'):
+            entity.actionFinished.set()
         entity.title.setText(entity.name)
         return True
     else:
@@ -75,14 +77,14 @@ def WaitForSaveToFinish(entity, saveProcess, deltaTime, lastTime):
     else:
         saveProcess.join()
 
-def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, getRawData = True, saving = False):
-    if queue.empty():
-        threading.Timer(.25, CheckProcess, args = (entity, process, saveProcess, queue, getRawData, saving)).start()
-        if entity.ID in shared.runnableBlocks:
-            if hasattr(entity, 'progressBar'):
-                if not runningActions[entity.ID][2].is_set():
-                    entity.progressBar.CheckProgress(runningActions[entity.ID][3].value)
-        return
+def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, getRawData = True, saving = False, autoCompleteProgress = True):
+    while process.is_alive():
+        if runningActions[entity.ID][1].wait(timeout = .1):
+            break
+        if entity.ID in shared.runnableBlocks and hasattr(entity, 'progressBar'):
+            if not runningActions[entity.ID][2].is_set():
+                entity.progressBar.CheckProgress(runningActions[entity.ID][3].value)
+    runningActions[entity.ID][1].clear()
     # Has an error occured to cause the stop?
     if runningActions[entity.ID][2].is_set():
         print(f'A critical error occurred inside {entity.name}')
@@ -92,7 +94,7 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
         # Has the action completed successfully?
         if not runningActions[entity.ID][1].is_set():
             shared.workspace.assistant.PushMessage(f'{entity.name} has finished and is no longer running.')
-            entity.progressBar.CheckProgress(1)
+            entity.progressBar.CheckProgress(1) if autoCompleteProgress else None
         else:
             StopAction(entity)
             shared.workspace.assistant.PushMessage(f'Stopped and reset {entity.name}.')
@@ -103,12 +105,13 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
     # close the shared memory of the entity to free up system resources.
     process.terminate()
     process.join()
+    runningActions.pop(entity.ID)
     entity.dataSharedMemory.close()
     entity.dataSharedMemory.unlink()
     del entity.dataSharedMemory
     gc.collect()
-
-    runningActions.pop(entity.ID)
+    if hasattr(entity, 'actionFinished'):
+        entity.actionFinished.set()
 
 def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
     '''Set `getRawData` to False to perform post processing.\n
@@ -116,16 +119,20 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
     Supply an attribute name `postProcessedDataName` for the post processed data to be stored in.\n
     If post processing, also supply an `emptyPostProcessedDataArray` numpy array of the final shape.\n
     Returns True if successful else False.'''
-    gc.collect()
-
+    if hasattr(entity, 'actionFinished'):
+        if hasattr(entity, 'resetApplied'):
+            entity.resetApplied.clear()
+        entity.actionFinished.clear()
     if entity.ID in runningActions:
         if runningActions[entity.ID][0].is_set():
             TogglePause(entity, False)
             return True
         else:
             return False
-    if hasattr(entity, 'progressBar'):
+    if hasattr(entity, 'progressBar') and kwargs.pop('updateProgress', True):
         entity.progressBar.Reset()
+    progress = kwargs.pop('progress', 0.)
+    autoCompleteProgress = kwargs.pop('autoCompleteProgress', True)
     kwargs['getRawData'] = kwargs.pop('getRawData', True)
     postProcessedDataName = kwargs.pop('postProcessedDataName', None)
     if postProcessedDataName:
@@ -145,7 +152,7 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
     queue = Queue()
     action = entity.offlineAction if not entity.online else entity.onlineAction
     # Define the pause and stop events and progress and add them to the runningActions dict.
-    runningActions[entity.ID] = [Event(), Event(), Event(), Value(c_float, 0.0)] # pause, stop, error, progress
+    runningActions[entity.ID] = [Event(), Event(), Event(), Value(c_float, progress)] # pause, stop, error, progress
     # Instantiate a process
     process = Process(
         target = RunProcess,
@@ -172,5 +179,5 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             break
     process.start()
     # periodically check if the action has finished ...
-    threading.Timer(.1, CheckProcess, args = (entity, process, saveProcess, queue, kwargs['getRawData'], saving)).start()
+    threading.Thread(target = CheckProcess, args = (entity, process, saveProcess, queue, kwargs['getRawData'], saving, autoCompleteProgress), daemon = True).start()
     return True

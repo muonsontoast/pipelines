@@ -10,12 +10,19 @@
   components: {}
   name: Editor
   positionInSceneCoords:
-  - 5456.725040837667
-  - 6382.821540412915
+  - 5764.288815724709
+  - 6376.299727023876
   type: Editor
-  zoom: 0.5107459106226406
+  zoom: 0.7026018524526026
 3:
   components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linksIn: {}
   linksOut: {}
   name: EditorMenu
@@ -38,6 +45,13 @@
   type: Inspector
 6:
   components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linksIn: {}
   linksOut: {}
   name: Kernel Menu
@@ -47,6 +61,13 @@
   type: KernelMenu
 7:
   components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linksIn: {}
   linksOut: {}
   name: Kernel Menu
@@ -60,6 +81,13 @@
     dimensions:
       name: Dimensions
       type: KernelComponent
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   fontsize: 12
   hyperparameters:
     lengthscale (RBF Kernel (LTB HSTRs)):
@@ -81,17 +109,20 @@
   type: Kernel
 9:
   components: {}
-  linksIn:
-    11: data
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  linksIn: {}
   linksOut: {}
-  name: Save
-  position:
-  - 6114
-  - 6565
+  name: Kernel Menu
   size:
-  - 600
-  - 300
-  type: Save
+  - 250
+  - 250
+  type: KernelMenu
 10:
   alignment: Horizontal
   components:
@@ -106,10 +137,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 24
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'VSTR (Index: 24)'
   position:
   - 4577
@@ -118,9 +156,9 @@
   - 350
   - 115
   type: PV
-11:
-  acqFunction: EI
-  acqHyperparameter: 2.0
+12:
+  acqFunction: UCB
+  acqHyperparameter: 2
   components:
     value:
       default: 0
@@ -130,6 +168,13 @@
       units: ''
       value: 0
       valueType: float
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linksIn:
     10: decision
     20: decision
@@ -145,28 +190,20 @@
     32: decision
     33: kernel
     34: objective
-  linksOut:
-    9: data
+  linksOut: {}
   mode: maximise
   name: Single Task GP
-  numSamples: 20
-  numSteps: 40
+  numParticles: 10000
+  numSamples: 5
+  numSteps: 20
   position:
-  - 5200
-  - 6243
+  - 5262.8596242004205
+  - 6091.240278880384
+  simPrecision: fp32
   size:
   - 600
-  - 525
+  - 565
   type: Single Task GP
-12:
-  components: {}
-  linksIn: {}
-  linksOut: {}
-  name: Kernel Menu
-  size:
-  - 250
-  - 250
-  type: KernelMenu
 13:
   components:
     linkedLatticeElement:
@@ -180,6 +217,13 @@
       type: SliderComponent
       units: ''
       value: 0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 58
   linksIn: {}
   linksOut:
@@ -205,6 +249,13 @@
       type: SliderComponent
       units: ''
       value: 0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 295
   linksIn: {}
   linksOut:
@@ -230,6 +281,13 @@
       type: SliderComponent
       units: ''
       value: 0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 247
   linksIn: {}
   linksOut:
@@ -248,6 +306,13 @@
     dimensions:
       name: Dimensions
       type: KernelComponent
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   fontsize: 12
   hyperparameters:
     lengthscale:
@@ -302,14 +367,21 @@
       type: SliderComponent
       units: ''
       value: 0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 191
   linksIn: {}
   linksOut:
     34: in
   name: 'BPM (Index: 191)'
   position:
-  - 4004.0
-  - 6669.0
+  - 4004
+  - 6669
   size:
   - 350
   - 115
@@ -327,6 +399,13 @@
       type: SliderComponent
       units: ''
       value: 0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 155
   linksIn: {}
   linksOut:
@@ -345,6 +424,13 @@
     dimensions:
       name: Dimensions
       type: KernelComponent
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   fontsize: 12
   hyperparameters:
     lengthscale:
@@ -400,10 +486,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 71
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'VSTR (Index: 71)'
   position:
   - 4576
@@ -426,10 +519,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 235
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'VSTR (Index: 235)'
   position:
   - 4571
@@ -452,10 +552,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 168
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'VSTR (Index: 168)'
   position:
   - 4570
@@ -478,10 +585,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 283
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'VSTR (Index: 283)'
   position:
   - 4569
@@ -503,6 +617,13 @@
       type: SliderComponent
       units: ''
       value: 0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 106
   linksIn: {}
   linksOut:
@@ -529,10 +650,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 119
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'VSTR (Index: 119)'
   position:
   - 4574
@@ -555,10 +683,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 23
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'HSTR (Index: 23)'
   position:
   - 4130
@@ -581,10 +716,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 167
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'HSTR (Index: 167)'
   position:
   - 4126
@@ -607,10 +749,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 118
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'HSTR (Index: 118)'
   position:
   - 4128
@@ -633,10 +782,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 70
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'HSTR (Index: 70)'
   position:
   - 4128
@@ -659,10 +815,17 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 282
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'HSTR (Index: 282)'
   position:
   - 4126
@@ -685,20 +848,34 @@
       type: SliderComponent
       units: mrad
       value: 0.0
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linkedElement: 234
   linksIn: {}
   linksOut:
-    11: decision
+    12: decision
   name: 'HSTR (Index: 234)'
   position:
-  - 4124.0
-  - 5984.0
+  - 4124
+  - 5984
   size:
   - 350
   - 115
   type: PV
 33:
   components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   hyperparameters:
     lengthscale (RBF Kernel (LTB HSTRs)):
       description: lengthscale affects how rapidly correlation decays with distance
@@ -713,7 +890,7 @@
     16: in
     19: in
   linksOut:
-    11: kernel
+    12: kernel
   name: Add
   position:
   - 4897
@@ -724,6 +901,13 @@
   type: Add
 34:
   components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
   linksIn:
     13: in
     14: in
@@ -732,7 +916,7 @@
     18: in
     24: in
   linksOut:
-    11: objective
+    12: objective
   name: Add
   position:
   - 4856

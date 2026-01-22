@@ -23,17 +23,16 @@ class Progress(QWidget):
         self.widget.layout().addWidget(self.innerWidget)
         self.bar = QWidget()
         self.innerWidget.layout().addWidget(self.bar, alignment = Qt.AlignLeft)
-        self.CheckProgress(0)
+        self.Reset()
     
     def Reset(self):
+        print('reset progress !!')
         self.progress = 0
         self.bar.setFixedWidth(0)
         self.bar.setStyleSheet(style.WidgetStyle(color = '#c4c4c4', borderRadius = 4))
 
     def CheckProgress(self, amount):
         '''Takes a decimal in from 0 to 1'''
-        if amount <= self.progress:
-            return
         self.progress = amount
         amount = np.maximum(amount, .01)
         if amount > .97:

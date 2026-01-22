@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 import gc
 import numpy as np
 import aioca
@@ -7,6 +7,7 @@ import asyncio
 import operator
 from functools import reduce
 import time
+import threading
 from datetime import datetime
 from xopt import Xopt, VOCS, Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
@@ -21,7 +22,7 @@ from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
 from ...actions.online.singletaskgp import SingleTaskGPAction as OnlineAction
 from ...utils import cothread
 # PerformAction is invoked when running tasks in offline mode to keep the UI responsive.
-from ...utils.multiprocessing import PerformAction, TogglePause, StopAction
+from ...utils.multiprocessing import PerformAction, TogglePause, StopAction, runningActions
 from ..composition.composition import Composition
 from ..composition.add import Add
 from ..composition.multiply import Multiply
@@ -63,6 +64,8 @@ class SingleTaskGP(Draggable):
         self.offlineAction = OfflineAction(self)
         self.onlineAction = OnlineAction(self)
         self.online = False
+        self.actionFinished = threading.Event()
+        self.resetApplied = threading.Event()
 
         self.streams = {
             'raw': lambda: {
@@ -639,7 +642,7 @@ class SingleTaskGP(Draggable):
         #         # job.add_done_callback(lambda _: StepUntilComplete())
         #         # await aioca.caput('LI-TI-MTGEN-01:STOP', 1, timeout = 2)
         #         # print('LINAC deactivated!')
-        await WaitUntilInputsRead()
+        asyncio.create_task(WaitUntilInputsRead())
 
     async def OnlineOptimisation(self, vocs, generator):
         async def SetDecisionsAndRecordResponse(dictIn: dict):
@@ -697,7 +700,7 @@ class SingleTaskGP(Draggable):
             return
 
     async def OfflineOptimisation(self, vocs, generator):
-        def Evaluate(dictIn: dict):
+        async def Evaluate(dictIn: dict):
             return dict()
 
         evaluator = Evaluator(function = Evaluate)
@@ -711,8 +714,10 @@ class SingleTaskGP(Draggable):
         # Assume 10 repeats per setting
         precision = np.float32 if self.settings['simPrecision'] == 'fp32' else np.float64
         try:
-            numRepeats = 2000
-            numParticles = 1000
+            numSteps = 40
+            numRepeats = 40
+            totalSteps = numRepeats + numSteps
+            numParticles = 5000
             emptyArray = np.empty((numRepeats, 6, numParticles, len(shared.lattice), 1), dtype = precision)
             # random samples
             PerformAction(
@@ -720,11 +725,42 @@ class SingleTaskGP(Draggable):
                 emptyArray,
                 numRepeats = numRepeats,
                 numParticles = numParticles,
+                totalSteps = totalSteps,
+                autoCompleteProgress = False,
             )
             shared.workspace.assistant.PushMessage(f'Starting {self.name}.')
         except:
             shared.workspace.assistant.PushMessage(f'Not enough system memory available to run numerical simulator for {self.name}. Try running at a lower fidelity.', 'Critical Error')
             return
+        
+        self.nextStage = False
+        def SamplesCheck():
+            # if self.ID in runningActions:
+            #     threading.Timer(.25, SamplesCheck).start()
+            #     return
+            # self.actionFinished.wait()
+            self.actionFinished.wait()
+            self.actionFinished.clear()
+            if self.resetApplied.is_set():
+                self.resetApplied.clear()
+                return
+            # if self.ID in runningActions:
+            #     runningActions.pop(self.ID)
+            # optimiser steps
+            print('Performing optimisation steps ...')
+            emptyArray = np.empty((numSteps, 6, numParticles, len(shared.lattice), 1), dtype = precision)
+            PerformAction(
+                self,
+                emptyArray,
+                numRepeats = numSteps,
+                numParticles = numParticles,
+                totalSteps = totalSteps,
+                stepOffset = numRepeats,
+                updateProgress = False,
+                progress = numRepeats / totalSteps
+            )
+        
+        threading.Thread(target = SamplesCheck, daemon = True).start()
 
     def SwitchMode(self):
         if cothread.AVAILABLE:

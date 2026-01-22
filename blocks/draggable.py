@@ -406,9 +406,12 @@ class Draggable(Entity, QWidget):
         TogglePause(self)
 
     def Reset(self):
+        self.resetApplied.set()
         StopAction(self)
         if hasattr(self, 'progressBar'):
             self.progressBar.Reset()
+
+        shared.workspace.assistant.PushMessage(f'{self.name} has been reset.')
 
     def AddLinkIn(self, ID:int, socket, streamTypeIn:str = '', **kwargs):
         '''`socket` the source is connected to and the `ID` of its parent.\n'''

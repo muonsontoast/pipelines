@@ -56,23 +56,21 @@ class SingleTaskGPAction(Action):
         return True
 
     def Run(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, **kwargs):
-        try: # make sure the process is guaranteed to exit
-            numRepeats = kwargs.get('numRepeats')
-            numSamples = kwargs.get('numSamples')
-            numParticles = kwargs.get('numParticles')
-            numSteps = kwargs.get('numSteps')
+        # try: # make sure the process is guaranteed to exit
+        numRepeats = kwargs.get('numRepeats')
+        numParticles = kwargs.get('numParticles')
+        totalSteps = kwargs.get('totalSteps')
+        stepOffset = kwargs.get('stepOffset', 0)
 
-            self.simulator.numParticles = numParticles
-            sharedMemory = SharedMemory(name = sharedMemoryName)
-            data = np.ndarray(shape, dtype, buffer = sharedMemory.buf)
-
-            # how to construct Xopt optimiser inside this action? - don't, make this the evaluation inside the Single Task block.
-
-            # np.copyto(data, trackingData)
-
+        self.simulator.numParticles = numParticles
+        sharedMemory = SharedMemory(name = sharedMemoryName)
+        data = np.ndarray(shape, dtype, buffer = sharedMemory.buf)
+        data[:] = np.inf
+        newData = np.empty(shape)
+        try:
             for r in range(numRepeats):
                 trackingData, _ = self.simulator.TrackBeam(numParticles)
-                data[r] = trackingData
+                newData[r] = trackingData
                 # check for interrupts
                 while pause.is_set():
                     if stop.is_set():
@@ -84,9 +82,9 @@ class SingleTaskGPAction(Action):
                     sharedMemory.close()
                     sharedMemory.unlink()
                     return
-                
-                progress.value = (r + 1) / numRepeats
+                progress.value = (r + 1 + stepOffset) / totalSteps
+                print(f'{progress.value:.1f}')
+            np.copyto(data, newData) # only copy at the end
+            stop.set()
         except Exception as e:
             print(e)
-        sharedMemory.close()
-        sharedMemory.unlink()
