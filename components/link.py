@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLineEdit, QStyledItemDelegate, QCompleter, QComboBox, QLabel, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QWidget, QLineEdit, QCompleter, QComboBox, QLabel, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QListView
 from PySide6.QtCore import Qt, QStringListModel
 from .component import Component
 from .. import shared
@@ -43,7 +43,7 @@ class LinkComponent(Component):
         self.context.setLayout(QVBoxLayout())
         self.context.layout().setContentsMargins(0, 0, 0, 0)
         self.context.layout().setSpacing(10)
-        self.context.setFixedHeight(150)
+        self.context.setFixedHeight(215)
         # Element type
         self.type = QWidget()
         self.type.setLayout(QHBoxLayout())
@@ -100,7 +100,17 @@ class LinkComponent(Component):
         self.dtypesWidget.setLayout(QHBoxLayout())
         self.dtypesWidget.layout().setContentsMargins(5, 0, 0, 0)
         self.dtypesWidget.layout().setSpacing(0)
-        self.dtypesTitle = QLabel('Data Stream')
+        descriptionWidget = QWidget()
+        descriptionWidget.setLayout(QVBoxLayout())
+        descriptionWidget.layout().setContentsMargins(10, 0, 10, 0)
+        description = QLabel(
+            f'(<span style = "color: #308dc2">?</span>) Discriminate between available data subtypes of lattice elements with multiple outputs. Default is \'Raw\' for single output elements.'
+        )
+        description.setWordWrap(True)
+        description.setFixedHeight(65)
+        descriptionWidget.layout().addWidget(description)
+        self.context.layout().addWidget(descriptionWidget)
+        self.dtypesTitle = QLabel('Data Subtype')
         self.dtypesTitle.setAlignment(Qt.AlignLeft)
         self.dtypesTitle.setFixedWidth(100)
         self.dtypesWidget.layout().addWidget(self.dtypesTitle, alignment = Qt.AlignLeft | Qt.AlignVCenter)
@@ -159,7 +169,7 @@ class LinkComponent(Component):
             self.pv.settings['name'] = newName
             self.pv.name = newName
             self.pv.title.setText(newName)
-        print(self.linkedElement.Type)
+        print(self.linkedElement.Name)
         shared.inspector.Push(self.pv)
 
     def UpdateColors(self):
@@ -173,6 +183,8 @@ class LinkComponent(Component):
             self.indexTitle.setStyleSheet(style.LabelStyle(fontColor = '#1e1e1e'))
         else:
             self.search.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 5))
+            self.completer.popup().setVerticalScrollMode(QListView.ScrollPerPixel)
+            self.completer.popup().setStyleSheet(style.CompleterStyle(color = '#1e1e1e', fontColor = '#c4c4c4', borderRadius = 6, hoverColor = '#3a3a3a', itemSelectedColor = '#2e2e2e', handleColor = '#3e3e3e', bold = True, fontSize = 14, itemPadding = 5))
             self.typeEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 0))
             self.typeTitle.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
             self.positionEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 0))

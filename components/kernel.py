@@ -19,10 +19,14 @@ class KernelComponent(Component):
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setFilterMode(Qt.MatchContains)
         # Automatic status
+        descriptionWidget = QWidget()
+        descriptionWidget.setLayout(QVBoxLayout())
+        descriptionWidget.layout().setContentsMargins(10, 0, 10, 0)
         description = QLabel(f'(<span style = "color: #308dc2">?</span>) An automatic kernel acts over all dimensions, whereas manual is over a user-defined subset.')
         description.setWordWrap(True)
-        description.setFixedHeight(50)
-        self.layout().addWidget(description)
+        description.setFixedHeight(65)
+        descriptionWidget.layout().addWidget(description)
+        self.layout().addWidget(descriptionWidget)
         mode = 'Auto' if self.pv.settings['automatic'] else 'Manual'
         if self.expandable is not None:
             self.expandable.header.setText(f'{self.expandable.header.text()} ({mode})')
