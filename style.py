@@ -195,7 +195,7 @@ def ToolButtonStyle(**kwargs):
 
 def ComboStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `color`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`, `borderRadius`'''
+    `color`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`, `borderRadius`, `marginLeft`, `marginTop`, `marginRight`, `marginBottom`, `paddingTop`, `paddingBottom`, `paddingLeft`, `paddingRight`.'''
     return f'''
     QComboBox {{
         background-color: {kwargs.get('color', buttonColor)};
@@ -204,21 +204,81 @@ def ComboStyle(**kwargs):
         font-family: {kwargs.get('fontFamily', fontFamily)};
         font-weight: bold;
         border-radius: {kwargs.get('borderRadius', 0)}px;
-        border: none;
+        border: 1px solid #6184D8;
+        padding-left: {kwargs.pop('paddingLeft', 2)}px;
+        padding-top: {kwargs.pop('paddingTop', 2)}px;
+        padding-right: {kwargs.pop('paddingRight', 2)}px;
+        padding-bottom: {kwargs.pop('paddingBottom', 2)}px;
+        margin-left: {kwargs.pop('marginLeft', 2)}px;
+        margin-top: {kwargs.pop('marginTop', 2)}px;
+        margin-right: {kwargs.pop('marginRight', 2)}px;
+        margin-bottom: {kwargs.pop('marginBottom', 2)}px;
     }}
     QComboBox::drop-down {{
         border: none;
         background: transparent;
     }}
     QComboBox QAbstractItemView {{
-        color: {kwargs.get('color', '#1e1e1e')};
-        border: 3px solid {kwargs.get('color', '#1e1e1e')};
-        border-radius: 0px;
-        padding: 2px;
-        margin-left: -1px;
-        margin-top: -1px;
-        margin-right: -1px;
-        margin-bottom: -1px;
+        color: #6184D8;
+        border: 1px solid #6184D8;
+        border-radius: 6px;
+        padding-left: {kwargs.pop('paddingLeft', 2)}px;
+        padding-top: {kwargs.pop('paddingTop', 2)}px;
+        padding-right: {kwargs.pop('paddingRight', 2)}px;
+        padding-bottom: {kwargs.pop('paddingBottom', 2)}px;
+        margin-left: {kwargs.pop('marginLeft', 2)}px;
+        margin-top: {kwargs.pop('marginTop', 2)}px;
+        margin-right: {kwargs.pop('marginRight', 2)}px;
+        margin-bottom: {kwargs.pop('marginBottom', 2)}px;
+    }}'''
+
+def CompleterStyle(**kwargs):
+    '''Accepts kwargs which should be set to #ABCDEF color strings.\n
+    `color`, `borderColor`, `borderRadius`, `hoverColor`, `paddingLeft`, `paddingRight`, `paddingBottom`, `paddingTop`, `itemSelectedColor`, `itemPadding`, `handleColor`, `bold`, `fontColor`, `fontSize`, `fontFamily`'''
+    bold = 'font-weight: bold;' if kwargs.get('bold', False) else ''
+    return f'''
+    QListView {{
+        background-color: {kwargs.get('color', '#1e1e1e')};
+        color: {kwargs.get('fontColor', '#c4c4c4')};
+        {bold}
+        font-size: {kwargs.get('fontSize', fontSize)}px;
+        font-family: {kwargs.get('fontFamily', fontFamily)};
+        padding: 5px;
+        padding-left: {kwargs.get('paddingLeft', 5)}px;
+        padding-right: {kwargs.get('paddingRight', 5)}px;
+        padding-bottom: {kwargs.get('paddingBottom', 5)}px;
+        padding-top: {kwargs.get('paddingTop', 5)}px;
+    }}
+    QListView::item {{
+        padding: {kwargs.get('itemPadding', 0)}px;
+        border: none;
+    }}
+    QListView::item:selected {{
+        background-color: {kwargs.get('itemSelectedColor', '#2e2e2e')};
+        color: {kwargs.get('fontColor', '#c4c4c4')};
+    }}
+    QListView::item:hover {{
+        background-color: {kwargs.get('itemHoverColor', '#262626')};
+        color: {kwargs.get('fontColor', '#c4c4c4')};
+    }}
+    QScrollBar::vertical {{
+        background-color: transparent;
+        width: 10px;
+        border: none;
+    }}
+    QScrollBar::handle:vertical {{
+        background-color: {kwargs.get('handleColor', '#3e3e3e')};
+        width: 15px;
+        min-height: 20px;
+    }}
+    QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {{
+        background-color: transparent;
+        border: none;
+        width: 0px;
+        height: 0px;
+    }}
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+        height: 0px;
     }}'''
 
 def LineEditStyle(**kwargs):
@@ -227,17 +287,17 @@ def LineEditStyle(**kwargs):
     bold = 'font-weight: bold;' if kwargs.get('bold', False) else ''
     return f'''
     QLineEdit {{
-    background-color: {kwargs.get('color', buttonColor)};
-    color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)}px;
-    font-family: {kwargs.get('fontFamily', fontFamily)};
-    {bold}
-    text-align: center;
-    padding-left: {kwargs.get('paddingLeft', 0)}px;
-    padding-right: {kwargs.get('paddingRight', 0)}px;
-    padding-bottom: {kwargs.get('paddingBottom', 0)}px;
-    padding-top: {kwargs.get('paddingTop', 0)}px;
-    border-radius: {kwargs.get('borderRadius', 3)};
+        background-color: {kwargs.get('color', buttonColor)};
+        color: {kwargs.get('fontColor', fontColor)};
+        font-size: {kwargs.get('fontSize', fontSize)}px;
+        font-family: {kwargs.get('fontFamily', fontFamily)};
+        {bold}
+        text-align: center;
+        padding-left: {kwargs.get('paddingLeft', 0)}px;
+        padding-right: {kwargs.get('paddingRight', 0)}px;
+        padding-bottom: {kwargs.get('paddingBottom', 0)}px;
+        padding-top: {kwargs.get('paddingTop', 0)}px;
+        border-radius: {kwargs.get('borderRadius', 3)};
     }}'''
 
 def TabStyle(**kwargs):
@@ -245,49 +305,49 @@ def TabStyle(**kwargs):
     `color`, `selectedColor`, `hoverColor`, `borderRadius`, `paneColor`, `hoverColor`, `fontColor`, `fontSize`, `fontFamily`'''
     return f'''
     QTabBar::tab {{
-    background-color: {kwargs.get('color', buttonColor)};
-    color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)}px;
-    font-family: {kwargs.get('fontFamily', fontFamily)};
-    font-weight: bold;
-    padding-left: 10px;
-    padding-top: 5px;
-    padding-right: 10px;
-    padding-bottom: 5px;
-    margin-right: 4px;
-    margin-bottom: -1px;
-    border: none;
-    border-radius: {kwargs.get('borderRadius', 2)};
+        background-color: {kwargs.get('color', buttonColor)};
+        color: {kwargs.get('fontColor', fontColor)};
+        font-size: {kwargs.get('fontSize', fontSize)}px;
+        font-family: {kwargs.get('fontFamily', fontFamily)};
+        font-weight: bold;
+        padding-left: 10px;
+        padding-top: 5px;
+        padding-right: 10px;
+        padding-bottom: 5px;
+        margin-right: 4px;
+        margin-bottom: -1px;
+        border: none;
+        border-radius: {kwargs.get('borderRadius', 2)};
     }}
     QTabBar::tab:selected {{
-    background-color: {kwargs.get('selectedColor', buttonColor)};
-    color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)}px;
-    font-family: {kwargs.get('fontFamily', fontFamily)};
-    font-weight: bold;
-    padding-left: 10px;
-    padding-top: 5px;
-    padding-right: 10px;
-    padding-bottom: 5px;
-    margin-right: 4px;
-    margin-bottom: -1px;
-    border: none;
-    border-radius: {kwargs.get('borderRadius', 2)};
+        background-color: {kwargs.get('selectedColor', buttonColor)};
+        color: {kwargs.get('fontColor', fontColor)};
+        font-size: {kwargs.get('fontSize', fontSize)}px;
+        font-family: {kwargs.get('fontFamily', fontFamily)};
+        font-weight: bold;
+        padding-left: 10px;
+        padding-top: 5px;
+        padding-right: 10px;
+        padding-bottom: 5px;
+        margin-right: 4px;
+        margin-bottom: -1px;
+        border: none;
+        border-radius: {kwargs.get('borderRadius', 2)};
     }}
     QTabBar::tab:hover {{
-    background-color: {kwargs.get('hoverColor', buttonColor)};
-    color: {kwargs.get('fontColor', fontColor)};
-    font-size: {kwargs.get('fontSize', fontSize)}px;
-    font-family: {kwargs.get('fontFamily', fontFamily)};
-    font-weight: bold;
-    padding-left: 10px;
-    padding-top: 5px;
-    padding-right: 10px;
-    padding-bottom: 5px;
-    margin-right: 4px;
-    margin-bottom: -1px;
-    border: none;
-    border-radius: {kwargs.get('borderRadius', 2)};
+        background-color: {kwargs.get('hoverColor', buttonColor)};
+        color: {kwargs.get('fontColor', fontColor)};
+        font-size: {kwargs.get('fontSize', fontSize)}px;
+        font-family: {kwargs.get('fontFamily', fontFamily)};
+        font-weight: bold;
+        padding-left: 10px;
+        padding-top: 5px;
+        padding-right: 10px;
+        padding-bottom: 5px;
+        margin-right: 4px;
+        margin-bottom: -1px;
+        border: none;
+        border-radius: {kwargs.get('borderRadius', 2)};
     }}'''
 
 def TabWidgetStyle(**kwargs):

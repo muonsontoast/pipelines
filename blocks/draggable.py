@@ -17,7 +17,7 @@ class Draggable(Entity, QWidget):
 
     def __init__(self, proxy, **kwargs):
         self.headerColor = kwargs.pop('headerColor', '#2e2e2e')
-        super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), **kwargs)
+        super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), dtype = kwargs.pop('dtype', 'raw'), dtypes = kwargs.pop('dtypes', ['raw']), **kwargs)
         self.fundamental = True
         self.proxy = proxy
         self.setLayout(QHBoxLayout())
@@ -41,9 +41,12 @@ class Draggable(Entity, QWidget):
         self.pollActionRate = kwargs.get('pollActionRate', 4) # Hz
         self.timeBetweenPolls = 1 / self.pollActionRate * 1e3 # in ms
         # instructions on how to display different data streams, based on the data held in the block.
+        # will be deprecated in a future version -- being replaced with self.settings['dtypes']
+        ########
         self.streams = {
             'default': lambda: {'data': self.data},
         }
+        #########
         self.streamTypesIn = dict() # dict of ID: stream type for incoming blocks
         self.timer = None # cumulative time since last clock update.
         self.clock = None

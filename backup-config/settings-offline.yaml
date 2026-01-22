@@ -1,0 +1,743 @@
+0:
+  components: {}
+  name: MainWindow
+  type: MainWindow
+1:
+  components: {}
+  name: Workspace
+  type: Workspace
+2:
+  components: {}
+  name: Editor
+  positionInSceneCoords:
+  - 5456.725040837667
+  - 6382.821540412915
+  type: Editor
+  zoom: 0.5107459106226406
+3:
+  components: {}
+  linksIn: {}
+  linksOut: {}
+  name: EditorMenu
+  size:
+  - 350
+  - 250
+  type: EditorMenu
+4:
+  components: {}
+  name: Global Lattice
+  sceneHeight: 145
+  sceneWidth: 1600
+  type: Global Lattice
+5:
+  components: {}
+  name: Inspector
+  size:
+  - 500
+  - -1
+  type: Inspector
+6:
+  components: {}
+  linksIn: {}
+  linksOut: {}
+  name: Kernel Menu
+  size:
+  - 250
+  - 250
+  type: KernelMenu
+7:
+  components: {}
+  linksIn: {}
+  linksOut: {}
+  name: Kernel Menu
+  size:
+  - 250
+  - 250
+  type: KernelMenu
+8:
+  automatic: true
+  components:
+    dimensions:
+      name: Dimensions
+      type: KernelComponent
+  fontsize: 12
+  hyperparameters:
+    lengthscale (RBF Kernel (LTB HSTRs)):
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 1.0
+    scale (RBF Kernel (LTB HSTRs)):
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linkedPVs: {}
+  linksIn: {}
+  linksOut: {}
+  name: Kernel
+  size:
+  - 300
+  - 275
+  type: Kernel
+9:
+  components: {}
+  linksIn:
+    11: data
+  linksOut: {}
+  name: Save
+  position:
+  - 6114
+  - 6565
+  size:
+  - 600
+  - 300
+  type: Save
+10:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 24
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'VSTR (Index: 24)'
+  position:
+  - 4577
+  - 5501
+  size:
+  - 350
+  - 115
+  type: PV
+11:
+  acqFunction: EI
+  acqHyperparameter: 2.0
+  components:
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      units: ''
+      value: 0
+      valueType: float
+  linksIn:
+    10: decision
+    20: decision
+    21: decision
+    22: decision
+    23: decision
+    26: decision
+    27: decision
+    28: decision
+    29: decision
+    30: decision
+    31: decision
+    32: decision
+    33: kernel
+    34: objective
+  linksOut:
+    9: data
+  mode: maximise
+  name: Single Task GP
+  numSamples: 20
+  numSteps: 40
+  position:
+  - 5200
+  - 6243
+  size:
+  - 600
+  - 525
+  type: Single Task GP
+12:
+  components: {}
+  linksIn: {}
+  linksOut: {}
+  name: Kernel Menu
+  size:
+  - 250
+  - 250
+  type: KernelMenu
+13:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linkedElement: 58
+  linksIn: {}
+  linksOut:
+    34: in
+  name: 'BPM (Index: 58)'
+  position:
+  - 4008
+  - 6301
+  size:
+  - 350
+  - 115
+  type: PV
+14:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linkedElement: 295
+  linksIn: {}
+  linksOut:
+    34: in
+  name: 'BPM (Index: 295)'
+  position:
+  - 4397
+  - 6422
+  size:
+  - 350
+  - 115
+  type: PV
+15:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linkedElement: 247
+  linksIn: {}
+  linksOut:
+    34: in
+  name: 'BPM (Index: 247)'
+  position:
+  - 4399
+  - 6303
+  size:
+  - 350
+  - 115
+  type: PV
+16:
+  automatic: false
+  components:
+    dimensions:
+      name: Dimensions
+      type: KernelComponent
+  fontsize: 12
+  hyperparameters:
+    lengthscale:
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 1.0
+    scale:
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linkedPVs:
+    27:
+    - 0
+    - 100
+    28:
+    - 0
+    - 100
+    29:
+    - 0
+    - 100
+    30:
+    - 0
+    - 100
+    31:
+    - 0
+    - 100
+    32:
+    - 0
+    - 100
+  linksIn: {}
+  linksOut:
+    33: in
+  name: RBF Kernel (LTB HSTRs)
+  position:
+  - 4257
+  - 6851
+  size:
+  - 300
+  - 374
+  type: RBF Kernel
+17:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linkedElement: 191
+  linksIn: {}
+  linksOut:
+    34: in
+  name: 'BPM (Index: 191)'
+  position:
+  - 4004.0
+  - 6669.0
+  size:
+  - 350
+  - 115
+  type: PV
+18:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linkedElement: 155
+  linksIn: {}
+  linksOut:
+    34: in
+  name: 'BPM (Index: 155)'
+  position:
+  - 4004
+  - 6547
+  size:
+  - 350
+  - 115
+  type: PV
+19:
+  automatic: false
+  components:
+    dimensions:
+      name: Dimensions
+      type: KernelComponent
+  fontsize: 12
+  hyperparameters:
+    lengthscale:
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 1.0
+    scale:
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linkedPVs:
+    10:
+    - 0
+    - 100
+    20:
+    - 0
+    - 100
+    21:
+    - 0
+    - 100
+    22:
+    - 0
+    - 100
+    23:
+    - 0
+    - 100
+    26:
+    - 0
+    - 100
+  linksIn: {}
+  linksOut:
+    33: in
+  name: RBF Kernel (LTB VSTRs)
+  position:
+  - 4582
+  - 7098
+  size:
+  - 300
+  - 374
+  type: RBF Kernel
+20:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 71
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'VSTR (Index: 71)'
+  position:
+  - 4576
+  - 5624
+  size:
+  - 350
+  - 115
+  type: PV
+21:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 235
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'VSTR (Index: 235)'
+  position:
+  - 4571
+  - 5989
+  size:
+  - 350
+  - 115
+  type: PV
+22:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 168
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'VSTR (Index: 168)'
+  position:
+  - 4570
+  - 5867
+  size:
+  - 350
+  - 115
+  type: PV
+23:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 283
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'VSTR (Index: 283)'
+  position:
+  - 4569
+  - 6110
+  size:
+  - 350
+  - 115
+  type: PV
+24:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
+      max: 100
+      min: 0
+      name: Value
+      type: SliderComponent
+      units: ''
+      value: 0
+  linkedElement: 106
+  linksIn: {}
+  linksOut:
+    34: in
+  name: 'BPM (Index: 106)'
+  position:
+  - 4006
+  - 6425
+  size:
+  - 350
+  - 115
+  type: PV
+26:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 119
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'VSTR (Index: 119)'
+  position:
+  - 4574
+  - 5746
+  size:
+  - 350
+  - 115
+  type: PV
+27:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 23
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'HSTR (Index: 23)'
+  position:
+  - 4130
+  - 5498
+  size:
+  - 350
+  - 115
+  type: PV
+28:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 167
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'HSTR (Index: 167)'
+  position:
+  - 4126
+  - 5864
+  size:
+  - 350
+  - 115
+  type: PV
+29:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 118
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'HSTR (Index: 118)'
+  position:
+  - 4128
+  - 5742
+  size:
+  - 350
+  - 115
+  type: PV
+30:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 70
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'HSTR (Index: 70)'
+  position:
+  - 4128
+  - 5620
+  size:
+  - 350
+  - 115
+  type: PV
+31:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 282
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'HSTR (Index: 282)'
+  position:
+  - 4126
+  - 6104
+  size:
+  - 350
+  - 115
+  type: PV
+32:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  linkedElement: 234
+  linksIn: {}
+  linksOut:
+    11: decision
+  name: 'HSTR (Index: 234)'
+  position:
+  - 4124.0
+  - 5984.0
+  size:
+  - 350
+  - 115
+  type: PV
+33:
+  components: {}
+  hyperparameters:
+    lengthscale (RBF Kernel (LTB HSTRs)):
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 1.0
+    scale (RBF Kernel (LTB HSTRs)):
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linksIn:
+    16: in
+    19: in
+  linksOut:
+    11: kernel
+  name: Add
+  position:
+  - 4897
+  - 6823
+  size:
+  - 350
+  - 295
+  type: Add
+34:
+  components: {}
+  linksIn:
+    13: in
+    14: in
+    15: in
+    17: in
+    18: in
+    24: in
+  linksOut:
+    11: objective
+  name: Add
+  position:
+  - 4856
+  - 6510
+  size:
+  - 250
+  - 100
+  type: Add

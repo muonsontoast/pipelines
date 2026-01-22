@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLineEdit, QCompleter, QLabel, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QWidget, QLineEdit, QStyledItemDelegate, QCompleter, QComboBox, QLabel, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 from PySide6.QtCore import Qt, QStringListModel
 from .component import Component
 from .. import shared
@@ -18,20 +18,23 @@ class LinkComponent(Component):
         self.displayHeight = 0
         self.pvHasLinkedElement = 'linkedElement' in self.pv.settings.keys()
         # Lattice elements and a list of names + indexes
-        if shared.elements is not None:
+        if shared.elements is None:
             shared.lattice = latticeutils.LoadLattice(shared.latticePath)
             shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
-            shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
+            shared.names = [a + f' [{shared.elements.Type[b]}] (Index: {str(b)}) @ {shared.elements['s (m)'].iloc[b]:.2f} m' for a, b in zip(shared.elements.Name, shared.elements.Index)]
         # Completer
         self.completer = QCompleter()
         self.completer.setModel(QStringListModel(shared.names))
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setFilterMode(Qt.MatchContains)
+        self.completer.setWrapAround(False)
         # Text search
         self.search = QLineEdit()
-        self.search.setFixedSize(250, 30)
+        self.search.setFixedSize(325, 30)
         self.search.setAlignment(Qt.AlignVCenter)
         self.search.setPlaceholderText('Search for element ...')
+        if 'linkedElement' in self.pv.settings:
+            self.search.setText(self.pv.settings['linkedElement'].Name)
         self.search.setCompleter(self.completer)
         self.search.returnPressed.connect(self.Select)
         # Assign search and list
@@ -40,7 +43,7 @@ class LinkComponent(Component):
         self.context.setLayout(QVBoxLayout())
         self.context.layout().setContentsMargins(0, 0, 0, 0)
         self.context.layout().setSpacing(10)
-        self.context.setFixedHeight(120)
+        self.context.setFixedHeight(150)
         # Element type
         self.type = QWidget()
         self.type.setLayout(QHBoxLayout())
@@ -92,17 +95,40 @@ class LinkComponent(Component):
         self.context.layout().addWidget(self.type)
         self.context.layout().addWidget(self.position)
         self.context.layout().addWidget(self.index)
+        # Data stream
+        self.dtypesWidget = QWidget()
+        self.dtypesWidget.setLayout(QHBoxLayout())
+        self.dtypesWidget.layout().setContentsMargins(5, 0, 0, 0)
+        self.dtypesWidget.layout().setSpacing(0)
+        self.dtypesTitle = QLabel('Data Stream')
+        self.dtypesTitle.setAlignment(Qt.AlignLeft)
+        self.dtypesTitle.setFixedWidth(100)
+        self.dtypesWidget.layout().addWidget(self.dtypesTitle, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        # select text for the data edit
+        self.dataComboBox = QComboBox()
+        self.dataComboBox.setFixedWidth(100)
+        self.dataComboBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.dataComboBox.view().parentWidget().setStyleSheet('color: transparent; background-color: transparent;')
+        self.dataComboBox.addItems([f'    {dtype.upper()}' for dtype in self.pv.settings['dtypes']])
+        idx = self.pv.settings['dtypes'].index(self.pv.settings['dtype'])
+        self.dataComboBox.setCurrentIndex(idx)
+        self.dtypesWidget.layout().addWidget(self.dataComboBox, alignment = Qt.AlignLeft)
+        self.context.layout().addWidget(self.dtypesWidget)
         self.context.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.layout().addWidget(self.context)
         self.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
+
+        self.defaultNames = ['PV', 'QUAD', 'VSTR', 'HSTR', 'BPM', 'AP', 'DRIFT', 'COLL']
 
         self.UpdateColors()
 
     def Select(self):
         self.search.clearFocus()
-        split = self.search.text().split(' ')
-        self.search.setText(split[0])
-        self.linkedElement = shared.elements.iloc[int(split[2][1:-1])]
+        try:
+            idx = int(self.search.text().split('Index: ')[1].split(')')[0])
+        except: # user has modified line edit text
+            return
+        self.linkedElement = shared.elements.iloc[idx]
         self.typeEdit.setText(self.linkedElement.Type)
         self.positionEdit.setText(f'{self.linkedElement.iloc[2]:.3f}')
         self.indexEdit.setText(f'{self.linkedElement.Index}')
@@ -128,7 +154,12 @@ class LinkComponent(Component):
                 self.pv.settings['components']['value']['min'] = self.pv.settings['components']['value']['value']
             elif self.pv.settings['components']['value']['value'] > self.pv.settings['components']['value']['max']:
                 self.pv.settings['components']['value']['max'] = self.pv.settings['components']['value']['value']
-        
+        if self.pv.name.split()[0] in self.defaultNames or ('(Index: ' in self.pv.name and self.pv.name.split(' (Index: ')[0] in self.defaultNames):
+            newName = self.linkedElement.Name + f' (Index: {self.linkedElement.Index})'
+            self.pv.settings['name'] = newName
+            self.pv.name = newName
+            self.pv.title.setText(newName)
+        print(self.linkedElement.Type)
         shared.inspector.Push(self.pv)
 
     def UpdateColors(self):
@@ -148,3 +179,4 @@ class LinkComponent(Component):
             self.positionTitle.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
             self.indexEdit.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 5, paddingBottom = 0))
             self.indexTitle.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
+            self.dataComboBox.setStyleSheet(style.ComboStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6))

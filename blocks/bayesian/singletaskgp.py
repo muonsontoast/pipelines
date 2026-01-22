@@ -117,6 +117,7 @@ class SingleTaskGP(Draggable):
         acquisitionSelect = QComboBox()
         acquisitionSelect.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         acquisitionSelect.setStyleSheet(style.ComboStyle(color = '#1e1e1e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 12))
+        acquisitionSelect.view().parentWidget().setStyleSheet('color: transparent;')
         funcs = {
             '    UCB': self.SelectUCB,
             '    EI': self.SelectEI,
@@ -136,7 +137,12 @@ class SingleTaskGP(Draggable):
         explorationLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
         explorationLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.exploration.layout().addWidget(explorationLabel)
-        self.explorationEdit = QLineEdit(f'{self.settings['acqHyperparameter']:.1f}')
+        self.explorationEdit = QLineEdit()
+        if self.settings['acqFunction'] == 'EI':
+            self.explorationEdit.setReadOnly(True)
+            self.explorationEdit.setText('N/A')
+        else:
+            self.explorationEdit.setText(f'{self.settings['acqHyperparameter']:.1f}')
         self.explorationEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.explorationEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6, paddingLeft = 13))
         self.explorationEdit.returnPressed.connect(self.ChangeAcqHyperparameter)
@@ -379,15 +385,11 @@ class SingleTaskGP(Draggable):
         if isinstance(entity, RBFKernel):
             if entity.settings['automatic']:
                 return ScaleKernel(_RBFKernel())
-            print('Returing a manual RBF Kernel with these active dims:')
-            print([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])
-            return ScaleKernel(_RBFKernel(active_dims = [self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']]))
+            return ScaleKernel(_RBFKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
         elif isinstance(entity, PeriodicKernel):
             if entity.settings['automatic']:
                 return ScaleKernel(_PeriodicKernel())
-            print('Returing a manual Periodic Kernel with these active dims:')
-            print([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])
-            return ScaleKernel(_PeriodicKernel(active_dims = [self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']]))
+            return ScaleKernel(_PeriodicKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
 
     async def Start(self, **kwargs):
         numParticles = kwargs.get('numParticles', 100000)

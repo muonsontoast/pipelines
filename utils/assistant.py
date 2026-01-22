@@ -12,9 +12,19 @@ class Assistant:
     def PushMessage(self, message, messageType: str = 'Normal'):
         '''`message` can be of types <Normal/Warning/Error/Critical Error>'''
         prefix = ''
+        spanPrefix = ''
+        spanSuffix = ''
         if messageType in ['Warning', 'Error', 'Critical Error']:
-            prefix = f'[{messageType}] '
-        self.message = f'Assistant: {prefix}{message}'
+            if messageType == 'Warning':
+                spanPrefix = '<span style = "color: #FF8811;">'
+            elif messageType == 'Error':
+                spanPrefix = '<span style = "color: #C6242F;">'
+            else:
+                spanPrefix = '<span style = "color: #800E13;">'
+            
+            spanSuffix = '</span>'
+            prefix = rf'[<b>{spanPrefix}{messageType.upper()}{spanSuffix}</b>] '
+        self.message = rf'Assistant: {prefix}{message}'
         self.Review() # immediately update the message
         self.timer.stop()
         self.timer.start(self.messageTimeout)

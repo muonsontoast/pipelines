@@ -15,7 +15,7 @@ class Composition(Draggable):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(
             proxy, name = kwargs.pop('name', 'Composition'), type = kwargs.pop('type', 'Composition'),
-            size = kwargs.pop('size', [300, 300]), headerColor = '#D42F45', **kwargs
+            size = kwargs.pop('size', [300, 300]), headerColor = '#32936F', **kwargs
             )
         self.fundamental = False
         self.parent = parent
@@ -45,7 +45,7 @@ class Composition(Draggable):
                     break
                 elif newFundamentalType in [PV, Kernel] and existingFundamentalType in [Filter, Composition]:
                     break
-                shared.workspace.assistant.PushMessage('Add operation must be performed on blocks of the same type.', 'Warning')
+                shared.workspace.assistant.PushMessage('Add operation must be performed on blocks of the same type.', 'Error')
                 return False
 
         successfulConnection = super().AddLinkIn(ID, socket)

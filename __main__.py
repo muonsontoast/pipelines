@@ -130,7 +130,7 @@ class MainWindow(Entity, QMainWindow):
                         fullPathName = files[0]
                 shared.latticePath = fullPathName
                 shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
-                shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
+                shared.names = [a + f' [{shared.elements.Type[b]}] (Index: {str(b)}) @ {shared.elements['s (m)'].iloc[b]:.2f} m' for a, b in zip(shared.elements.Name, shared.elements.Index)]
             else:
                 print('No saved lattices found.')
         self.lightModeOn = False

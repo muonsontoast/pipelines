@@ -15,7 +15,7 @@ class KernelComponent(Component):
         self.layout().setSpacing(5)
         self.displayHeight = 0
         self.completer = QCompleter()
-        self.completer.setModel(QStringListModel([f'{shared.entities[pID].name} (ID: {shared.entities[pID].ID})' for pID in shared.PVIDs]))
+        self.completer.setModel(QStringListModel([f'{shared.entities[pID].name.split(' (Index')[0]} (ID: {shared.entities[pID].ID})' for pID in shared.PVIDs]))
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setFilterMode(Qt.MatchContains)
         # Automatic status
@@ -157,5 +157,6 @@ class KernelComponent(Component):
     def UpdateColors(self):
         self.switch.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4'))
         if hasattr(self, 'search'):
+            self.completer.popup().setStyleSheet(style.CompleterStyle(itemPadding = 5, bold = True, borderRadius = 20))
             self.search.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', paddingLeft = 5, paddingBottom = 5))
             self.editorSelect.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', marginTop = 0, marginBottom = 0, paddingLeft = 0, paddingRight = 0))

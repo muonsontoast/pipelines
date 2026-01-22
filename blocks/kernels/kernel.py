@@ -69,10 +69,11 @@ class Kernel(Draggable):
         if ID not in self.settings['linkedPVs']:
             return
         self.settings['linkedPVs'].pop(ID)
-        entity = shared.entities[ID]
-        if shared.editorSelectMode:
-            entity.widget.setStyleSheet(style.WidgetStyle(color = "#1157A1", fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16))
-        shared.workspace.assistant.PushMessage(f'Removed {entity.name} as a dimension of {self.name}')
+        if ID in shared.entities:
+            entity = shared.entities[ID]
+            if shared.editorSelectMode:
+                entity.widget.setStyleSheet(style.WidgetStyle(color = "#1157A1", fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16))
+            shared.workspace.assistant.PushMessage(f'Removed {entity.name} as a dimension of {self.name}')
 
     def ShowMenu(self, context):
         if shared.kernelMenu is not None:

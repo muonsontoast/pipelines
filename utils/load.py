@@ -105,7 +105,7 @@ def Load(path):
                             if shared.elements is None: # fetch lattice info if this is the first time instantiating a linked block.
                                 shared.lattice = LoadLattice(shared.latticePath)
                                 shared.elements = GetLatticeInfo(shared.lattice)
-                                shared.names = [a + f' [{shared.elements.Type[b]}] ({str(b)})' for a, b in zip(shared.elements.Name, shared.elements.Index)]
+                                shared.names = [a + f' [{shared.elements.Type[b]}] (Index: {str(b)}) @ {shared.elements['s (m)'].iloc[b]:.2f} m' for a, b in zip(shared.elements.Name, shared.elements.Index)]
                             entity.settings['linkedElement'] = shared.elements.iloc[v['linkedElement']]
                         # Assign the correct components
                         if 'components' in v:

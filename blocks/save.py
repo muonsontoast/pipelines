@@ -241,7 +241,7 @@ class Save(Draggable):
 
     def BaseStyling(self):
         super().BaseStyling()
-        self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e'))
+        self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadiusBottomLeft = 8, borderRadiusBottomRight = 8))
         self.title.setStyleSheet(style.LabelStyle(padding = 0, fontSize = 18, fontColor = '#c4c4c4'))
         self.savePath.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', paddingLeft = 5))
         self.paths.setStyleSheet(style.ListView(color = '#2e2e2e', hoverColor = '#363636', fontColor = '#c4c4c4', spacing = 5))
