@@ -30,13 +30,13 @@ class Progress(QWidget):
         self.progress = 0
         self.bar.setFixedWidth(0)
         self.bar.setStyleSheet(style.WidgetStyle(color = '#c4c4c4', borderRadius = 4))
+        self.setStyleSheet(style.WidgetStyle(color = "#3e3e3e", borderRadius = 6))
 
     def CheckProgress(self, amount):
         '''Takes a decimal in from 0 to 1'''
         self.progress = amount
-        amount = np.maximum(amount, .01)
+        # amount = np.maximum(amount, .01)
         if amount > .97:
-            if amount > .99:
-                self.bar.setStyleSheet(style.WidgetStyle(color = '#FFC100', borderRadius = 4))
             amount = .97
+            self.setStyleSheet(style.WidgetStyle(color = "#2cb158", borderRadius = 6))
         self.bar.setFixedWidth(amount * self.width())

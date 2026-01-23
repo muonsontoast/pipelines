@@ -116,7 +116,7 @@ class LinkComponent(Component):
         self.dtypesWidget.layout().addWidget(self.dtypesTitle, alignment = Qt.AlignLeft | Qt.AlignVCenter)
         # select text for the data edit
         self.dataComboBox = QComboBox()
-        self.dataComboBox.setFixedWidth(150)
+        self.dataComboBox.setFixedSize(150, 30)
         self.dataComboBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.dataComboBox.view().parentWidget().setStyleSheet('color: transparent; background-color: transparent;')
         self.dataComboBox.addItems([f'    {dtype.upper()}' for dtype in self.pv.settings['dtypes']])

@@ -403,11 +403,11 @@ class Draggable(Entity, QWidget):
         pass
 
     def Pause(self):
-        TogglePause(self)
+        if not self.actionFinished.is_set():
+            TogglePause(self)
 
     def Reset(self):
-        self.resetApplied.set()
-        StopAction(self)
+        StopAction(self, restart = True)
         if hasattr(self, 'progressBar'):
             self.progressBar.Reset()
 

@@ -66,6 +66,7 @@ class SingleTaskGP(Draggable):
         self.online = False
         self.actionFinished = threading.Event()
         self.resetApplied = threading.Event()
+        self.lock = threading.Lock()
 
         self.streams = {
             'raw': lambda: {
@@ -96,12 +97,11 @@ class SingleTaskGP(Draggable):
         self.ToggleStyling(active = False)
 
     def Pause(self):
-        print('Pausing!')
-        TogglePause(self, True)
-        shared.workspace.assistant.PushMessage(f'{self.name} action is paused.')
+        if not self.actionFinished.is_set():
+            TogglePause(self, True)
+            shared.workspace.assistant.PushMessage(f'Paused {self.name}.')
 
     def Stop(self):
-        print('Stopping!')
         StopAction(self)
 
     def Push(self):
@@ -416,6 +416,12 @@ class SingleTaskGP(Draggable):
             return ScaleKernel(_PeriodicKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
 
     async def Start(self, **kwargs):
+        # Prevents GP from spooling up another job if one is already running but paused.
+        if self.ID in runningActions:
+            if runningActions[self.ID][0].is_set():
+                TogglePause(self)
+            return
+        
         self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
         self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
         # this will be deprecated soon
@@ -727,28 +733,34 @@ class SingleTaskGP(Draggable):
                 numParticles = numParticles,
                 totalSteps = totalSteps,
                 autoCompleteProgress = False,
+                ignorePrint = True,
             )
+            with self.lock:
+                self.actionFinished.clear()
             shared.workspace.assistant.PushMessage(f'Starting {self.name}.')
         except:
             shared.workspace.assistant.PushMessage(f'Not enough system memory available to run numerical simulator for {self.name}. Try running at a lower fidelity.', 'Critical Error')
             return
         
-        self.nextStage = False
         def SamplesCheck():
             # if self.ID in runningActions:
             #     threading.Timer(.25, SamplesCheck).start()
             #     return
             # self.actionFinished.wait()
+            print('Waiting for action to finish in  GP!')
             self.actionFinished.wait()
-            self.actionFinished.clear()
-            if self.resetApplied.is_set():
-                self.resetApplied.clear()
-                return
+            print('Action has finished in  GP!')
+            with self.lock:
+                self.actionFinished.clear()
+                if self.resetApplied.is_set():
+                    print('exiting because reset was applied')
+                    return
             # if self.ID in runningActions:
             #     runningActions.pop(self.ID)
             # optimiser steps
             print('Performing optimisation steps ...')
             emptyArray = np.empty((numSteps, 6, numParticles, len(shared.lattice), 1), dtype = precision)
+            print('Submitting second action - optimiser steps')
             PerformAction(
                 self,
                 emptyArray,

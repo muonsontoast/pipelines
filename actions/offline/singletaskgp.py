@@ -83,8 +83,7 @@ class SingleTaskGPAction(Action):
                     sharedMemory.unlink()
                     return
                 progress.value = (r + 1 + stepOffset) / totalSteps
-                print(f'{progress.value:.1f}')
             np.copyto(data, newData) # only copy at the end
-            stop.set()
         except Exception as e:
             print(e)
+        stop.set()
