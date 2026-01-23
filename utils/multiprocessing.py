@@ -6,6 +6,7 @@ mp.set_start_method('spawn', force = True) # force linux machines to call __gets
 import threading
 import numpy as np
 import time
+from datetime import timedelta
 from .entity import Entity
 from .. import shared
 
@@ -81,11 +82,14 @@ def WaitForSaveToFinish(entity, saveProcess, deltaTime, lastTime):
     else:
         saveProcess.join()
 
-def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, getRawData = True, saving = False, autoCompleteProgress = True, ignorePrint = False):
+def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, getRawData = True, saving = False, autoCompleteProgress = True, ignorePrint = False, timeRunning = 0):
     while process.is_alive():
-        if entity.ID in shared.runnableBlocks and hasattr(entity, 'progressBar'):
-            if not runningActions[entity.ID][2].is_set():
-                entity.progressBar.CheckProgress(runningActions[entity.ID][3].value)
+        if entity.ID in shared.runnableBlocks:
+            if hasattr(entity, 'progressBar'):
+                if not runningActions[entity.ID][2].is_set():
+                    entity.progressBar.CheckProgress(runningActions[entity.ID][3].value)
+            entity.runTimeEdit.setText(str(timedelta(seconds = int(time.time() - entity.t0 + timeRunning))))
+            entity.progressEdit.setText(f'{entity.progressBar.progress * 1e2:.0f}')
         if runningActions[entity.ID][1].wait(timeout = .1):
             break
     runningActions[entity.ID][1].clear()
@@ -139,6 +143,7 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
         entity.progressBar.Reset()
     progress = kwargs.pop('progress', 0.)
     ignorePrint = kwargs.pop('ignorePrint', False)
+    timeRunning = kwargs.pop('timeRunning', 0)
     autoCompleteProgress = kwargs.pop('autoCompleteProgress', True)
     kwargs['getRawData'] = kwargs.pop('getRawData', True)
     postProcessedDataName = kwargs.pop('postProcessedDataName', None)
@@ -186,5 +191,5 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             break
     process.start()
     # periodically check if the action has finished ...
-    threading.Thread(target = CheckProcess, args = (entity, process, saveProcess, queue, kwargs['getRawData'], saving, autoCompleteProgress, ignorePrint), daemon = True).start()
+    threading.Thread(target = CheckProcess, args = (entity, process, saveProcess, queue, kwargs['getRawData'], saving, autoCompleteProgress, ignorePrint, timeRunning), daemon = True).start()
     return True

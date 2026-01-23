@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 import gc
 import numpy as np
 import aioca
@@ -8,14 +8,13 @@ import operator
 from functools import reduce
 import time
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from xopt import Xopt, VOCS, Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
 # rename gpytorch kernels to avoid conflict with pipelines objects
 from gpytorch.kernels import RBFKernel as _RBFKernel, PeriodicKernel as _PeriodicKernel, ScaleKernel
 from xopt.generators.bayesian.models.standard import StandardModelConstructor
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
 from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
@@ -450,6 +449,10 @@ class SingleTaskGP(Draggable):
                     shared.workspace.assistant.PushMessage(f'{decision.name} is not supplying a live value to {self.name}.', 'Error')
                     return
         self.online = self.decisions[0].online
+        self.timestamp.setText(self.Timestamp())
+        self.progress = 0
+        self.total = self.settings['numSamples'] + self.settings['numSteps']
+        self.t0 = time.time()
 
         async def WaitUntilInputsRead():
             mode = 'MAXIMIZE' if self.settings['mode'] == 'maximise' else 'MINIMIZE'
@@ -480,10 +483,6 @@ class SingleTaskGP(Draggable):
                     vocs = vocs,
                     gp_constructor = constructor,
                 )
-
-            self.progress = 0
-            self.total = self.settings['numSamples'] + self.settings['numSteps']
-            self.t0 = time.time()
 
             if self.online:
                 await self.OnlineOptimisation(vocs, generator)
@@ -743,24 +742,15 @@ class SingleTaskGP(Draggable):
             return
         
         def SamplesCheck():
-            # if self.ID in runningActions:
-            #     threading.Timer(.25, SamplesCheck).start()
-            #     return
-            # self.actionFinished.wait()
-            print('Waiting for action to finish in  GP!')
             self.actionFinished.wait()
-            print('Action has finished in  GP!')
             with self.lock:
                 self.actionFinished.clear()
                 if self.resetApplied.is_set():
-                    print('exiting because reset was applied')
                     return
-            # if self.ID in runningActions:
-            #     runningActions.pop(self.ID)
             # optimiser steps
-            print('Performing optimisation steps ...')
             emptyArray = np.empty((numSteps, 6, numParticles, len(shared.lattice), 1), dtype = precision)
-            print('Submitting second action - optimiser steps')
+            timeRunning = sum([int(a) * b for a, b in zip(self.runTimeEdit.text().split(':'), [3600, 60, 1])])
+            self.t0 = time.time()
             PerformAction(
                 self,
                 emptyArray,
@@ -769,7 +759,8 @@ class SingleTaskGP(Draggable):
                 totalSteps = totalSteps,
                 stepOffset = numRepeats,
                 updateProgress = False,
-                progress = numRepeats / totalSteps
+                progress = numRepeats / totalSteps,
+                timeRunning = timeRunning
             )
         
         threading.Thread(target = SamplesCheck, daemon = True).start()
