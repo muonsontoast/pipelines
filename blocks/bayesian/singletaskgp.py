@@ -96,9 +96,9 @@ class SingleTaskGP(Draggable):
         self.ToggleStyling(active = False)
 
     def Pause(self):
-        if not self.actionFinished.is_set():
-            TogglePause(self, True)
-            shared.workspace.assistant.PushMessage(f'Paused {self.name}.')
+            if not self.actionFinished.is_set():
+                TogglePause(self, True)
+                shared.workspace.assistant.PushMessage(f'Paused {self.name}.')
 
     def Stop(self):
         StopAction(self)

@@ -18,34 +18,33 @@ maxWait = .25 # in seconds
 
 def TogglePause(entity, override = None):
     '''Pause the action of an entity if it is running one.'''
-    if entity.ID not in runningActions:
-        return
-    if override:
-        runningActions[entity.ID][0].set()
-        state = False
-    else:
-        if override == False:
-            runningActions[entity.ID][0].clear()
-            state = True
+    with entity.lock:
+        if entity.ID not in runningActions:
+            return
+        if override:
+                runningActions[entity.ID][0].set()
+                state = False
         else:
-            runningActions[entity.ID][0].set() if not runningActions[entity.ID][0].is_set() else runningActions[entity.ID][0].clear()
-            state = False if runningActions[entity.ID][0].is_set() else True
-    if not state:
-        entity.title.setText(f'{entity.title.text().split(' (')[0]} (Paused)')
-    else:
-        entity.title.setText(entity.name)
-    return state
+                if override == False:
+                    runningActions[entity.ID][0].clear()
+                    state = True
+                else:
+                    runningActions[entity.ID][0].set() if not runningActions[entity.ID][0].is_set() else runningActions[entity.ID][0].clear()
+                    state = False if runningActions[entity.ID][0].is_set() else True
+        if not state:
+            entity.title.setText(f'{entity.title.text().split(' (')[0]} (Paused)')
+        else:
+            entity.title.setText(entity.name)
+        return state
 
 def StopAction(entity, restart = False):
     '''Stop an entity's action if it is running. Returns true if successful else false.'''
     if entity.ID in runningActions:
-        runningActions[entity.ID][1].set()
         with entity.lock:
-            if hasattr(entity, 'actionFinished'):
-                if hasattr(entity, 'restartApplied'):
-                    if restart:
-                        entity.restartApplied.set()
-                entity.actionFinished.set()
+            runningActions[entity.ID][1].set()
+            if restart:
+                entity.resetApplied.set()
+            entity.actionFinished.set()
         entity.title.setText(entity.name)
         return True
     else:
@@ -92,7 +91,8 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
             entity.progressEdit.setText(f'{entity.progressBar.progress * 1e2:.0f}')
         if runningActions[entity.ID][1].wait(timeout = .1):
             break
-    runningActions[entity.ID][1].clear()
+    with entity.lock:
+        runningActions[entity.ID][1].clear()
     # Has an error occured to cause the stop?
     if runningActions[entity.ID][2].is_set():
         print(f'A critical error occurred inside {entity.name}')
