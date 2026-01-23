@@ -95,7 +95,6 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
         runningActions[entity.ID][1].clear()
     # Has an error occured to cause the stop?
     if runningActions[entity.ID][2].is_set():
-        print(f'A critical error occurred inside {entity.name}')
         shared.workspace.assistant.PushMessage(queue.get(), 'Critical Error')
         entity.title.setText(f'{entity.title.text().split(' (')[0]} (Corrupted)')
     else:
@@ -103,10 +102,12 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
         if not runningActions[entity.ID][1].is_set():
             if not ignorePrint:
                 shared.workspace.assistant.PushMessage(f'{entity.name} has finished and is no longer running.')
-            entity.progressBar.CheckProgress(1) if autoCompleteProgress else None
         else:
             StopAction(entity)
             shared.workspace.assistant.PushMessage(f'Stopped and reset {entity.name}.')
+        if autoCompleteProgress:
+            entity.progressBar.CheckProgress(1)
+            entity.progressEdit.setText('100')
 
     if saving:
         WaitForSaveToFinish(entity, saveProcess, 0, time.time())

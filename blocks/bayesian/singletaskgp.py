@@ -296,7 +296,7 @@ class SingleTaskGP(Draggable):
         progressWidget = QWidget()
         progressWidget.setLayout(QVBoxLayout())
         progressWidget.layout().setContentsMargins(15, 0, 0, 0)
-        self.progressBar = Progress()
+        self.progressBar = Progress(self)
         progressWidget.layout().addWidget(self.progressBar)
         self.widget.layout().addWidget(progressWidget)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
@@ -421,24 +421,26 @@ class SingleTaskGP(Draggable):
                 TogglePause(self)
             return
         
-        self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
-        self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
+        # self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
+        # self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
         # this will be deprecated soon
         # independents = [
         #     {'ID': d.ID, 'stream': self.streamTypesIn[d.ID]} for d in self.decisions
         # ]
         # waiting = False
         # force it online for now ...
-        self.online = True
-        actionToRun = self.offlineAction if not self.online else self.onlineAction
-        actionToRun.decisions = self.decisions
+        # self.online = True
+        # actionToRun.decisions = self.decisions
+        # actionToRun.objectives = self.objectives
         # for decision in self.decisions:
         #     if decision.type not in self.pvBlockTypes and np.isinf(decision.streams[self.streamTypesIn[decision.ID]]()['data']).any():
         #         waiting = True
         #         self.title.setText(f'{self.title.text().split(' (')[0]} (Waiting)')
         #         await actionToRun.ReadDependents(independents)
         #         break
-
+        self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
+        self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
+        self.online = self.decisions[0].online
         # Check states of decision variables. All must share the same online / offline state. If online, check they are streaming values.
         for decision in self.decisions:
             if decision.online != self.decisions[0].online:
@@ -448,7 +450,6 @@ class SingleTaskGP(Draggable):
                 if np.isinf(decision.data[1]):
                     shared.workspace.assistant.PushMessage(f'{decision.name} is not supplying a live value to {self.name}.', 'Error')
                     return
-        self.online = self.decisions[0].online
         self.timestamp.setText(self.Timestamp())
         self.progress = 0
         self.total = self.settings['numSamples'] + self.settings['numSteps']
@@ -723,7 +724,8 @@ class SingleTaskGP(Draggable):
             numRepeats = 40
             totalSteps = numRepeats + numSteps
             numParticles = 5000
-            emptyArray = np.empty((numRepeats, 6, numParticles, len(shared.lattice), 1), dtype = precision)
+            # emptyArray = np.empty((numRepeats, 6, numParticles, len(shared.lattice), 1), dtype = precision)
+            emptyArray = np.empty((len(self.objectives),), dtype = precision)
             # random samples
             PerformAction(
                 self,
@@ -733,6 +735,7 @@ class SingleTaskGP(Draggable):
                 totalSteps = totalSteps,
                 autoCompleteProgress = False,
                 ignorePrint = True,
+                numSeeds = self.settings['numSamples'],
             )
             with self.lock:
                 self.actionFinished.clear()
@@ -748,7 +751,8 @@ class SingleTaskGP(Draggable):
                 if self.resetApplied.is_set():
                     return
             # optimiser steps
-            emptyArray = np.empty((numSteps, 6, numParticles, len(shared.lattice), 1), dtype = precision)
+            # emptyArray = np.empty((numSteps, 6, numParticles, len(shared.lattice), 1), dtype = precision)
+            emptyArray = np.empty((len(self.objectives)), dtype = precision)
             timeRunning = sum([int(a) * b for a, b in zip(self.runTimeEdit.text().split(':'), [3600, 60, 1])])
             self.t0 = time.time()
             PerformAction(
@@ -762,6 +766,9 @@ class SingleTaskGP(Draggable):
                 progress = numRepeats / totalSteps,
                 timeRunning = timeRunning
             )
+
+            self.actionFinished.wait()
+            print('All done! :D')
         
         threading.Thread(target = SamplesCheck, daemon = True).start()
 

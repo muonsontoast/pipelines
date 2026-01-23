@@ -121,7 +121,6 @@ class MainWindow(Entity, QMainWindow):
                 else:
                     latticeName = latticeName.split('.')[0] + '.mat' # ensure correct file extension
                     try:
-                        print(f'Attempting to load saved lattice \'{latticeName}\'.')
                         fullPathName = os.path.join(formattedLatticePath, latticeName)
                         shared.lattice = latticeutils.LoadLattice(fullPathName)
                     except:

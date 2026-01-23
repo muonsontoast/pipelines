@@ -5,8 +5,8 @@ from .. import style
 
 class Progress(QWidget):
     '''A progress bar for actionable blocks to be added to .widget on the entity.'''
-    def __init__(self, **kwargs):
-        super().__init__()
+    def __init__(self, parent: QWidget, **kwargs):
+        super().__init__(parent)
         self.progress = 0
         self.setFixedHeight(30)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -26,7 +26,6 @@ class Progress(QWidget):
         self.Reset()
     
     def Reset(self):
-        print('reset progress !!')
         self.progress = 0
         self.bar.setFixedWidth(0)
         self.bar.setStyleSheet(style.WidgetStyle(color = '#c4c4c4', borderRadius = 4))
@@ -35,7 +34,6 @@ class Progress(QWidget):
     def CheckProgress(self, amount):
         '''Takes a decimal in from 0 to 1'''
         self.progress = amount
-        # amount = np.maximum(amount, .01)
         if amount > .97:
             amount = .97
             self.setStyleSheet(style.WidgetStyle(color = "#2cb158", borderRadius = 6))
