@@ -10,12 +10,20 @@
   components: {}
   name: Editor
   positionInSceneCoords:
-  - 6292.403414530304
-  - 5460.155144977969
+  - 5438.820062843673
+  - 6526.584075412408
   type: Editor
-  zoom: 0.5935728773166713
+  zoom: 0.6306514943255234
 3:
   components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
   linksIn: {}
   linksOut: {}
   name: EditorMenu
@@ -37,154 +45,213 @@
   - -1
   type: Inspector
 6:
-  components:
-    linkedLatticeElement:
-      name: Linked Lattice Element
-      type: LinkComponent
-    value:
-      default: 0.41779008507728577
-      max: 5.0
-      min: -5.0
-      name: Value
-      type: SliderComponent
-      units: Amps
-      value: 0.4177299999999997
-      valueType: float
+  components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
   linksIn: {}
-  linksOut:
-    12: decision
-  name: LB-PC-HSTR-01
-  position:
-  - 5406
-  - 5159
+  linksOut: {}
+  name: Kernel Menu
   size:
-  - 325
-  - 115
-  type: PV
+  - 250
+  - 250
+  type: KernelMenu
 7:
+  automatic: true
   components:
-    linkedLatticeElement:
-      name: Linked Lattice Element
-      type: LinkComponent
-    value:
-      default: -1.4600733518600464
-      max: 5.0
-      min: -5.0
-      name: Value
-      type: SliderComponent
-      units: Amps
-      value: 0.41780999999999935
-      valueType: float
+    dimensions:
+      name: Dimensions
+      type: KernelComponent
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  fontsize: 12
+  hyperparameters:
+    lengthscale:
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 5.0
+    scale:
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linkedPVs:
+    19:
+    - 0
+    - 100
+    27:
+    - 0
+    - 100
+    28:
+    - 0
+    - 100
+    29:
+    - 0
+    - 100
+    30:
+    - 0
+    - 100
+    31:
+    - 0
+    - 100
+    32:
+    - 0
+    - 100
   linksIn: {}
   linksOut:
-    12: decision
-  name: LB-PC-HSTR-06
+    12: kernel
+    16: in
+    37: in
+  name: RBF Kernel HSTRs
   position:
-  - 5766
-  - 5284
+  - 4562
+  - 6708
   size:
-  - 325
-  - 115
-  type: PV
+  - 300
+  - 374
+  type: RBF Kernel
 8:
-  components:
-    linkedLatticeElement:
-      name: Linked Lattice Element
-      type: LinkComponent
-    value:
-      default: 3.8500092029571533
-      max: 5.0
-      min: -5.0
-      name: Value
-      type: SliderComponent
-      units: Amps
-      value: 0
+  components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
   linksIn: {}
-  linksOut:
-    12: decision
-  name: LB-PC-HSTR-05
-  position:
-  - 5766
-  - 5160
+  linksOut: {}
+  name: Kernel Menu
   size:
-  - 325
-  - 115
-  type: PV
+  - 250
+  - 250
+  type: KernelMenu
 9:
+  automatic: true
   components:
-    linkedLatticeElement:
-      name: Linked Lattice Element
-      type: LinkComponent
-    value:
-      default: 0.7099058032035828
-      max: 5.0
-      min: -5.0
-      name: Value
-      type: SliderComponent
-      units: Amps
-      value: 0.7100300000000006
-      valueType: float
+    dimensions:
+      name: Dimensions
+      type: KernelComponent
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  fontsize: 12
+  hyperparameters:
+    lengthscale:
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 1.0
+    period:
+      description: periodicity affects frequency of oscillations
+      type: vec
+      value:
+      - 4.0
+    scale:
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1.0
+  linkedPVs: {}
   linksIn: {}
   linksOut:
-    12: decision
-  name: LB-PC-HSTR-04
+    16: in
+    37: in
+  name: Periodic Kernel
   position:
-  - 5407
-  - 5524
+  - 4645
+  - 7293
   size:
-  - 325
-  - 115
-  type: PV
+  - 300
+  - 415
+  type: Periodic Kernel
 10:
+  alignment: Horizontal
   components:
     linkedLatticeElement:
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 3.2699997425079346
-      max: 5.0
-      min: -5.0
-      name: Value
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
       type: SliderComponent
-      units: Amps
-      value: 0
+      units: ''
+      value: 1.0
+      valueType: float
+  dtype: Y
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 116
   linksIn: {}
   linksOut:
     12: decision
-  name: LB-PC-HSTR-03
+  name: 'VSTR (Index: 116)'
   position:
-  - 5405
-  - 5403
+  - 4577
+  - 5501
   size:
-  - 325
+  - 350
   - 115
   type: PV
 11:
+  automatic: true
   components:
-    linkedLatticeElement:
-      name: Linked Lattice Element
-      type: LinkComponent
-    value:
-      default: -0.4341314136981964
-      max: 5.0
-      min: -5.0
-      name: Value
-      type: SliderComponent
-      units: Amps
-      value: -0.43403999999999954
-      valueType: float
+    dimensions:
+      name: Dimensions
+      type: KernelComponent
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  fontsize: 12
+  hyperparameters:
+    lengthscale (RBF Kernel HSTRs):
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 5.0
+    scale (RBF Kernel HSTRs):
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linkedPVs: {}
   linksIn: {}
-  linksOut:
-    12: decision
-  name: LB-PC-HSTR-02
-  position:
-  - 5405
-  - 5282
+  linksOut: {}
+  name: Kernel
   size:
-  - 325
-  - 115
-  type: PV
+  - 300
+  - 275
+  type: Kernel
 12:
+  acqFunction: EI
+  acqHyperparameter: 2
   components:
     value:
       default: 0
@@ -194,24 +261,44 @@
       units: ''
       value: 0
       valueType: float
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
   linksIn:
-    6: decision
-    7: decision
-    8: decision
-    9: decision
+    7: kernel
     10: decision
-    11: decision
-    20: objective
-    21: kernel
-  linksOut:
-    23: data
+    19: decision
+    20: decision
+    21: decision
+    22: decision
+    23: decision
+    25: decision
+    26: decision
+    27: decision
+    28: decision
+    29: decision
+    30: decision
+    31: decision
+    32: decision
+    34: objective
+  linksOut: {}
+  mode: maximise
   name: Single Task GP
+  numParticles: 10000
+  numSamples: 5
+  numSteps: 20
   position:
-  - 6683
-  - 5615
+  - 5291
+  - 6140
+  simPrecision: fp32
   size:
   - 600
-  - 500
+  - 565
   type: Single Task GP
 13:
   components:
@@ -219,22 +306,31 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.031425
+      default: 0
       max: 100
       min: 0
       name: Value
       type: SliderComponent
       units: ''
       value: 0
+  dtype: SURVIVAL_RATE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 120
   linksIn: {}
   linksOut:
-    20: in
-  name: LB-DI-EBPM-07:FT:CHARGE
+    34: in
+  name: 'BPM (Index: 120)'
   position:
-  - 5777
-  - 5995
+  - 4008
+  - 6301
   size:
-  - 325
+  - 350
   - 115
   type: PV
 14:
@@ -243,22 +339,31 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.001927
+      default: 0
       max: 100
       min: 0
       name: Value
       type: SliderComponent
       units: ''
       value: 0
+  dtype: SURVIVAL_RATE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 310
   linksIn: {}
   linksOut:
-    20: in
-  name: LB-DI-EBPM-06:FT:CHARGE
+    34: in
+  name: 'BPM (Index: 310)'
   position:
-  - 5776
-  - 5876
+  - 4397
+  - 6422
   size:
-  - 325
+  - 350
   - 115
   type: PV
 15:
@@ -267,70 +372,96 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.008196
+      default: 0
       max: 100
       min: 0
       name: Value
       type: SliderComponent
       units: ''
       value: 0
+  dtype: SURVIVAL_RATE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 280
   linksIn: {}
   linksOut:
-    20: in
-  name: LB-DI-EBPM-05:FT:CHARGE
+    34: in
+  name: 'BPM (Index: 280)'
   position:
-  - 5777
-  - 5750
+  - 4399
+  - 6301
   size:
-  - 325
+  - 350
   - 115
   type: PV
 16:
-  components:
-    linkedLatticeElement:
-      name: Linked Lattice Element
-      type: LinkComponent
-    value:
-      default: 0.004236
-      max: 100
-      min: 0
-      name: Value
-      type: SliderComponent
-      units: ''
-      value: 0
-  linksIn: {}
-  linksOut:
-    20: in
-  name: LB-DI-EBPM-04:FT:CHARGE
+  components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  hyperparameters:
+    lengthscale (RBF Kernel HSTRs):
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 5.0
+    scale (RBF Kernel HSTRs):
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linksIn:
+    7: in
+    9: in
+  linksOut: {}
+  name: Add
   position:
-  - 5415
-  - 6115
+  - 5031
+  - 7216
   size:
-  - 325
-  - 115
-  type: PV
+  - 350
+  - 295
+  type: Add
 17:
   components:
     linkedLatticeElement:
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.005613
+      default: 0
       max: 100
       min: 0
       name: Value
       type: SliderComponent
       units: ''
       value: 0
+  dtype: SURVIVAL_RATE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 254
   linksIn: {}
   linksOut:
-    20: in
-  name: LB-DI-EBPM-02:FT:CHARGE
+    34: in
+  name: 'BPM (Index: 254)'
   position:
-  - 5412
-  - 5872
+  - 4004
+  - 6669
   size:
-  - 325
+  - 350
   - 115
   type: PV
 18:
@@ -339,94 +470,523 @@
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.0037089999999999996
+      default: 0
       max: 100
       min: 0
       name: Value
       type: SliderComponent
       units: ''
       value: 0
+  dtype: SURVIVAL_RATE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 222
   linksIn: {}
   linksOut:
-    20: in
-  name: LB-DI-EBPM-03:FT:CHARGE
+    34: in
+  name: 'BPM (Index: 222)'
   position:
-  - 5415
-  - 5995
+  - 4004
+  - 6547
   size:
-  - 325
+  - 350
   - 115
   type: PV
 19:
+  alignment: Horizontal
   components:
     linkedLatticeElement:
       name: Linked Lattice Element
       type: LinkComponent
     value:
-      default: 0.00402
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+  dtype: X
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 84
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'HSTR (Index: 84)'
+  position:
+  - 4132
+  - 5378
+  size:
+  - 350
+  - 115
+  type: PV
+20:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 1.7094000000000003
+      valueType: float
+  dtype: Y
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 136
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'VSTR (Index: 136)'
+  position:
+  - 4576
+  - 5624
+  size:
+  - 350
+  - 115
+  type: PV
+21:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+      valueType: float
+  dtype: Y
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 270
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'VSTR (Index: 270)'
+  position:
+  - 4571
+  - 5988
+  size:
+  - 350
+  - 115
+  type: PV
+22:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 3.25
+      valueType: float
+  dtype: Y
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 238
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'VSTR (Index: 238)'
+  position:
+  - 4570
+  - 5867
+  size:
+  - 350
+  - 115
+  type: PV
+23:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+  dtype: Y
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 296
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'VSTR (Index: 296)'
+  position:
+  - 4569
+  - 6110
+  size:
+  - 350
+  - 115
+  type: PV
+24:
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0
       max: 100
       min: 0
       name: Value
       type: SliderComponent
       units: ''
       value: 0
+  dtype: SURVIVAL_RATE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 152
   linksIn: {}
   linksOut:
-    20: in
-  name: LB-DI-EBPM-01:FT:CHARGE
+    34: in
+  name: 'BPM (Index: 152)'
   position:
-  - 5410
-  - 5750
+  - 4006
+  - 6425
   size:
-  - 325
+  - 350
   - 115
   type: PV
-20:
-  components: {}
-  linksIn:
-    13: in
-    14: in
-    15: in
-    16: in
-    17: in
-    18: in
-    19: in
-  linksOut:
-    12: objective
-  name: Add
-  position:
-  - 6260
-  - 5822
-  size:
-  - 250
-  - 100
-  type: Add
-21:
-  components: {}
-  fontsize: 12
-  hyperparameters:
-    lengthscale:
-      description: lengthscale affects how rapidly correlation decays with distance
-      type: vec
-      value:
-      - 3.0
-    scale:
-      description: magnitude of the kernel around the point
-      type: float
-      value: 1
+25:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 1.0
+      valueType: float
+  dtype: Y
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 88
   linksIn: {}
   linksOut:
-    12: kernel
-  name: RBF Kernel
+    12: decision
+  name: 'VSTR (Index: 88)'
   position:
-  - 6256
-  - 6032
+  - 4578
+  - 5381
   size:
-  - 320
-  - 339
-  type: RBF Kernel
-22:
+  - 350
+  - 115
+  type: PV
+26:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 10.0
+      min: -10.0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: -1.2820600000000013
+      valueType: float
+  dtype: Y
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 168
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'VSTR (Index: 168)'
+  position:
+  - 4574
+  - 5746
+  size:
+  - 350
+  - 115
+  type: PV
+27:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+  dtype: X
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 112
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'HSTR (Index: 112)'
+  position:
+  - 4132
+  - 5503
+  size:
+  - 350
+  - 115
+  type: PV
+28:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+  dtype: X
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 234
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'HSTR (Index: 234)'
+  position:
+  - 4126
+  - 5864
+  size:
+  - 350
+  - 115
+  type: PV
+29:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+  dtype: X
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 164
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'HSTR (Index: 164)'
+  position:
+  - 4128
+  - 5742
+  size:
+  - 350
+  - 115
+  type: PV
+30:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+  dtype: X
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 132
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'HSTR (Index: 132)'
+  position:
+  - 4129
+  - 5623
+  size:
+  - 350
+  - 115
+  type: PV
+31:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+  dtype: X
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 292
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'HSTR (Index: 292)'
+  position:
+  - 4126
+  - 6104
+  size:
+  - 350
+  - 115
+  type: PV
+32:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: ''
+      value: 0.0
+  dtype: X
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linkedElement: 266
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'HSTR (Index: 266)'
+  position:
+  - 4124
+  - 5984
+  size:
+  - 350
+  - 115
+  type: PV
+33:
   components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
   linksIn: {}
   linksOut: {}
   name: Kernel Menu
@@ -434,16 +994,112 @@
   - 250
   - 250
   type: KernelMenu
-23:
+34:
   components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
   linksIn:
-    12: data
-  linksOut: {}
-  name: Save
+    13: in
+    14: in
+    15: in
+    17: in
+    18: in
+    24: in
+  linksOut:
+    12: objective
+  name: Add
   position:
-  - 7514
-  - 5956
+  - 4913
+  - 6397
   size:
-  - 600
+  - 250
+  - 100
+  type: Add
+35:
+  automatic: true
+  components:
+    dimensions:
+      name: Dimensions
+      type: KernelComponent
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  fontsize: 12
+  hyperparameters:
+    lengthscale (RBF Kernel HSTRs):
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 5.0
+    scale (RBF Kernel HSTRs):
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linkedPVs: {}
+  linksIn: {}
+  linksOut: {}
+  name: Kernel
+  size:
   - 300
-  type: Save
+  - 275
+  type: Kernel
+36:
+  components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  linksIn: {}
+  linksOut: {}
+  name: Kernel Menu
+  size:
+  - 250
+  - 250
+  type: KernelMenu
+37:
+  components: {}
+  dtype: CHARGE
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  - SURVIVAL_RATE
+  hyperparameters:
+    lengthscale (RBF Kernel HSTRs):
+      description: lengthscale affects how rapidly correlation decays with distance
+      type: vec
+      value:
+      - 5.0
+    scale (RBF Kernel HSTRs):
+      description: magnitude of the kernel around the point
+      type: float
+      value: 1
+  linksIn:
+    7: in
+    9: in
+  linksOut: {}
+  name: Multiply
+  position:
+  - 5029
+  - 6836
+  size:
+  - 350
+  - 295
+  type: Multiply

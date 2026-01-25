@@ -1,6 +1,7 @@
 import gc # garbage collection
 from multiprocessing import Queue, Process, Event, Value
 from ctypes import c_float
+from threading import Thread
 import multiprocessing as mp
 mp.set_start_method('spawn', force = True) # force linux machines to call __getstate__ and __setstate__ methods attached to actions.
 import threading
@@ -16,26 +17,20 @@ runningActions = dict()
 # Max wait time for save before main thread override
 maxWait = .25 # in seconds
 
-def TogglePause(entity, override = None):
-    '''Pause the action of an entity if it is running one.'''
-    with entity.lock:
-        if entity.ID not in runningActions:
+def SetGlobalToggleState():
+    # change global toggle state if all runnable blocks share the same state
+    myPauseState = runningActions[next(iter(runningActions.keys()))][0].is_set()
+    for ID in shared.runnableBlocks:
+        if ID in runningActions and runningActions[ID][0].is_set() != myPauseState:
             return
-        if override:
-                runningActions[entity.ID][0].set()
-                state = False
-        else:
-                if override == False:
-                    runningActions[entity.ID][0].clear()
-                    state = True
-                else:
-                    runningActions[entity.ID][0].set() if not runningActions[entity.ID][0].is_set() else runningActions[entity.ID][0].clear()
-                    state = False if runningActions[entity.ID][0].is_set() else True
-        if not state:
-            entity.title.setText(f'{entity.title.text().split(' (')[0]} (Paused)')
-        else:
-            entity.title.setText(entity.name)
-        return state
+    shared.changeToggleState = False
+    shared.toggleState = myPauseState
+
+def TogglePause(entity, changeGlobalToggleState = True):
+    runningActions[entity.ID][0].clear() if runningActions[entity.ID][0].is_set() else runningActions[entity.ID][0].set()
+    if not changeGlobalToggleState:
+        return
+    SetGlobalToggleState()
 
 def StopAction(entity, restart = False):
     '''Stop an entity's action if it is running. Returns true if successful else false.'''
@@ -46,6 +41,7 @@ def StopAction(entity, restart = False):
                 entity.resetApplied.set()
             entity.actionFinished.set()
         entity.title.setText(entity.name)
+        gc.collect()
         return True
     else:
         return False
@@ -81,7 +77,8 @@ def WaitForSaveToFinish(entity, saveProcess, deltaTime, lastTime):
     else:
         saveProcess.join()
 
-def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, getRawData = True, saving = False, autoCompleteProgress = True, ignorePrint = False, timeRunning = 0):
+# will be removed soon ...
+def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, getRawData = True, saving = False, autoCompleteProgress = True, ignorePrint = False, timeRunning = 0, persist = False):
     while process.is_alive():
         if entity.ID in shared.runnableBlocks:
             if hasattr(entity, 'progressBar'):
@@ -112,25 +109,38 @@ def CheckProcess(entity, process: Process, saveProcess: Process, queue: Queue, g
     if saving:
         WaitForSaveToFinish(entity, saveProcess, 0, time.time())
 
-    # close the shared memory of the entity to free up system resources.
-    process.terminate()
-    process.join()
-    runningActions.pop(entity.ID)
-    entity.dataSharedMemory.close()
-    entity.dataSharedMemory.unlink()
-    del entity.dataSharedMemory
-    gc.collect()
+    # close the shared memory of the entity to free up system resources if this is not a persistent process.
+    if not persist:
+        process.terminate()
+        process.join()
+        runningActions.pop(entity.ID)
+
     if hasattr(entity, 'actionFinished'):
         with entity.lock:
             if hasattr(entity, 'restartApplied'):
                 entity.restartApplied.clear()
             entity.actionFinished.set()
 
+def StartPersistentJobCheck(entityID, sharedMemoryName, emptyArray, inQueue, outQueue, action, pause, stop, error, progress, **kwargs):
+    '''Instantiate a process that will stay open and accept an aribtrary number of jobs.'''
+    while True:
+        parameters = inQueue.get() # will sit in background until a queue submission occurs.
+        if parameters is None: # if None is submitted, close the process.
+            break
+        outQueue.put(action(pause, stop, error, progress, sharedMemoryName, emptyArray.shape, emptyArray.dtype, parameters, **kwargs))
+
+def CreatePersistentWorker(entity, emptyArray, inQueue, outQueue, action, progress, **kwargs):
+    entity.CreateEmptySharedData(emptyArray)
+    runningActions[entity.ID] = [Event(), Event(), Event(), Value(c_float, progress)]
+    Process(target = StartPersistentJobCheck, args = (entity.ID, entity.dataSharedMemory.name, emptyArray, inQueue, outQueue, action, *runningActions[entity.ID]), daemon = True).start()
+
+#### will be deprecated below ....
 def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
     '''Set `getRawData` to False to perform post processing.\n
     Supply an `emptyDataArray` numpy array of the final shape.\n
     Supply an attribute name `postProcessedDataName` for the post processed data to be stored in.\n
     If post processing, also supply an `emptyPostProcessedDataArray` numpy array of the final shape.\n
+    Set `persist` to True to allow a process to remain open for future jobs.\n
     Returns True if successful else False.'''
     if hasattr(entity, 'resetApplied'):
         entity.resetApplied.clear()
@@ -140,6 +150,7 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             return True
         else:
             return False
+
     if hasattr(entity, 'progressBar') and kwargs.pop('updateProgress', True):
         entity.progressBar.Reset()
     progress = kwargs.pop('progress', 0.)
@@ -192,5 +203,18 @@ def PerformAction(entity: Entity, emptyDataArray: np.ndarray, **kwargs) -> bool:
             break
     process.start()
     # periodically check if the action has finished ...
-    threading.Thread(target = CheckProcess, args = (entity, process, saveProcess, queue, kwargs['getRawData'], saving, autoCompleteProgress, ignorePrint, timeRunning), daemon = True).start()
+    threading.Thread(target = CheckProcess, args = (entity, process, saveProcess, queue, kwargs['getRawData'], saving, autoCompleteProgress, ignorePrint, timeRunning, persist), daemon = True).start()
     return True
+
+# Create a global thread to check running actions and remove any with stop flag turned on.
+def CleanUpRunningActions():
+    while True:
+        if shared.stopCleanUpTimer:
+            break
+        IDsToRemove = []
+        for ID, v in runningActions.items():
+            if v[1].is_set():
+                IDsToRemove.append(ID)
+        for ID in IDsToRemove:
+            runningActions.pop(ID)
+        time.sleep(.5)

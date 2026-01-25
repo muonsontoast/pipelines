@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QGraphicsProxyWidget
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
+from threading import Thread
 from .composition import Composition
 from ..draggable import Draggable
 from ...utils.entity import Entity
@@ -16,10 +17,27 @@ class Add(Composition):
         super().Push()
         self.AddSocket('in', 'F', acceptableTypes = [Draggable])
     
-    async def Start(self):
-        result = 0
+    # def Start(self):
+    #     result = 0
+    #     for ID in self.linksIn:
+    #         result += shared.entities[ID].Start()
+    #     self.data = result
+    #     return self.data
+
+    def Start(self):
+        result, threads = [], []
         for ID in self.linksIn:
-            result += await shared.entities[ID].Start()
+            res = 0
+            def StartLinkIn(_ID, res):
+                res = shared.entities[ID].Start()
+            result.append(res)
+            t = Thread(target = StartLinkIn, args = (ID, res), daemon = True)
+            t.start()
+            threads.append(t)
+        for t in threads:
+            t.join()
+
+        result = sum(result)
         self.data = result
         return self.data
     

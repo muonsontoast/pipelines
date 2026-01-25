@@ -74,26 +74,39 @@ def Snip(): # cut links
 def StopAllActions():
     StopActions()
 
-_toggleState = False
-
 async def ToggleAllActions():
     # check which blocks can run and have well-defined inputs.
-    global _toggleState
-    if not runningActions:
-        _toggleState = False
-    _toggleState = not _toggleState
+    shared.toggleState = not shared.toggleState if shared.changeToggleState else shared.toggleState
+    shared.changeToggleState = True
+    shared.workspace.assistant.ignoreRequests = True
 
-    if _toggleState:
-        shared.workspace.assistant.ignoreRequests = True
+    print(f'Inside ToggleAllActions(), toggleState is: {shared.toggleState}')
+
+    if shared.toggleState:
+        allRunnableBlocksFinished = True
         for r in shared.runnableBlocks.values():
-            await r.Start()
+            if not r.actionFinished.is_set():
+                allRunnableBlocksFinished = False
+                if r.ID not in runningActions:
+                    r.Start(False)
+                elif runningActions[r.ID][0].is_set():
+                    r.progressBar.TogglePause(False)
+                    TogglePause(r, False)
+        if allRunnableBlocksFinished:
+            for r in shared.runnableBlocks.values():
+                r.Reset()
+                r.Start(False)
         shared.workspace.assistant.ignoreRequests = False
         shared.workspace.assistant.PushMessage('All actionable block(s) have been started.')
     else:
-        shared.workspace.assistant.ignoreRequests = True
+        if not runningActions:
+            shared.workspace.assistant.ignoreRequests = False
+            return
         for r in shared.runnableBlocks.values():
-            TogglePause(r)
-        shared.workspace.assistant.ignoreRequests = False
+            if not r.actionFinished.is_set():
+                if r.ID in runningActions:
+                    if not runningActions[r.ID][0].is_set():
+                        r.Pause(False)
         shared.workspace.assistant.PushMessage('All actionable block(s) have been paused.')
 
 def PauseAllActions():

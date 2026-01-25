@@ -46,6 +46,7 @@ class SingleTaskGPAction(Action):
             'Y': self.GetY,
             'XP': self.GetXP,
             'YP': self.GetYP,
+            'SURVIVAL_RATE': self.GetSurvivalRate,
         }
     
     def CheckForValidInputs(self):
@@ -101,6 +102,9 @@ class SingleTaskGPAction(Action):
     def GetYP(self, tracking, index):
         '''Returns the vertical momentum of the beam at an element.'''
         return np.nanmean(tracking[3, :, index, 0])
+    
+    def GetSurvivalRate(self, tracking, index):
+        return np.sum(np.where(np.any(np.isnan(tracking[:, :, index, 0]), axis = 0), False, True)) / self.numParticles
 
     def Run(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, **kwargs):
         
@@ -111,36 +115,37 @@ class SingleTaskGPAction(Action):
         '''
 
         # numRepeats = kwargs.get('numRepeats')
-        numRepeats = 1
-        numParticles = kwargs.get('numParticles')
+        numRepeats = 20
+        self.numParticles = kwargs.get('numParticles')
         totalSteps = kwargs.get('totalSteps')
         stepOffset = kwargs.get('stepOffset', 0)
-        self.simulator.numParticles = numParticles
+        self.simulator.numParticles = self.numParticles
         
         if not self.sharedMemoryCreated:
-            sharedMemory = SharedMemory(name = sharedMemoryName)
-            data = np.ndarray(shape, dtype, buffer = sharedMemory.buf)
+            self.sharedMemory = SharedMemory(name = sharedMemoryName)
+            data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
             data[:] = np.inf
             self.sharedMemoryCreated = True
+        else:
+            data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
         
-        result = np.zeros(numRepeats, self.numObjectives)
+        result = np.zeros((numRepeats, self.numObjectives))
 
         try:
             for r in range(numRepeats):
-                tracking, _ = self.simulator.TrackBeam(numParticles)
+                tracking, _ = self.simulator.TrackBeam(self.numParticles)
                 for it, o in enumerate(self.objectives):
                     result[r, it] = self.computations[o['dtype']](tracking, o['index'])
-                    # extract the relevant objective information
                     # check for interrupts
                     while pause.is_set():
                         if stop.is_set():
-                            sharedMemory.close()
-                            sharedMemory.unlink()
+                            self.sharedMemory.close()
+                            self.sharedMemory.unlink()
                             return
                         time.sleep(.1)
                     if stop.is_set():
-                        sharedMemory.close()
-                        sharedMemory.unlink()
+                        self.sharedMemory.close()
+                        self.sharedMemory.unlink()
                         return
                 progress.value = (r + 1 + stepOffset) / totalSteps
             # return the average over repeats as an array of length len(self.objectives)

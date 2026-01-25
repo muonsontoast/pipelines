@@ -1,34 +1,30 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
 from PySide6.QtCore import Qt
-import gc
 import numpy as np
 import aioca
 import asyncio
 import operator
 from functools import reduce
 import time
-import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from xopt import Xopt, VOCS, Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
 # rename gpytorch kernels to avoid conflict with pipelines objects
-from gpytorch.kernels import RBFKernel as _RBFKernel, PeriodicKernel as _PeriodicKernel, ScaleKernel
 from xopt.generators.bayesian.models.standard import StandardModelConstructor
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Queue
+from multiprocessing.shared_memory import SharedMemory
+from threading import Thread, Event, Lock
+from ...simulator import Simulator
+from ... import shared
 from ..draggable import Draggable
 from ...ui.runningcircle import RunningCircle
 from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
 from ...actions.online.singletaskgp import SingleTaskGPAction as OnlineAction
 from ...utils import cothread
 # PerformAction is invoked when running tasks in offline mode to keep the UI responsive.
-from ...utils.multiprocessing import PerformAction, TogglePause, StopAction, runningActions
-from ..composition.composition import Composition
-from ..composition.add import Add
-from ..composition.multiply import Multiply
+from ...utils.multiprocessing import SetGlobalToggleState, TogglePause, StopAction, CreatePersistentWorker, runningActions
 from ..filters.filter import Filter
-from ..kernels.kernel import Kernel
-from ..kernels.rbf import RBFKernel
-from ..kernels.periodic import PeriodicKernel
 from ..pv import PV
 from ..progress import Progress
 from ... import style
@@ -63,9 +59,9 @@ class SingleTaskGP(Draggable):
         self.offlineAction = OfflineAction(self)
         self.onlineAction = OnlineAction(self)
         self.online = False
-        self.actionFinished = threading.Event()
-        self.resetApplied = threading.Event()
-        self.lock = threading.Lock()
+        self.actionFinished = Event()
+        self.resetApplied = Event()
+        self.lock = Lock()
 
         self.streams = {
             'raw': lambda: {
@@ -95,15 +91,53 @@ class SingleTaskGP(Draggable):
         self.Push()
         self.ToggleStyling(active = False)
 
-    def Pause(self):
-            if not self.actionFinished.is_set():
-                TogglePause(self, True)
-                shared.workspace.assistant.PushMessage(f'Paused {self.name}.')
+    def __getstate__(self):
+        return {
+            'lattice': shared.lattice,
+            'decisions': [
+                {
+                    'name': d.settings['linkedElement'].Name,
+                    'index': d.settings['linkedElement'].Index,
+                    's': d.settings['linkedElement']['s (m)'],
+                    'set': d.settings['components']['value']['value'],
+                }
+                for d in self.decisions
+            ],
+            'objectives': [
+                {
+                    'name': o.settings['linkedElement'].Name,
+                    'index': o.settings['linkedElement'].Index,
+                    's': o.settings['linkedElement']['s (m)'],
+                    'dtype': o.settings['dtype'],
+                }
+                for o in self.objectives
+            ],
+            'numParticles': self.numParticles,
+            'totalSteps': self.settings['numSamples'] + self.settings['numSteps']
+        }
 
-    def Stop(self):
-        StopAction(self)
+    def __setstate__(self, state):
+        self.lattice = state['lattice']
+        self.simulator = Simulator(lattice = self.lattice)
+        self.decisions:list = state['decisions']
+        self.objectives:list = state['objectives']
+        self.numObjectives:int = len(state['objectives'])
+        self.sharedMemoryCreated = False
+        self.numParticles = state['numParticles']
+        self.totalSteps = state['totalSteps']
+        self.computations = {
+            'CHARGE': self.GetCharge,
+            'X': self.GetX,
+            'Y': self.GetY,
+            'XP': self.GetXP,
+            'YP': self.GetYP,
+            'SURVIVAL_RATE': self.GetSurvivalRate,
+        }
 
     def Push(self):
+        from ..kernels.periodic import PeriodicKernel
+        from ..composition.composition import Composition
+        from ..kernels.kernel import Kernel
         super().Push()
         self.widget.layout().setContentsMargins(5, 10, 20, 10)
         self.widget.layout().setSpacing(15)
@@ -138,8 +172,8 @@ class SingleTaskGP(Draggable):
         acquisitionSelect.setStyleSheet(style.ComboStyle(color = '#1e1e1e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 12))
         acquisitionSelect.view().parentWidget().setStyleSheet('color: transparent;')
         funcs = {
-            '    UCB': self.SelectUCB,
-            '    EI': self.SelectEI,
+            '   UCB': self.SelectUCB,
+            '   EI': self.SelectEI,
         }
         acquisitionSelect.addItems(funcs.keys())
         idx = 0 if self.settings['acqFunction'] == 'UCB' else 1
@@ -302,6 +336,20 @@ class SingleTaskGP(Draggable):
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.BaseStyling()
 
+    def UpdateMetrics(self):
+        while True:
+            if self.ID in runningActions:
+                tm = time.time()
+                if not runningActions[self.ID][0].is_set():
+                    self.runTimeAmount += tm - self.t0
+                    self.runTimeEdit.setText(f'{self.runTimeAmount:.0f}')
+                if self.actionFinished.is_set():
+                    break
+                self.t0 = tm
+            else:
+                break
+            time.sleep(.2)
+
     def Timestamp(self):
         return datetime.now().strftime('%H:%M:%S')
 
@@ -387,6 +435,7 @@ class SingleTaskGP(Draggable):
 
     def GetKernelStructureString(self, ID):
         '''Will need to be extended in the future.'''
+        from ..composition.add import Add
         entity = shared.entities[ID]
         if len(entity.linksIn) > 0:
             # assume this is a composition for now ...
@@ -397,6 +446,10 @@ class SingleTaskGP(Draggable):
     
     def GetKernelStructure(self, ID):
         '''Will need to be extended in the future.'''
+        from gpytorch.kernels import RBFKernel as _RBFKernel, PeriodicKernel as _PeriodicKernel, ScaleKernel
+        from ..kernels.rbf import RBFKernel
+        from ..kernels.periodic import PeriodicKernel
+        from ..composition.add import Add
         entity = shared.entities[ID]
         if len(entity.linksIn) > 0:
             # assume this is a composition for now ...
@@ -414,7 +467,219 @@ class SingleTaskGP(Draggable):
                 return ScaleKernel(_PeriodicKernel())
             return ScaleKernel(_PeriodicKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
 
-    async def Start(self, **kwargs):
+    def GetObjectiveIDs(self, ID, objectives = set([]), socketNameFilter = None):
+        entity = shared.entities[ID]
+        linksIn = [linkID for linkID, v in entity.linksIn.items() if v['socket'] == socketNameFilter] if socketNameFilter is not None else [linkID for linkID, v in entity.linksIn.items()]
+        if len(linksIn) > 0:
+            for linkID in linksIn:
+                objectives = objectives.union(self.GetObjectiveIDs(linkID, objectives)) # union set with newly found objectives
+            return list(objectives)
+        if isinstance(entity, PV):
+            return set([ID])
+        return set([])
+
+    def CheckDecisionStatesAgree(self):
+        for d in self.decisions:
+            if d.online != self.decisions[0].online:
+                shared.workspace.assistant.PushMessage(f'All decision variables of {self.name} must share the same Online or Offline state.', 'Error')
+                return False
+            if d.online and np.isinf(d.data[1]):
+                shared.workspace.assistant.PushMessage(f'{d.name} is not supplying a live value to {self.name}.', 'Error')
+                return False
+        return True
+
+    def SetupAndRunOptimiser(self, evaluateFunction):
+        shared.workspace.assistant.PushMessage(f'{self.name} is setting up for the first time, which may take a few seconds.')
+        mode = 'MAXIMIZE' if self.settings['mode'] == 'maximise' else 'MINIMIZE'
+        variables = dict()
+        for _, d in enumerate(self.decisions):
+            self.activeDims[d.ID] = _
+            variables[f'{d.name} (ID: {d.ID})'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
+        vocs = VOCS(
+            variables = variables,
+            objectives = {
+                f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': mode,
+            },
+        )
+        kernel = self.ConstructKernel()
+        constructor = StandardModelConstructor(
+            covar_modules = {
+                f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': kernel,
+            },
+        )
+        if self.settings['acqFunction'] == 'UCB':
+            generator = UpperConfidenceBoundGenerator(
+                vocs = vocs,
+                gp_constructor = constructor,
+                beta = self.settings['acqHyperparameter'],
+            )
+        else:
+            generator = ExpectedImprovementGenerator(
+                vocs = vocs,
+                gp_constructor = constructor,
+            )
+
+        evaluator = Evaluator(function = evaluateFunction)
+        X = Xopt(
+            vocs = vocs,
+            generator = generator,
+            evaluator = evaluator,
+        )
+        X.random_evaluate(1) # run once to initialise shared memory array
+        X.data.drop(0)
+        self.numEvals = 0
+        shared.workspace.assistant.PushMessage(f'{self.name} is now running.')
+        X.random_evaluate(np.maximum(self.settings['numSamples'], 1))
+        X.random_evaluate(self.settings['numSteps'])
+        self.inQueue.put(None)
+        self.progressAmount = 1
+        self.progressEdit.setText('100')
+        # set the STOP flag to allow the runningAction to be cleaned up.
+        runningActions[self.ID][1].set()
+        self.progressBar.CheckProgress(self.progressAmount)
+
+    def Pause(self, changeGlobalToggleState = True):
+        with self.lock:
+            if not self.actionFinished.is_set() and not runningActions[self.ID][0].is_set():
+                TogglePause(self, changeGlobalToggleState)
+                if runningActions[self.ID][0].is_set():
+                    self.progressBar.TogglePause(True)
+                else:
+                    self.progressBar.TogglePause(False)
+
+    def Stop(self):
+        StopAction(self)
+
+    def Reset(self):
+        super().Reset()
+        self.progressBar.Reset()
+
+    def Start(self, changeGlobalToggleState = True, **kwargs):
+        if self.ID in runningActions:
+            if runningActions[self.ID][0].is_set():
+                TogglePause(self, changeGlobalToggleState)
+                self.progressBar.TogglePause(False)
+            return
+        
+        self.actionFinished.clear()
+        self.progressBar.Reset()
+        self.decisions = []
+        for ID, v in self.linksIn.items():
+            if v['socket'] == 'decision':
+                self.decisions.append(shared.entities[ID])
+        self.objectives = [shared.entities[ID] for ID in self.GetObjectiveIDs(self.ID, socketNameFilter = 'objective')]
+        immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
+
+        if not self.CheckDecisionStatesAgree():
+            return
+        self.online = self.decisions[0].online
+        self.numParticles = 5000
+        self.numEvals = 0
+        self.maxEvals = self.settings['numSamples'] + self.settings['numSteps']
+        self.t0 = time.time()
+        self.runTimeAmount = 0
+        self.progressAmount = 0
+
+        precision = np.float32 if self.settings['simPrecision'] == 'fp32' else np.float64
+        emptyArray = np.empty(len(self.objectives), dtype = precision)
+        self.inQueue, self.outQueue = Queue(), Queue()
+
+        if not self.online:
+            CreatePersistentWorker(self, emptyArray, self.inQueue, self.outQueue, self.Simulate, 0.)
+        SetGlobalToggleState()
+
+        def Evaluate(dictIn: dict):
+            if self.ID not in runningActions or runningActions[self.ID][1].is_set():
+                return {immediateObjectiveName: np.nan}
+            self.progressAmount = self.numEvals / self.maxEvals
+            self.progressEdit.setText(f'{self.progressAmount * 1e2:.0f}')
+            self.progressBar.CheckProgress(self.progressAmount)
+            self.numEvals += 1
+            for d in dictIn:
+                entity = shared.entities[int(d.split()[-1][:-1])]
+                entity.settings['components']['value']['value'] = dictIn[d]
+                entity.data[1] = dictIn[d]
+                if entity.settings['linkedElement'].Name == 'HSTR':
+                    shared.lattice[entity.settings['linkedElement'].Index].KickAngle[0] = dictIn[d] * 1e-3 # convert input to mrad
+                elif entity.settings['linkedElement'].Name == 'VSTR':
+                    shared.lattice[entity.settings['linkedElement'].Index].KickAngle[1] = dictIn[d] * 1e-3 # convert input to mrad
+            self.inQueue.put(dictIn)
+            simResult = self.outQueue.get()
+            # a reset interrupt can cause this to set simResult to None -- handle this
+            if self.ID not in runningActions or runningActions[self.ID][1].is_set():
+                return {immediateObjectiveName: np.nan}
+            for it, o in enumerate(self.objectives):
+                o.data[1] = simResult[it]
+            return {immediateObjectiveName: self.objectives[0].Start()}
+
+        self.timestamp.setText(self.Timestamp())
+        self.progressEdit.setText('0')
+        Thread(target = self.SetupAndRunOptimiser, args = (Evaluate,), daemon = True).start()
+        Thread(target = self.UpdateMetrics, daemon = True).start()
+
+    def Simulate(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, parameters, **kwargs):
+        '''Action does this:
+            1. Track Beam
+            2. Store objectives vector in data
+            3. Return
+        '''
+        numRepeats = 5
+        self.simulator.numParticles = self.numParticles
+        
+        if not self.sharedMemoryCreated:
+            self.sharedMemory = SharedMemory(name = sharedMemoryName)
+            data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
+            data[:] = np.inf
+            self.sharedMemoryCreated = True
+        else:
+            data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
+        
+        result = np.zeros((numRepeats, self.numObjectives))
+
+        for r in range(numRepeats):
+            tracking, _ = self.simulator.TrackBeam(self.numParticles)
+            for it, o in enumerate(self.objectives):
+                result[r, it] = self.computations[o['dtype']](tracking, o['index'])
+                # check for interrupts
+                while pause.is_set():
+                    if stop.is_set():
+                        self.sharedMemory.close()
+                        self.sharedMemory.unlink()
+                        return
+                    time.sleep(.1)
+                if stop.is_set():
+                    self.sharedMemory.close()
+                    self.sharedMemory.unlink()
+                    return
+        # return the average over repeats as an array of length len(self.objectives)
+        np.copyto(data, np.mean(result, axis = 0))
+        return data
+
+    def GetCharge(self, tracking, index):
+        '''Returns charge at an element in units of fundamental charge, q.'''
+        return np.sum(np.where(np.any(np.isnan(tracking[:, :, index, 0]), axis = 0), False, True))
+
+    def GetX(self, tracking, index):
+        '''Returns the centroid of the beam in the horizontal axis at an element.'''
+        return np.nanmean(tracking[0, :, index, 0])
+
+    def GetY(self, tracking, index):
+        '''Returns the centroid of the beam in the vertical axis at an element.'''
+        return np.nanmean(tracking[2, :, index, 0])
+
+    def GetXP(self, tracking, index):
+        '''Returns the horizontal momentum of the beam at an element.'''
+        return np.nanmean(tracking[1, :, index, 0])
+
+    def GetYP(self, tracking, index):
+        '''Returns the vertical momentum of the beam at an element.'''
+        return np.nanmean(tracking[3, :, index, 0])
+    
+    def GetSurvivalRate(self, tracking, index):
+        return np.sum(np.where(np.any(np.isnan(tracking[:, :, index, 0]), axis = 0), False, True)) / self.numParticles
+
+    # will be removed soon ...
+    async def _Start(self, **kwargs):
         # Prevents GP from spooling up another job if one is already running but paused.
         if self.ID in runningActions:
             if runningActions[self.ID][0].is_set():
@@ -650,6 +915,7 @@ class SingleTaskGP(Draggable):
         #         # print('LINAC deactivated!')
         asyncio.create_task(WaitUntilInputsRead())
 
+    # will also be removed soon ...
     async def OnlineOptimisation(self, vocs, generator):
         async def SetDecisionsAndRecordResponse(dictIn: dict):
             try:
@@ -705,73 +971,6 @@ class SingleTaskGP(Draggable):
             shared.workspace.assistant.PushMessage(f'Failed to stop up the LINAC due to a PV timeout. User should manually stop it now.', 'Error')
             return
 
-    async def OfflineOptimisation(self, vocs, generator):
-        async def Evaluate(dictIn: dict):
-            return dict()
-
-        evaluator = Evaluator(function = Evaluate)
-        X = Xopt(
-            vocs = vocs,
-            generator = generator,
-            evaluator = evaluator,
-        )
-        gc.collect()
-
-        # Assume 10 repeats per setting
-        precision = np.float32 if self.settings['simPrecision'] == 'fp32' else np.float64
-        try:
-            numSteps = 40
-            numRepeats = 40
-            totalSteps = numRepeats + numSteps
-            numParticles = 5000
-            # emptyArray = np.empty((numRepeats, 6, numParticles, len(shared.lattice), 1), dtype = precision)
-            emptyArray = np.empty((len(self.objectives),), dtype = precision)
-            # random samples
-            PerformAction(
-                self,
-                emptyArray,
-                numRepeats = numRepeats,
-                numParticles = numParticles,
-                totalSteps = totalSteps,
-                autoCompleteProgress = False,
-                ignorePrint = True,
-                numSeeds = self.settings['numSamples'],
-            )
-            with self.lock:
-                self.actionFinished.clear()
-            shared.workspace.assistant.PushMessage(f'Starting {self.name}.')
-        except:
-            shared.workspace.assistant.PushMessage(f'Not enough system memory available to run numerical simulator for {self.name}. Try running at a lower fidelity.', 'Critical Error')
-            return
-        
-        def SamplesCheck():
-            self.actionFinished.wait()
-            with self.lock:
-                self.actionFinished.clear()
-                if self.resetApplied.is_set():
-                    return
-            # optimiser steps
-            # emptyArray = np.empty((numSteps, 6, numParticles, len(shared.lattice), 1), dtype = precision)
-            emptyArray = np.empty((len(self.objectives)), dtype = precision)
-            timeRunning = sum([int(a) * b for a, b in zip(self.runTimeEdit.text().split(':'), [3600, 60, 1])])
-            self.t0 = time.time()
-            PerformAction(
-                self,
-                emptyArray,
-                numRepeats = numSteps,
-                numParticles = numParticles,
-                totalSteps = totalSteps,
-                stepOffset = numRepeats,
-                updateProgress = False,
-                progress = numRepeats / totalSteps,
-                timeRunning = timeRunning
-            )
-
-            self.actionFinished.wait()
-            print('All done! :D')
-        
-        threading.Thread(target = SamplesCheck, daemon = True).start()
-
     def SwitchMode(self):
         if cothread.AVAILABLE:
             if self.online:
@@ -793,6 +992,7 @@ class SingleTaskGP(Draggable):
         return True
 
     def BaseStyling(self):
+        super().BaseStyling()
         if shared.lightModeOn:
             pass
         else:
@@ -800,7 +1000,6 @@ class SingleTaskGP(Draggable):
             self.progressBar.setStyleSheet(style.WidgetStyle(color = "#3e3e3e", borderRadius = 6))
             self.progressBar.innerWidget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadius = 5))
             self.progressBar.bar.setStyleSheet(style.WidgetStyle(color = '#c4c4c4', borderRadius = 4))
-        super().BaseStyling()
 
     def SelectedStyling(self):
         pass

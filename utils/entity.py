@@ -36,6 +36,8 @@ class Entity:
         sharedMemoryName = f'{attrName}SharedMemory'
         setattr(self, sharedMemoryName, SharedMemory(create = True, size = emptyArray.nbytes))
         setattr(self, attrName, np.ndarray(emptyArray.shape, dtype = emptyArray.dtype, buffer = getattr(self, sharedMemoryName).buf))
+        data = getattr(self, attrName)
+        data[:] = np.inf
         self.sharingData = True
     
     def CleanUp(self):

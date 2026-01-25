@@ -18,6 +18,7 @@ from cpuinfo import get_cpu_info
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from threading import Thread
 from .inspector import Inspector
 from .ui.workspace import Workspace
 from .ui.groupmenu import GroupMenu
@@ -27,6 +28,7 @@ from .utils.entity import Entity
 from .utils import memory
 from .utils.commands import ConnectShortcuts, Save, StopAllActions
 from .utils.resourcemonitor import ResourceMonitor
+from .utils.multiprocessing import CleanUpRunningActions
 from .utils.load import Load
 from . import style
 from . import shared
@@ -255,6 +257,7 @@ class MainWindow(Entity, QMainWindow):
         # Load in settings if they exist and apply to existing entities, and create new ones if they don't already exist.
         print('Loading settings from:', settingsPath)
         Load(settingsPath)
+        Thread(target = CleanUpRunningActions, daemon = True).start()
         self.showMaximized()
     
     async def ConfigureLoop(self):
@@ -278,6 +281,7 @@ class MainWindow(Entity, QMainWindow):
         shared.app.processEvents()
 
     def closeEvent(self, event):
+        shared.stopCleanUpTimer = True
         self.resourceMonitor.stop()
         StopAllActions()
         if not self.quitShortcutPressed:

@@ -18,7 +18,7 @@ class Draggable(Entity, QWidget):
 
     def __init__(self, proxy, **kwargs):
         self.headerColor = kwargs.pop('headerColor', '#2e2e2e')
-        dtypes = kwargs.pop('dtypes', ['CHARGE', 'X', 'Y', 'PX', 'PY'])
+        dtypes = kwargs.pop('dtypes', ['CHARGE', 'X', 'Y', 'PX', 'PY', 'SURVIVAL_RATE'])
         dtype = kwargs.pop('dtype', None)
         dtype = dtypes[0] if dtype is None else dtype
         super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), dtype = dtype, dtypes = dtypes, **kwargs)
@@ -369,19 +369,19 @@ class Draggable(Entity, QWidget):
             self.start = QPushButton('Start')
             self.start.setFixedHeight(buttonsHeight)
             self.start.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-            self.start.clicked.connect(lambda: asyncio.create_task(self.Start()))
+            self.start.clicked.connect(lambda: self.Start(changeGlobalToggleState = True))
             self.buttons.layout().addWidget(self.start)
         if 'pause' not in args:
             self.pause = QPushButton('Pause')
             self.pause.setFixedHeight(buttonsHeight)
             self.pause.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-            self.pause.clicked.connect(lambda: self.Pause())
+            self.pause.clicked.connect(lambda: self.Pause(changeGlobalToggleState = True))
             self.buttons.layout().addWidget(self.pause)
         if 'reset' not in args:
             self.reset = QPushButton('Reset')
             self.reset.setFixedHeight(buttonsHeight)
             self.reset.setStyleSheet(style.PushButtonStyle(padding = 0, color = '#2e2e2e', fontColor = '#c4c4c4'))
-            self.reset.clicked.connect(lambda: self.Reset())
+            self.reset.clicked.connect(self.Reset)
             self.buttons.layout().addWidget(self.reset)
         if 'clear' not in args:
             self.clear = QPushButton('Clear')
@@ -399,18 +399,15 @@ class Draggable(Entity, QWidget):
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         self.main.layout().addWidget(self.header, alignment = Qt.AlignTop)
 
-    async def Start(self, **kwargs):
+    async def Start(self, changeGlobalToggleState = True, **kwargs):
         pass
 
-    def Pause(self):
+    def Pause(self, changeGlobalToggleState = True):
         if not self.actionFinished.is_set():
-            TogglePause(self)
+            TogglePause(self, changeGlobalToggleState)
 
     def Reset(self):
         StopAction(self, restart = True)
-        if hasattr(self, 'progressBar'):
-            self.progressBar.Reset()
-
         shared.workspace.assistant.PushMessage(f'{self.name} has been reset.')
 
     def AddLinkIn(self, ID:int, socket, streamTypeIn:str = '', **kwargs):

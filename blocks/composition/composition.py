@@ -83,7 +83,7 @@ class Composition(Draggable):
                         async def FetchValues():
                             # this QTimer can run after deleting last PV so explicitly check if PVs are still linked.
                             if len(self.linksIn) > 0:
-                                result = await self.Start()
+                                result = self.Start()
                                 result = 'N/A' if np.isinf(result) else f'{result:.3f}'
                                 self.edit.setText(result)
                                 QTimer.singleShot(200, lambda: asyncio.create_task(FetchValues()))

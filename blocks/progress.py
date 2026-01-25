@@ -28,13 +28,17 @@ class Progress(QWidget):
     def Reset(self):
         self.progress = 0
         self.bar.setFixedWidth(0)
-        self.bar.setStyleSheet(style.WidgetStyle(color = '#c4c4c4', borderRadius = 4))
         self.setStyleSheet(style.WidgetStyle(color = "#3e3e3e", borderRadius = 6))
 
     def CheckProgress(self, amount):
         '''Takes a decimal in from 0 to 1'''
         self.progress = amount
-        if amount > .97:
-            amount = .97
+        if amount == 1:
             self.setStyleSheet(style.WidgetStyle(color = "#2cb158", borderRadius = 6))
-        self.bar.setFixedWidth(amount * self.width())
+        self.bar.setFixedWidth(np.maximum(np.minimum(amount, .97), .04) * self.width())
+
+    def TogglePause(self, isPaused):
+        if isPaused:
+            self.setStyleSheet(style.WidgetStyle(color = '#FF8811', borderRadius = 6))
+        else:
+            self.setStyleSheet(style.WidgetStyle(color = '#3e3e3e', borderRadius = 6))

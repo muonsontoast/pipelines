@@ -10,10 +10,10 @@
   components: {}
   name: Editor
   positionInSceneCoords:
-  - 5764.288815724709
-  - 6376.299727023876
+  - 4706.531482558868
+  - 5773.055612051856
   type: Editor
-  zoom: 0.7026018524526026
+  zoom: 0.5063176585200275
 3:
   components: {}
   dtype: CHARGE
@@ -90,15 +90,20 @@
   - PY
   fontsize: 12
   hyperparameters:
-    lengthscale (RBF Kernel (LTB HSTRs)):
+    lengthscale (Periodic Kernel):
       description: lengthscale affects how rapidly correlation decays with distance
       type: vec
       value:
       - 1.0
-    scale (RBF Kernel (LTB HSTRs)):
+    period (Periodic Kernel):
+      description: periodicity affects frequency of oscillations
+      type: vec
+      value:
+      - 1.0
+    scale (Periodic Kernel):
       description: magnitude of the kernel around the point
       type: float
-      value: 1
+      value: 1.0
   linkedPVs: {}
   linksIn: {}
   linksOut: {}
@@ -137,18 +142,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: Y
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 24
+  linkedElement: 116
   linksIn: {}
   linksOut:
     12: decision
-  name: 'VSTR (Index: 24)'
+  name: 'VSTR (Index: 116)'
   position:
   - 4577
   - 5501
@@ -177,10 +182,13 @@
   - PY
   linksIn:
     10: decision
+    16: kernel
+    19: decision
     20: decision
     21: decision
     22: decision
     23: decision
+    25: decision
     26: decision
     27: decision
     28: decision
@@ -188,7 +196,6 @@
     30: decision
     31: decision
     32: decision
-    33: kernel
     34: objective
   linksOut: {}
   mode: maximise
@@ -197,8 +204,8 @@
   numSamples: 5
   numSteps: 20
   position:
-  - 5262.8596242004205
-  - 6091.240278880384
+  - 5274.0
+  - 5950.0
   simPrecision: fp32
   size:
   - 600
@@ -224,11 +231,11 @@
   - Y
   - PX
   - PY
-  linkedElement: 58
+  linkedElement: 120
   linksIn: {}
   linksOut:
     34: in
-  name: 'BPM (Index: 58)'
+  name: 'BPM (Index: 120)'
   position:
   - 4008
   - 6301
@@ -256,11 +263,11 @@
   - Y
   - PX
   - PY
-  linkedElement: 295
+  linkedElement: 310
   linksIn: {}
   linksOut:
     34: in
-  name: 'BPM (Index: 295)'
+  name: 'BPM (Index: 310)'
   position:
   - 4397
   - 6422
@@ -288,11 +295,11 @@
   - Y
   - PX
   - PY
-  linkedElement: 247
+  linkedElement: 280
   linksIn: {}
   linksOut:
     34: in
-  name: 'BPM (Index: 247)'
+  name: 'BPM (Index: 280)'
   position:
   - 4399
   - 6303
@@ -319,7 +326,7 @@
       description: lengthscale affects how rapidly correlation decays with distance
       type: vec
       value:
-      - 1.0
+      - 5.0
     scale:
       description: magnitude of the kernel around the point
       type: float
@@ -345,11 +352,11 @@
     - 100
   linksIn: {}
   linksOut:
-    33: in
+    12: kernel
   name: RBF Kernel (LTB HSTRs)
   position:
-  - 4257
-  - 6851
+  - 4907.0
+  - 6544.0
   size:
   - 300
   - 374
@@ -374,11 +381,11 @@
   - Y
   - PX
   - PY
-  linkedElement: 191
+  linkedElement: 254
   linksIn: {}
   linksOut:
     34: in
-  name: 'BPM (Index: 191)'
+  name: 'BPM (Index: 254)'
   position:
   - 4004
   - 6669
@@ -406,11 +413,11 @@
   - Y
   - PX
   - PY
-  linkedElement: 155
+  linkedElement: 222
   linksIn: {}
   linksOut:
     34: in
-  name: 'BPM (Index: 155)'
+  name: 'BPM (Index: 222)'
   position:
   - 4004
   - 6547
@@ -419,59 +426,38 @@
   - 115
   type: PV
 19:
-  automatic: false
+  alignment: Horizontal
   components:
-    dimensions:
-      name: Dimensions
-      type: KernelComponent
-  dtype: CHARGE
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  dtype: X
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  fontsize: 12
-  hyperparameters:
-    lengthscale:
-      description: lengthscale affects how rapidly correlation decays with distance
-      type: vec
-      value:
-      - 1.0
-    scale:
-      description: magnitude of the kernel around the point
-      type: float
-      value: 1
-  linkedPVs:
-    10:
-    - 0
-    - 100
-    20:
-    - 0
-    - 100
-    21:
-    - 0
-    - 100
-    22:
-    - 0
-    - 100
-    23:
-    - 0
-    - 100
-    26:
-    - 0
-    - 100
+  linkedElement: 84
   linksIn: {}
   linksOut:
-    33: in
-  name: RBF Kernel (LTB VSTRs)
+    12: decision
+  name: 'HSTR (Index: 84)'
   position:
-  - 4582
-  - 7098
+  - 4132.083206384611
+  - 5378.085231140258
   size:
-  - 300
-  - 374
-  type: RBF Kernel
+  - 350
+  - 115
+  type: PV
 20:
   alignment: Horizontal
   components:
@@ -486,18 +472,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: Y
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 71
+  linkedElement: 136
   linksIn: {}
   linksOut:
     12: decision
-  name: 'VSTR (Index: 71)'
+  name: 'VSTR (Index: 136)'
   position:
   - 4576
   - 5624
@@ -519,18 +505,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: Y
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 235
+  linkedElement: 270
   linksIn: {}
   linksOut:
     12: decision
-  name: 'VSTR (Index: 235)'
+  name: 'VSTR (Index: 270)'
   position:
   - 4571
   - 5989
@@ -552,18 +538,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: Y
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 168
+  linkedElement: 238
   linksIn: {}
   linksOut:
     12: decision
-  name: 'VSTR (Index: 168)'
+  name: 'VSTR (Index: 238)'
   position:
   - 4570
   - 5867
@@ -585,18 +571,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: Y
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 283
+  linkedElement: 296
   linksIn: {}
   linksOut:
     12: decision
-  name: 'VSTR (Index: 283)'
+  name: 'VSTR (Index: 296)'
   position:
   - 4569
   - 6110
@@ -624,14 +610,47 @@
   - Y
   - PX
   - PY
-  linkedElement: 106
+  linkedElement: 152
   linksIn: {}
   linksOut:
     34: in
-  name: 'BPM (Index: 106)'
+  name: 'BPM (Index: 152)'
   position:
   - 4006
   - 6425
+  size:
+  - 350
+  - 115
+  type: PV
+25:
+  alignment: Horizontal
+  components:
+    linkedLatticeElement:
+      name: Linked Lattice Element
+      type: LinkComponent
+    value:
+      default: 0.0
+      max: 100
+      min: 0
+      name: Kick
+      type: SliderComponent
+      units: mrad
+      value: 0.0
+  dtype: Y
+  dtypes:
+  - CHARGE
+  - X
+  - Y
+  - PX
+  - PY
+  linkedElement: 88
+  linksIn: {}
+  linksOut:
+    12: decision
+  name: 'VSTR (Index: 88)'
+  position:
+  - 4578.083206384611
+  - 5381.085231140258
   size:
   - 350
   - 115
@@ -650,18 +669,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: Y
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 119
+  linkedElement: 168
   linksIn: {}
   linksOut:
     12: decision
-  name: 'VSTR (Index: 119)'
+  name: 'VSTR (Index: 168)'
   position:
   - 4574
   - 5746
@@ -683,21 +702,21 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: X
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 23
+  linkedElement: 112
   linksIn: {}
   linksOut:
     12: decision
-  name: 'HSTR (Index: 23)'
+  name: 'HSTR (Index: 112)'
   position:
-  - 4130
-  - 5498
+  - 4132.0
+  - 5503.0
   size:
   - 350
   - 115
@@ -716,18 +735,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: X
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 167
+  linkedElement: 234
   linksIn: {}
   linksOut:
     12: decision
-  name: 'HSTR (Index: 167)'
+  name: 'HSTR (Index: 234)'
   position:
   - 4126
   - 5864
@@ -749,18 +768,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: X
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 118
+  linkedElement: 164
   linksIn: {}
   linksOut:
     12: decision
-  name: 'HSTR (Index: 118)'
+  name: 'HSTR (Index: 164)'
   position:
   - 4128
   - 5742
@@ -782,21 +801,21 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: X
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 70
+  linkedElement: 132
   linksIn: {}
   linksOut:
     12: decision
-  name: 'HSTR (Index: 70)'
+  name: 'HSTR (Index: 132)'
   position:
-  - 4128
-  - 5620
+  - 4129.0
+  - 5623.0
   size:
   - 350
   - 115
@@ -815,18 +834,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: X
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 282
+  linkedElement: 292
   linksIn: {}
   linksOut:
     12: decision
-  name: 'HSTR (Index: 282)'
+  name: 'HSTR (Index: 292)'
   position:
   - 4126
   - 6104
@@ -848,18 +867,18 @@
       type: SliderComponent
       units: mrad
       value: 0.0
-  dtype: CHARGE
+  dtype: X
   dtypes:
   - CHARGE
   - X
   - Y
   - PX
   - PY
-  linkedElement: 234
+  linkedElement: 266
   linksIn: {}
   linksOut:
     12: decision
-  name: 'HSTR (Index: 234)'
+  name: 'HSTR (Index: 266)'
   position:
   - 4124
   - 5984
@@ -867,38 +886,6 @@
   - 350
   - 115
   type: PV
-33:
-  components: {}
-  dtype: CHARGE
-  dtypes:
-  - CHARGE
-  - X
-  - Y
-  - PX
-  - PY
-  hyperparameters:
-    lengthscale (RBF Kernel (LTB HSTRs)):
-      description: lengthscale affects how rapidly correlation decays with distance
-      type: vec
-      value:
-      - 1.0
-    scale (RBF Kernel (LTB HSTRs)):
-      description: magnitude of the kernel around the point
-      type: float
-      value: 1
-  linksIn:
-    16: in
-    19: in
-  linksOut:
-    12: kernel
-  name: Add
-  position:
-  - 4897
-  - 6823
-  size:
-  - 350
-  - 295
-  type: Add
 34:
   components: {}
   dtype: CHARGE
@@ -919,8 +906,8 @@
     12: objective
   name: Add
   position:
-  - 4856
-  - 6510
+  - 4948.0
+  - 6366.0
   size:
   - 250
   - 100

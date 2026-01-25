@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, QTimer
 import numpy as np
 import aioca
 import asyncio
+from threading import Thread
 from .draggable import Draggable
 from ..indicator import Indicator
 from ..clickablewidget import ClickableWidget
@@ -147,7 +148,7 @@ class PV(Draggable):
                     shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
                     shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
 
-    async def Start(self):
+    def Start(self):
         '''Unlike more complex blocks, a PV just returns its current value, indicating the end of a graph.'''
         return self.data[1]
 
@@ -186,18 +187,31 @@ class PV(Draggable):
                     await self.UpdateInspectorLimits(PVName)
             except:
                 self.PVMatch = False
-                self.online  = False
+                self.settings['components']['value']['units'] = ''
                 if not np.isinf(self.data[1]):
-                    self.data[1] = np.inf
+                    if lastMatch != PVName:
+                        if self.online:
+                            self.data[1] = np.inf
+                            self.get.setText('N/A')
+                        else:
+                            s = f'{self.data[1]:.3f}'
+                            self.get.setText(s)
+                            self.set.setText(s)
+                    else:
+                        s = f'{self.data[1]:.3f}'
+                        self.get.setText(s)
+                        self.set.setText(s)
+                else:
                     self.get.setText('N/A')
-                    self.settings['components']['value']['units'] = ''
-                    if self.active:
-                        try: # this can fail when the app is closed, so wrap in a try-except
-                            shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
-                            shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
-                            await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
-                        except:
-                            pass
+                self.online  = False
+                
+                if self.active:
+                    try: # this can fail when the app is closed, so wrap in a try-except
+                        shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
+                        shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
+                        await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
+                    except:
+                        pass
             lastMatch = PVName
             # Recheck online state of any downstream blocks
             if self.checkStateOfDownstreamBlocks:
