@@ -212,9 +212,11 @@ class PV(Draggable):
                                 if self.active:
                                     shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + '(Amps)'
                                     shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
-                            loop.run_until_complete(
-                                self.UpdateInspectorLimits(PVName)
-                            )
+                            try:
+                                loop.run_until_complete(
+                                    self.UpdateInspectorLimits(PVName)
+                                )
+                            except: pass
                             lastMatch = PVName
                         except: pass
                         continue
