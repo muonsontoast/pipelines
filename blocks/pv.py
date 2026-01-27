@@ -215,6 +215,7 @@ class PV(Draggable):
                             loop.run_until_complete(
                                 self.UpdateInspectorLimits(PVName)
                             )
+                            lastMatch = PVName
                         except: pass
                         continue
                 except: pass
