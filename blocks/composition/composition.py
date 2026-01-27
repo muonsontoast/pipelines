@@ -86,7 +86,8 @@ class Composition(Draggable):
                         self.checkThread.start()
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
-                    QTimer.singleShot(0, commands.Delete)
+                    # QTimer.singleShot(0, commands.Delete)
+                    Thread(target = commands.Delete).start()
                 else:
                     if newFundamentalType == Kernel:
                         if not self.hasBeenPushed:

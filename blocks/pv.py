@@ -131,8 +131,6 @@ class PV(Draggable):
                 mx = loop.run_until_complete(
                     aioca.caget(PVName + ':IMAX', timeout = timeout)
                 )
-                # mn = asyncio.caioca.caget(PVName + ':IMIN', timeout = timeout)
-                # mx = await aioca.caget(PVName + ':IMAX', timeout = timeout)
                 if mx > mn:
                     if self.active:
                         shared.inspector.expandables['value'].widget.minimum.setText(f'{mn}')
