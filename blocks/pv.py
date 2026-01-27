@@ -158,7 +158,6 @@ class PV(Draggable):
         while True:
             if self.stopCheckThread.is_set():
                 loop.close()
-                self.checkThreadIsClosed.set()
                 break
             try:
                 PVName = self.name
