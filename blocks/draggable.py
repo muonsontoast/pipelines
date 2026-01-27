@@ -29,6 +29,7 @@ class Draggable(Entity, QWidget):
         self.valueRequest, self.valueReady = Event(), Event()
         self.checkThread = None # every draggable has an optional check thread responsible for updating its value displayed to the user regularly.
         self.stopCheckThread = Event() # force the check thread to close when exiting and saving.
+        self.checkThreadIsClosed = Event()
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)

@@ -40,16 +40,6 @@ class Entity:
         data = getattr(self, attrName)
         data[:] = np.inf
         self.sharingData = True
-    
-    def CleanUp(self):
-        if hasattr(self, 'checkThread'):
-            if self.checkThread is not None:
-                self.stopCheckThread.set()
-        if hasattr(self, 'dataSharedMemory'):
-            try:
-                self.dataSharedMemory.close()
-                self.dataSharedMemory.unlink()
-            except: pass
 
     def Register(self, overrideID = None):
         '''Registers this object as an entity inside the shared entity list.'''

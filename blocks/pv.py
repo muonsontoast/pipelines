@@ -157,7 +157,6 @@ class PV(Draggable):
         asyncio.set_event_loop(loop)
         while True:
             if self.stopCheckThread.is_set():
-                loop.close()
                 break
             try:
                 PVName = self.name
@@ -165,7 +164,9 @@ class PV(Draggable):
                     loop.run_until_complete(
                         aioca.caget(self.name, timeout = timeout)
                     )
-                    self.stopCheckThread.wait(timeout = .25)
+                    if self.stopCheckThread.wait(timeout = .25):
+                        loop.close()
+                        break
                     self.data[1] = loop.run_until_complete(
                         aioca.caget(self.name, timeout = timeout)
                     )
@@ -174,7 +175,9 @@ class PV(Draggable):
                     loop.run_until_complete(
                         aioca.caget(PVName + ':I', timeout = timeout)
                     )
-                    self.stopCheckThread.wait(timeout = .25)
+                    if self.stopCheckThread.wait(timeout = .25):
+                        loop.close()
+                        break
                     # set value
                     self.data[0] = loop.run_until_complete(
                         aioca.caget(PVName + ':SETI', timeout = timeout)
@@ -183,26 +186,34 @@ class PV(Draggable):
                     self.data[1] = loop.run_until_complete(
                         aioca.caget(PVName + ':I', timeout = timeout)
                     )
-                self.settings['components']['value']['default'] = self.data[1]
-                if PVName != lastMatch:
-                    self.PVMatch = True
-                    self.settings['components']['value']['units'] = ''
-                    shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
-                    self.checkStateOfDownstreamBlocks = True
-                    self.online = True
-                    s = f'{self.data[1]:.3f}'
-                    self.get.setText(s)
-                    self.set.setText(s)
-                    print(f'* ABC and setting get and set text to {s}')
-                    if 'STR' in PVName:
-                        self.settings['components']['value']['units'] = 'Amps'
-                        if self.active:
-                            shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + '(Amps)'
-                            shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
-                    loop.run_until_complete(
-                        self.UpdateInspectorLimits(PVName)
-                    )
-                    continue
+                if self.stopCheckThread.is_set():
+                    break
+                try:
+                    self.settings['components']['value']['default'] = self.data[1]
+                    if PVName != lastMatch:
+                        try:
+                            self.PVMatch = True
+                            self.settings['components']['value']['units'] = ''
+                            shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
+                            self.checkStateOfDownstreamBlocks = True
+                            self.online = True
+                            if self.stopCheckThread.is_set():
+                                break
+                            s = f'{self.data[1]:.3f}'
+                            self.get.setText(s)
+                            self.set.setText(s)
+                            print(f'* ABC and setting get and set text to {s}')
+                            if 'STR' in PVName:
+                                self.settings['components']['value']['units'] = 'Amps'
+                                if self.active:
+                                    shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + '(Amps)'
+                                    shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
+                            loop.run_until_complete(
+                                self.UpdateInspectorLimits(PVName)
+                            )
+                        except: pass
+                        continue
+                except: pass
             except:
                 self.PVMatch = False
                 self.online = False
@@ -210,24 +221,35 @@ class PV(Draggable):
                     try:
                         if lastMatch != PVName:
                             if self.online:
-                                self.data[1] = np.inf
-                                self.get.setText('N/A')
-                                self.settings['components']['value']['units'] = ''
+                                if self.stopCheckThread.is_set():
+                                    break
+                                s = f'{self.data[1]:.3f}'
+                                self.get.setText(s)
+                                self.set.setText(s)
                             else:
+                                if self.stopCheckThread.is_set():
+                                    break
                                 s = f'{self.data[1]:.3f}'
                                 self.get.setText(s)
                                 self.set.setText(s)
                         else:
+                            if self.stopCheckThread.is_set():
+                                break
                             s = f'{self.data[1]:.3f}'
                             self.get.setText(s)
                             self.set.setText(s)
                     except: pass
                 else:
-                    self.get.setText('N/A')
+                    with self.lock:
+                        if self.stopCheckThread.is_set():
+                            break
+                        self.get.setText('N/A')
 
                 if self.active:
                     try:
                         shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
+                        if self.stopCheckThread.is_set():
+                                break
                         shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
                         loop.run_until_complete(
                             self.UpdateInspectorLimits(PVName, makeReadOnly = False)
@@ -240,6 +262,8 @@ class PV(Draggable):
                         shared.entities[ID].CheckState()
             self.checkStateOfDownstreamBlocks = False
             self.stopCheckThread.wait(timeout = .2)
+        self.checkThreadIsClosed.set()
+        loop.close()
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
         '''`event` should be a mouseReleaseEvent if it needs to be called.'''

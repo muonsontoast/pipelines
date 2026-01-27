@@ -25,11 +25,19 @@ def Save():
             if entitySettings['type'] == 'Editor':
                 entitySettings['positionInSceneCoords'] = [entity.positionInSceneCoords.x(), entity.positionInSceneCoords.y()]
             settings[entity.ID] = entitySettings
+            # tell check threads to stop
             if entity.sharingData:
-                entity.CleanUp() # remove the shared memory data from memory to stop persistance.
-        gc.collect()
+                entity.stopCheckThread.set()
         yaml.dump(settings, f)
         print('Dumped session settings to disk.')
+        # close and unlink shared memory pools
+        for entity in shared.entities.values():
+            if entity.sharingData:
+                entity.dataSharedMemory.close()
+                entity.dataSharedMemory.unlink()
+                del entity.dataSharedMemory
+        gc.collect()
+        print('Cleaned up.')
 
 def FormatComponents(components: dict):
     newComponents = dict()
