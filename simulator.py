@@ -1,7 +1,10 @@
 import at
 import numpy as np
 from copy import deepcopy
+import logging
 from . import shared
+
+logging.getLogger('at').setLevel(logging.CRITICAL)
 
 class Simulator:
     '''Handles offline simulations with the lattice.'''

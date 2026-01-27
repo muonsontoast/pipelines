@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QSizePolicy, QSpacerItem
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt
 import numpy as np
 from .. import style

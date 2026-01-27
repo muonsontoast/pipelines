@@ -75,23 +75,6 @@ class Inspector(Entity, QTabWidget):
         if self.mainWindowTitleWidget.isHidden():
             self.main.setUpdatesEnabled(True)
 
-        # if 'alignment' in pv.settings:
-        #     self.items['alignment'] = QListWidgetItem()
-        #     if pv.settings['alignment'] == 'Horizontal':
-        #         text = 'Aligned to <span style = "color: #bc4444">Horizontal</span> plane.'
-        #     else:
-        #         text = 'Aligned to <span style = "color: #399a26">Vertical</span> plane.'
-        #     self.state = QLabel(text)
-        #     self.state.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        #     self.planeRow = QWidget()
-        #     self.planeRow.setLayout(QHBoxLayout())
-        #     self.planeRow.layout().setContentsMargins(2, 0, 10, 0)
-        #     self.planeRow.layout().addWidget(self.state)
-        #     self.planeRow.layout().addWidget(self.toggle)
-        #     self.items['alignment'].setSizeHint(self.planeRow.sizeHint())
-        #     self.main.addItem(self.items['alignment'])
-        #     self.main.setItemWidget(self.items['alignment'], self.planeRow)
-
         def SortName(item):
             key, component = item
             return key == 'linkedLatticeElement'

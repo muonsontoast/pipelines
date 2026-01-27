@@ -1,12 +1,13 @@
 from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QLineEdit, QVBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt, QTimer
-import asyncio
 import numpy as np
+import time
+from threading import Thread
+from multiprocessing import Event, Lock
 from ..draggable import Draggable
 from ..pv import PV
 from ..kernels.kernel import Kernel
 from ..filters.filter import Filter
-from ...ui.runningcircle import RunningCircle
 from ...utils import commands
 from ... import style
 from ... import shared
@@ -19,8 +20,9 @@ class Composition(Draggable):
             )
         self.fundamental = False
         self.parent = parent
+        self.checkDone = Event()
+        self.lock = Lock()
         self.blockType = 'Add'
-        self.runningCircle = RunningCircle()
         self.widget = QWidget()
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.setLayout(QVBoxLayout())
@@ -80,14 +82,9 @@ class Composition(Draggable):
                         self.edit.setReadOnly(True)
                         self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
                         self.timerRunning = True
-                        async def FetchValues():
-                            # this QTimer can run after deleting last PV so explicitly check if PVs are still linked.
-                            if len(self.linksIn) > 0:
-                                result = self.Start()
-                                result = 'N/A' if np.isinf(result) else f'{result:.3f}'
-                                self.edit.setText(result)
-                                QTimer.singleShot(200, lambda: asyncio.create_task(FetchValues()))
-                        asyncio.create_task(FetchValues())
+                        # Thread(target = self.CheckValue, daemon = True).start()
+                        self.checkThread = Thread(target = self.CheckValue, daemon = True)
+                        self.checkThread.start()
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
                     QTimer.singleShot(0, commands.Delete)
@@ -162,3 +159,6 @@ class Composition(Draggable):
             pass
         else:
             self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', borderRadiusBottomLeft = 8, borderRadiusBottomRight = 8))
+
+    def CheckValue(self):
+        pass

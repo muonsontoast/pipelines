@@ -80,8 +80,6 @@ async def ToggleAllActions():
     shared.changeToggleState = True
     shared.workspace.assistant.ignoreRequests = True
 
-    print(f'Inside ToggleAllActions(), toggleState is: {shared.toggleState}')
-
     if shared.toggleState:
         allRunnableBlocksFinished = True
         for r in shared.runnableBlocks.values():
@@ -245,6 +243,7 @@ def Delete():
         if widget in shared.activePVs:
             shared.activePVs.remove(widget)
         message = f'Deleted {widget.name}.'
+        widget.stopCheckThread.set()
         widget.deleteLater()
     if len(selectedItems) > 1:
         message = f'Deleted {len(selectedItems)} items.'

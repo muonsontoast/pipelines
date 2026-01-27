@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QSpacerItem
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 import numpy as np
 import aioca
 import asyncio
@@ -55,11 +55,8 @@ class PV(Draggable):
         self.checkStateOfDownstreamBlocks = False
         self.Push()
 
-        try:
-            asyncio.get_event_loop().create_task(self.FetchReadValue())
-        except RuntimeError:
-            # loop not installed yet — schedule for next Qt tick
-            QTimer.singleShot(0, lambda: asyncio.get_event_loop().create_task(self.FetchReadValue()))
+        self.checkThread = Thread(target = self.FetchAndReadValue)
+        self.checkThread.start()
 
     def Push(self):
         self.clickable = ClickableWidget(self)
@@ -151,76 +148,168 @@ class PV(Draggable):
     def Start(self):
         '''Unlike more complex blocks, a PV just returns its current value, indicating the end of a graph.'''
         return self.data[1]
-
-    async def FetchReadValue(self, timeout = 1):
+    
+    def FetchAndReadValue(self, timeout = 1):
         '''Asynchronously fetch and update current value, without blocking the UI thread.'''
         lastMatch = ''
+        # create event loop used solely by this thread to await aioca command responses.
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         while True:
-            # check whether the current name is a valid PV.
+            if self.stopCheckThread.is_set():
+                break
             try:
-                # will attempt to find a match on the full name first, before splitting
                 PVName = self.name
                 try:
-                    await aioca.caget(self.name, timeout = timeout)
-                    await asyncio.sleep(.25)
-                    self.data[1] = await aioca.caget(self.name, timeout = timeout)
+                    loop.run_until_complete(
+                        aioca.caget(self.name, timeout = timeout)
+                    )
+                    self.stopCheckThread.wait(timeout = .25)
+                    self.data[1] = loop.run_until_complete(
+                        aioca.caget(self.name, timeout = timeout)
+                    )
                 except:
                     PVName = self.name.split(':')[0]
-                    await aioca.caget(PVName + ':I', timeout = timeout)
-                    await asyncio.sleep(.25)
-                    self.data[1] = await aioca.caget(PVName + ':I', timeout = timeout)
+                    loop.run_until_complete(
+                        aioca.caget(PVName + ':I', timeout = timeout)
+                    )
+                    self.stopCheckThread.wait(timeout = .25)
+                    # set value
+                    self.data[0] = loop.run_until_complete(
+                        aioca.caget(PVName + ':SETI', timeout = timeout)
+                    )
+                    # read value
+                    self.data[1] = loop.run_until_complete(
+                        aioca.caget(PVName + ':I', timeout = timeout)
+                    )
                 self.settings['components']['value']['default'] = self.data[1]
                 if PVName != lastMatch:
                     self.PVMatch = True
+                    self.settings['components']['value']['units'] = ''
                     shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
                     self.checkStateOfDownstreamBlocks = True
                     self.online = True
-                    self.get.setText(f'{self.data[1]:.3f}')
+                    self.get.setText(f'{self.data[0]:.3f}')
                     self.set.setText(f'{self.data[1]:.3f}')
-                    self.data[0] = self.data[1] # set the READ and SET values to be the same if the new PV name is valid
-                    # Update units if this is a corrector / steerer.
                     if 'STR' in PVName:
                         self.settings['components']['value']['units'] = 'Amps'
                         if self.active:
-                            shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + ' (Amps)'
+                            shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + '(Amps)'
                             shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
-                    await self.UpdateInspectorLimits(PVName)
+                    loop.run_until_complete(
+                        self.UpdateInspectorLimits(PVName)
+                    )
+                    continue
             except:
                 self.PVMatch = False
-                self.settings['components']['value']['units'] = ''
+                self.online = False
                 if not np.isinf(self.data[1]):
-                    if lastMatch != PVName:
-                        if self.online:
-                            self.data[1] = np.inf
-                            self.get.setText('N/A')
+                    try:
+                        if lastMatch != PVName:
+                            if self.online:
+                                self.data[1] = np.inf
+                                self.get.setText('N/A')
+                                self.settings['components']['value']['units'] = ''
+                            else:
+                                s = f'{self.data[1]:.3f}'
+                                self.get.setText(s)
+                                self.set.setText(s)
                         else:
                             s = f'{self.data[1]:.3f}'
                             self.get.setText(s)
                             self.set.setText(s)
-                    else:
-                        s = f'{self.data[1]:.3f}'
-                        self.get.setText(s)
-                        self.set.setText(s)
+                    except: pass
                 else:
                     self.get.setText('N/A')
-                self.online  = False
-                
+
                 if self.active:
-                    try: # this can fail when the app is closed, so wrap in a try-except
+                    try:
                         shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
                         shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
-                        await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
-                    except:
-                        pass
+                        loop.run_until_complete(
+                            self.UpdateInspectorLimits(PVName, makeReadOnly = False)
+                        )
+                    except: pass
             lastMatch = PVName
-            # Recheck online state of any downstream blocks
             if self.checkStateOfDownstreamBlocks:
                 for ID in self.linksOut:
                     if type(ID) == int:
                         shared.entities[ID].CheckState()
-
             self.checkStateOfDownstreamBlocks = False
-            await asyncio.sleep(.2)
+            self.stopCheckThread.wait(timeout = .2)
+
+    # async def FetchReadValue(self, timeout = 1):
+    #     '''Asynchronously fetch and update current value, without blocking the UI thread.'''
+    #     lastMatch = ''
+    #     while True:
+    #         # check whether the current name is a valid PV.
+    #         try:
+    #             # will attempt to find a match on the full name first, before splitting
+    #             PVName = self.name
+    #             try:
+    #                 await aioca.caget(self.name, timeout = timeout)
+    #                 await asyncio.sleep(.25)
+    #                 self.data[1] = await aioca.caget(self.name, timeout = timeout)
+    #             except:
+    #                 PVName = self.name.split(':')[0]
+    #                 await aioca.caget(PVName + ':I', timeout = timeout)
+    #                 await asyncio.sleep(.25)
+    #                 self.data[1] = await aioca.caget(PVName + ':I', timeout = timeout)
+    #             self.settings['components']['value']['default'] = self.data[1]
+    #             if PVName != lastMatch:
+    #                 self.PVMatch = True
+    #                 shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
+    #                 self.checkStateOfDownstreamBlocks = True
+    #                 self.online = True
+    #                 self.get.setText(f'{self.data[1]:.3f}')
+    #                 self.set.setText(f'{self.data[1]:.3f}')
+    #                 self.data[0] = self.data[1] # set the READ and SET values to be the same if the new PV name is valid
+    #                 # Update units if this is a corrector / steerer.
+    #                 if 'STR' in PVName:
+    #                     self.settings['components']['value']['units'] = 'Amps'
+    #                     if self.active:
+    #                         shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + ' (Amps)'
+    #                         shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
+    #                 await self.UpdateInspectorLimits(PVName)
+    #         except:
+    #             self.PVMatch = False
+    #             self.settings['components']['value']['units'] = ''
+    #             if not np.isinf(self.data[1]):
+    #                 try:
+    #                     if lastMatch != PVName:
+    #                         if self.online:
+    #                             self.data[1] = np.inf
+    #                             self.get.setText('N/A')
+    #                         else:
+    #                             s = f'{self.data[1]:.3f}'
+    #                             self.get.setText(s)
+    #                             self.set.setText(s)
+    #                     else:
+    #                         s = f'{self.data[1]:.3f}'
+    #                         self.get.setText(s)
+    #                         self.set.setText(s)
+    #                 except:
+    #                     pass
+    #             else:
+    #                 self.get.setText('N/A')
+    #             self.online  = False
+                
+    #             if self.active:
+    #                 try: # this can fail when the app is closed, so wrap in a try-except
+    #                     shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
+    #                     shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
+    #                     await self.UpdateInspectorLimits(PVName, makeReadOnly = False)
+    #                 except:
+    #                     pass
+    #         lastMatch = PVName
+    #         # Recheck online state of any downstream blocks
+    #         if self.checkStateOfDownstreamBlocks:
+    #             for ID in self.linksOut:
+    #                 if type(ID) == int:
+    #                     shared.entities[ID].CheckState()
+
+    #         self.checkStateOfDownstreamBlocks = False
+    #         await asyncio.sleep(.2)
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
         '''`event` should be a mouseReleaseEvent if it needs to be called.'''

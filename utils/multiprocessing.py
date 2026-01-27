@@ -127,7 +127,7 @@ def StartPersistentJobCheck(entityID, sharedMemoryName, emptyArray, inQueue, out
         parameters = inQueue.get() # will sit in background until a queue submission occurs.
         if parameters is None: # if None is submitted, close the process.
             break
-        outQueue.put(action(pause, stop, error, progress, sharedMemoryName, emptyArray.shape, emptyArray.dtype, parameters, **kwargs))
+        outQueue.put(action(pause, stop, error, progress, sharedMemoryName, emptyArray.shape, emptyArray.dtype, *parameters, **kwargs))
 
 def CreatePersistentWorker(entity, emptyArray, inQueue, outQueue, action, progress, **kwargs):
     entity.CreateEmptySharedData(emptyArray)

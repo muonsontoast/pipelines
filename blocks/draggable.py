@@ -2,7 +2,8 @@ from PySide6.QtWidgets import QGraphicsProxyWidget, QComboBox, QListWidget, QLis
 from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QLineF, QPoint, QPointF
 import time
-import asyncio
+from threading import Lock
+from multiprocessing import Event
 from ..components.slider import SliderComponent
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene
@@ -24,6 +25,10 @@ class Draggable(Entity, QWidget):
         super().__init__(name = kwargs.pop('name', 'Draggable'), type = kwargs.pop('type', 'Draggable'), size = kwargs.pop('size', [500, 440]), dtype = dtype, dtypes = dtypes, **kwargs)
         self.fundamental = True
         self.proxy = proxy
+        self.lock = Lock()
+        self.valueRequest, self.valueReady = Event(), Event()
+        self.checkThread = None # every draggable has an optional check thread responsible for updating its value displayed to the user regularly.
+        self.stopCheckThread = Event() # force the check thread to close when exiting and saving.
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)

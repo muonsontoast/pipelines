@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
+from PySide6.QtWidgets import QScrollArea, QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
 from PySide6.QtCore import Qt
 import numpy as np
 import aioca
@@ -40,7 +40,7 @@ class SingleTaskGP(Draggable):
             simPrecision = 'fp64'
 
         super().__init__(
-            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 565]), 
+            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 615]), 
             components = {
                 'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float),
             },
@@ -48,7 +48,7 @@ class SingleTaskGP(Draggable):
             acqHyperparameter = kwargs.pop('acqHyperparameter', 2),
             numSamples = kwargs.pop('numSamples', 5),
             numSteps = kwargs.pop('numSteps', 20),
-            mode = kwargs.pop('mode', 'maximise'),
+            mode = kwargs.pop('mode', 'MAXIMISE'),
             numParticles = kwargs.pop('numParticles', 10000),
             simPrecision = simPrecision,
             headerColor = "#C1492B",
@@ -59,6 +59,7 @@ class SingleTaskGP(Draggable):
         self.offlineAction = OfflineAction(self)
         self.onlineAction = OnlineAction(self)
         self.online = False
+        self.isReset = False
         self.actionFinished = Event()
         self.resetApplied = Event()
         self.lock = Lock()
@@ -110,7 +111,7 @@ class SingleTaskGP(Draggable):
                     's': o.settings['linkedElement']['s (m)'],
                     'dtype': o.settings['dtype'],
                 }
-                for o in self.objectives
+                for o in self.fundamentalObjectives
             ],
             'numParticles': self.numParticles,
             'totalSteps': self.settings['numSamples'] + self.settings['numSteps']
@@ -140,7 +141,7 @@ class SingleTaskGP(Draggable):
         from ..kernels.kernel import Kernel
         super().Push()
         self.widget.layout().setContentsMargins(5, 10, 20, 10)
-        self.widget.layout().setSpacing(15)
+        self.widget.layout().setSpacing(20)
         self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = [PV])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
         self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition, Filter])
@@ -311,6 +312,20 @@ class SingleTaskGP(Draggable):
         self.bestEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         best.layout().addWidget(self.bestEdit)
         metrics.layout().addWidget(best)
+        # candidate
+        candidate = QWidget()
+        candidate.setFixedHeight(30)
+        candidate.setLayout(QHBoxLayout())
+        candidate.layout().setContentsMargins(5, 0, 0, 0)
+        candidateLabel = QLabel('Best Candidate')
+        candidateLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        candidate.layout().addWidget(candidateLabel)
+        self.candidateEdit = QLineEdit('N/A')
+        self.candidateEdit.setReadOnly(True)
+        self.candidateEdit.setStyleSheet(style.LineEditStyle(color = '#1e1e1e', fontColor = '#c4c4c4', fontSize = 12, paddingLeft = 13, borderRadius = 6))
+        self.candidateEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        candidate.layout().addWidget(self.candidateEdit)
+        metrics.layout().addWidget(candidate)
         # average
         average = QWidget()
         average.setFixedHeight(30)
@@ -333,7 +348,6 @@ class SingleTaskGP(Draggable):
         self.progressBar = Progress(self)
         progressWidget.layout().addWidget(self.progressBar)
         self.widget.layout().addWidget(progressWidget)
-        self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.BaseStyling()
 
     def UpdateMetrics(self):
@@ -354,9 +368,9 @@ class SingleTaskGP(Draggable):
         return datetime.now().strftime('%H:%M:%S')
 
     def ChangeMode(self):
-        self.settings['mode'] = 'maximise' if self.settings['mode'] == 'minimise' else 'minimise'
-        self.modeLabel.setText(f'Mode:\t{self.settings['mode'].upper()}')
-        shared.workspace.assistant.PushMessage(f'Successfully changed mode of {self.name} to {self.settings['mode'].upper()}.')
+        self.settings['mode'] = 'MAXIMISE' if self.settings['mode'] == 'MINIMISE' else 'MINIMISE'
+        self.modeLabel.setText(f'Mode:\t{self.settings['mode']}')
+        shared.workspace.assistant.PushMessage(f'Successfully changed mode of {self.name} to {self.settings['mode']}.')
 
     def ChangeAcqHyperparameter(self):
         try:
@@ -490,21 +504,22 @@ class SingleTaskGP(Draggable):
 
     def SetupAndRunOptimiser(self, evaluateFunction):
         shared.workspace.assistant.PushMessage(f'{self.name} is setting up for the first time, which may take a few seconds.')
-        mode = 'MAXIMIZE' if self.settings['mode'] == 'maximise' else 'MINIMIZE'
+        mode = 'MAXIMIZE' if self.settings['mode'].upper() == 'MAXIMISE' else 'MINIMIZE'
         variables = dict()
+        self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
         for _, d in enumerate(self.decisions):
             self.activeDims[d.ID] = _
             variables[f'{d.name} (ID: {d.ID})'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
         vocs = VOCS(
             variables = variables,
             objectives = {
-                f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': mode,
+                self.immediateObjectiveName: mode,
             },
         )
         kernel = self.ConstructKernel()
         constructor = StandardModelConstructor(
             covar_modules = {
-                f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': kernel,
+                self.immediateObjectiveName: kernel,
             },
         )
         if self.settings['acqFunction'] == 'UCB':
@@ -520,37 +535,55 @@ class SingleTaskGP(Draggable):
             )
 
         evaluator = Evaluator(function = evaluateFunction)
-        X = Xopt(
+        self.X = Xopt(
             vocs = vocs,
             generator = generator,
             evaluator = evaluator,
         )
-        X.random_evaluate(1) # run once to initialise shared memory array
-        X.data.drop(0)
+        self.bestValue = None
+        self.bestCandidate = None
+        self.runningAverageWindow = 5
+        self.lastValues = np.array([])
+        self.initialised = False
+        self.X.random_evaluate(1) # run once to initialise shared memory array
+        self.initialised = True
+        self.X.data.drop(0, inplace = True)
         self.numEvals = 0
         shared.workspace.assistant.PushMessage(f'{self.name} is now running.')
-        X.random_evaluate(np.maximum(self.settings['numSamples'], 1))
-        X.random_evaluate(self.settings['numSteps'])
+        self.X.random_evaluate(np.maximum(self.settings['numSamples'], 1))
+        if self.settings['numSteps'] > 0:
+            for it in range(self.settings['numSteps']):
+                self.X.step()
+                self.X.generator.train_model()
+                # allow user to break out of this for loop.
+                if self.stopCheckThread.is_set():
+                    self.stopCheckThread.clear()
+                    break
         self.inQueue.put(None)
-        self.progressAmount = 1
-        self.progressEdit.setText('100')
         # set the STOP flag to allow the runningAction to be cleaned up.
-        runningActions[self.ID][1].set()
-        self.progressBar.CheckProgress(self.progressAmount)
+        if self.ID in runningActions:
+            runningActions[self.ID][1].set()
+        if not self.isReset:
+            self.progressAmount = 1
+            self.progressEdit.setText('100')
+            self.progressBar.CheckProgress(self.progressAmount)
 
     def Pause(self, changeGlobalToggleState = True):
         with self.lock:
-            if not self.actionFinished.is_set() and not runningActions[self.ID][0].is_set():
-                TogglePause(self, changeGlobalToggleState)
-                if runningActions[self.ID][0].is_set():
-                    self.progressBar.TogglePause(True)
-                else:
-                    self.progressBar.TogglePause(False)
+            if not self.actionFinished.is_set():
+                if self.ID in runningActions and not runningActions[self.ID][0].is_set():
+                    TogglePause(self, changeGlobalToggleState)
+                    if runningActions[self.ID][0].is_set():
+                        self.progressBar.TogglePause(True)
+                    else:
+                        self.progressBar.TogglePause(False)
 
     def Stop(self):
         StopAction(self)
 
     def Reset(self):
+        self.stopCheckThread.set()
+        self.isReset = True
         super().Reset()
         self.progressBar.Reset()
 
@@ -561,19 +594,23 @@ class SingleTaskGP(Draggable):
                 self.progressBar.TogglePause(False)
             return
         
+        self.isReset = False
         self.actionFinished.clear()
         self.progressBar.Reset()
         self.decisions = []
         for ID, v in self.linksIn.items():
             if v['socket'] == 'decision':
                 self.decisions.append(shared.entities[ID])
-        self.objectives = [shared.entities[ID] for ID in self.GetObjectiveIDs(self.ID, socketNameFilter = 'objective')]
+        # objective leaf nodes that determine the final objective value witnessed by the block.
+        self.fundamentalObjectives = [shared.entities[ID] for ID in self.GetObjectiveIDs(self.ID, socketNameFilter = 'objective')]
+        # objectives with immediate connections to this block.
+        self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
         immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
 
         if not self.CheckDecisionStatesAgree():
             return
         self.online = self.decisions[0].online
-        self.numParticles = 5000
+        self.numParticles = 10000
         self.numEvals = 0
         self.maxEvals = self.settings['numSamples'] + self.settings['numSteps']
         self.t0 = time.time()
@@ -581,7 +618,7 @@ class SingleTaskGP(Draggable):
         self.progressAmount = 0
 
         precision = np.float32 if self.settings['simPrecision'] == 'fp32' else np.float64
-        emptyArray = np.empty(len(self.objectives), dtype = precision)
+        emptyArray = np.empty(len(self.fundamentalObjectives), dtype = precision)
         self.inQueue, self.outQueue = Queue(), Queue()
 
         if not self.online:
@@ -595,25 +632,48 @@ class SingleTaskGP(Draggable):
             self.progressEdit.setText(f'{self.progressAmount * 1e2:.0f}')
             self.progressBar.CheckProgress(self.progressAmount)
             self.numEvals += 1
-            for d in dictIn:
-                entity = shared.entities[int(d.split()[-1][:-1])]
-                entity.settings['components']['value']['value'] = dictIn[d]
-                entity.data[1] = dictIn[d]
-                if entity.settings['linkedElement'].Name == 'HSTR':
-                    shared.lattice[entity.settings['linkedElement'].Index].KickAngle[0] = dictIn[d] * 1e-3 # convert input to mrad
-                elif entity.settings['linkedElement'].Name == 'VSTR':
-                    shared.lattice[entity.settings['linkedElement'].Index].KickAngle[1] = dictIn[d] * 1e-3 # convert input to mrad
-            self.inQueue.put(dictIn)
+            self.inQueue.put([dictIn])
             simResult = self.outQueue.get()
             # a reset interrupt can cause this to set simResult to None -- handle this
             if self.ID not in runningActions or runningActions[self.ID][1].is_set():
                 return {immediateObjectiveName: np.nan}
-            for it, o in enumerate(self.objectives):
+            # trying to change pv values from a separate process will not work.
+            for it, o in enumerate(self.fundamentalObjectives):
                 o.data[1] = simResult[it]
-            return {immediateObjectiveName: self.objectives[0].Start()}
+            t = Thread(target = self.objectives[0].Start)
+            t.start()
+            t.join()
+            if self.initialised:
+                if self.lastValues.shape[0] > self.runningAverageWindow:
+                    self.lastValues = np.delete(self.lastValues, 0)
+                self.lastValues = np.append(self.lastValues, np.array([self.objectives[0].data[1]]))
+                self.averageEdit.setText(f'{np.nanmean(self.lastValues):.3f}')
+                if self.settings['mode'].upper() == 'MAXIMISE':
+                    if self.bestValue is None or self.bestValue < self.objectives[0].data[1]:
+                        self.bestValue = self.objectives[0].data[1]
+                        self.bestEdit.setText(f'{self.bestValue:.3f}')
+                        self.bestCandidate = np.array(list(dictIn.values()))
+                        s = ''
+                        for d in dictIn.values():
+                            s += f'{d:.3f}  '
+                        self.candidateEdit.setText(s)
+                elif self.settings['mode'].upper() == 'MINIMISE':
+                    if self.bestValue is None or self.bestValue > self.objectives[0].data[1]:
+                        self.bestValue = self.objectives[0].data[1]
+                        self.bestEdit.setText(f'{self.bestValue:.3f}')
+                        self.bestCandidate = np.array(list(dictIn.values()))
+                        s = ''
+                        for d in dictIn.values():
+                            s += f'{d:.3f}  '
+                        self.candidateEdit.setText(s)
+            
+            return {immediateObjectiveName: self.objectives[0].data[1]}
 
         self.timestamp.setText(self.Timestamp())
         self.progressEdit.setText('0')
+        self.bestEdit.setText('N/A')
+        self.candidateEdit.setText('N/A')
+        self.averageEdit.setText('N/A')
         Thread(target = self.SetupAndRunOptimiser, args = (Evaluate,), daemon = True).start()
         Thread(target = self.UpdateMetrics, daemon = True).start()
 
@@ -628,13 +688,17 @@ class SingleTaskGP(Draggable):
         
         if not self.sharedMemoryCreated:
             self.sharedMemory = SharedMemory(name = sharedMemoryName)
-            data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
-            data[:] = np.inf
             self.sharedMemoryCreated = True
-        else:
-            data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
-        
+        data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
         result = np.zeros((numRepeats, self.numObjectives))
+
+        for d in parameters:
+            idx = int(d.split('Index: ')[1].split(')')[0])
+            # convert steerer values to mrad.
+            if 'HSTR' in d:
+                self.lattice[idx].KickAngle[0] = parameters[d] * 1e-3
+            elif 'VSTR' in d:
+                self.lattice[idx].KickAngle[1] = parameters[d] * 1e-3
 
         for r in range(numRepeats):
             tracking, _ = self.simulator.TrackBeam(self.numParticles)
@@ -651,7 +715,6 @@ class SingleTaskGP(Draggable):
                     self.sharedMemory.close()
                     self.sharedMemory.unlink()
                     return
-        # return the average over repeats as an array of length len(self.objectives)
         np.copyto(data, np.mean(result, axis = 0))
         return data
 

@@ -281,6 +281,8 @@ class MainWindow(Entity, QMainWindow):
         shared.app.processEvents()
 
     def closeEvent(self, event):
+        shared.workspace.assistant.PushMessage('Closing app and cleaning up.')
+        shared.app.processEvents()
         shared.stopCleanUpTimer = True
         self.resourceMonitor.stop()
         StopAllActions()
