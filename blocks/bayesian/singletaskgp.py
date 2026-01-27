@@ -506,10 +506,13 @@ class SingleTaskGP(Draggable):
         shared.workspace.assistant.PushMessage(f'{self.name} is setting up for the first time, which may take a few seconds.')
         mode = 'MAXIMIZE' if self.settings['mode'].upper() == 'MAXIMISE' else 'MINIMIZE'
         variables = dict()
+        self.variableNameToID = dict()
         self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
         for _, d in enumerate(self.decisions):
             self.activeDims[d.ID] = _
-            variables[f'{d.name} (ID: {d.ID})'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
+            nm = f'{d.name} (ID: {d.ID})'
+            variables[nm] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
+            self.variableNameToID[nm] = d.ID
         vocs = VOCS(
             variables = variables,
             objectives = {
@@ -632,6 +635,10 @@ class SingleTaskGP(Draggable):
             self.progressEdit.setText(f'{self.progressAmount * 1e2:.0f}')
             self.progressBar.CheckProgress(self.progressAmount)
             self.numEvals += 1
+            # update decision variables live in editor
+            for v in dictIn:
+                shared.entities[self.variableNameToID[v]].data[0] = dictIn[v]
+                shared.entities[self.variableNameToID[v]].data[1] = dictIn[v]
             self.inQueue.put([dictIn])
             simResult = self.outQueue.get()
             # a reset interrupt can cause this to set simResult to None -- handle this

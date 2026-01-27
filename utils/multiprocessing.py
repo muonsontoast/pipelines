@@ -50,7 +50,6 @@ def StopActions():
     '''Stop all currently running actions.'''
     IDs = list(runningActions.keys())
     for ID in IDs:
-        shared.entities[ID].title.setText(shared.entities[ID].name)
         runningActions[ID][1].set()
 
 def RunProcess(action, queue, pause, stop, error, progress, sharedMemoryName, shape, dtype, **kwargs):

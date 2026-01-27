@@ -1,4 +1,5 @@
 from multiprocessing.shared_memory import SharedMemory
+from threading import current_thread
 import numpy as np
 from .. import shared
 
@@ -41,17 +42,14 @@ class Entity:
         self.sharingData = True
     
     def CleanUp(self):
-        # remove the data from memory to stop it persisting after closing the application.
         if hasattr(self, 'checkThread'):
-            # if a draggable is running a check thread, allow it to close to avoid silent save errors.
             if self.checkThread is not None:
                 self.stopCheckThread.set()
         if hasattr(self, 'dataSharedMemory'):
             try:
                 self.dataSharedMemory.close()
                 self.dataSharedMemory.unlink()
-            except:
-                pass
+            except: pass
 
     def Register(self, overrideID = None):
         '''Registers this object as an entity inside the shared entity list.'''
