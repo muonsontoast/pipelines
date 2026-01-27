@@ -627,7 +627,9 @@ class SingleTaskGP(Draggable):
         emptyArray = np.empty(len(self.fundamentalObjectives), dtype = precision)
         self.inQueue, self.outQueue = Queue(), Queue()
 
-        if not self.online:
+        if self.online:
+            CreatePersistentWorker(self, emptyArray, self.inQueue, self.outQueue, self.SendMachineInstructions, 0.)
+        else:
             CreatePersistentWorker(self, emptyArray, self.inQueue, self.outQueue, self.Simulate, 0.)
         SetGlobalToggleState()
 
@@ -686,6 +688,18 @@ class SingleTaskGP(Draggable):
         self.averageEdit.setText('N/A')
         Thread(target = self.SetupAndRunOptimiser, args = (Evaluate,), daemon = True).start()
         Thread(target = self.UpdateMetrics, daemon = True).start()
+
+    def SendMachineInstructions(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, parameters, **kwargs):
+        if not self.sharedMemoryCreated:
+            self.sharedMemory = SharedMemory(name = sharedMemoryName)
+            self.sharedMemoryCreated = True
+        data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
+        print('== Send Machine Instructions ==')
+        for d in parameters:
+            nm = d.split()[:-1]
+            print(f'{nm} is being set to {parameters[d]:.3f}')
+        print('-------')
+
 
     def Simulate(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, parameters, **kwargs):
         '''Action does this:
