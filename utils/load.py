@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 from .commands import blockTypes, CreateBlock
 from ..blocks.composition.composition import Composition
+from ..blocks.kernels.kernel import Kernel
 from ..lattice.latticeutils import LoadLattice, GetLatticeInfo
 from ..components import BPM, errors, kickangle, link, slider, kernel
 from .. import shared
@@ -28,7 +29,7 @@ valueTypeLookup = {
 
 def UpdateHyperparameters():
     for entity in shared.entities.values():
-        if 'hyperparameters' in entity.settings:
+        if 'hyperparameters' in entity.settings and len(entity.linksIn) > 0 and isinstance(shared.entities[next(iter(entity.linksIn))], Kernel):
             for hname, h in entity.settings['hyperparameters'].items():
                 if h['type'] == 'vec':
                     entity.settings['hyperparameters'][hname]['value'] = np.array(h['value']) if len(h['value']) > 0 else np.nan
@@ -97,6 +98,7 @@ def Load(path):
                             numSteps = v.get('numSteps', None),
                             mode = v.get('mode', None),
                             dtype = v.get('dtype', None),
+                            numberValue = v.get('numberValue', None),
                         )
                         if 'alignment' in v:
                             entity.settings['alignment'] = v['alignment']
@@ -118,6 +120,8 @@ def Load(path):
                             if hasattr(entity, 'set'):
                                 entity.set.setText(f'{v['components']['value']['value']:.3f}')
                         if 'hyperparameters' in v:
+                            for h in v['hyperparameters']:
+                                v['hyperparameters'][h]['value'] = np.array(v['hyperparameters'][h]['value'])
                             entity.settings['hyperparameters'] = v['hyperparameters']
                 LinkBlocks()
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')

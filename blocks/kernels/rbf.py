@@ -12,8 +12,10 @@ class RBFKernel(Kernel):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         '''Accepts `name` and `type` overrides for entity.'''
         additionalHeight = 64
-        sigma = kwargs.pop('sigma', np.nan)
-        lengthscale = kwargs.pop('lengthscale', np.nan)
+        sigma = kwargs.pop('sigma', [1])
+        sigma = np.array(sigma)
+        lengthscale = kwargs.pop('lengthscale', [1])
+        lengthscale = np.array(lengthscale)
         super().__init__(
             parent,
             proxy,
@@ -37,13 +39,14 @@ class RBFKernel(Kernel):
             **kwargs
         )
 
-    async def k(self, X1, X2):
+    def k(self, X1, X2):
         '''Accepts a matrix pair of X1 and X2 which are NxD arrays.\n
         Returns inner product between each pair of vectors.'''
         X1 = np.array(X1)
         X2 = np.array(X2)
-        self.settings['hyperparameters']['scale']['value'] = 1 if np.isnan(self.settings['hyperparameters']['scale']['value']) else self.settings['hyperparameters']['scale']['value']
+        # self.settings['hyperparameters']['scale']['value'] = 1 if self.settings['hyperparameters']['scale']['value'].shape[0] == 0 else self.settings['hyperparameters']['scale']['value']
         sigma = self.settings['hyperparameters']['scale']['value']
+        # print('>>', self.settings['hyperparameters']['lengthscale']['value'])
         self.settings['hyperparameters']['lengthscale']['value'] = np.ones(X1.shape[1]) if np.isnan(self.settings['hyperparameters']['lengthscale']['value']) else self.settings['hyperparameters']['lengthscale']['value']
         lengthscale = self.settings['hyperparameters']['lengthscale']['value']
         X, Y = np.meshgrid(X1, X2)

@@ -1,10 +1,10 @@
 from PySide6.QtWidgets import QGraphicsProxyWidget
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
-import numpy as np
-import time
-from ..pv import PV
 from threading import Thread
+import numpy as np
+from ..pv import PV
+from ..kernels.kernel import Kernel
 from .composition import Composition
 from ..draggable import Draggable
 from ...utils.entity import Entity
@@ -16,6 +16,7 @@ class Add(Composition):
         super().__init__(parent, proxy, name = kwargs.pop('name', 'Add'), type = 'Add', size = kwargs.pop('size', [250, 100]), **kwargs)
         self.hasBeenPushed = False
         self.CreateEmptySharedData(np.empty(2))
+        Thread(target = self.CheckValue, daemon = True).start()
     
     def Push(self):
         super().Push()
@@ -36,28 +37,29 @@ class Add(Composition):
         while True:
             if self.stopCheckThread.is_set():
                 break
-            if isinstance(shared.entities[next(iter(self.linksIn))], PV):
-                try:
-                    with self.lock:
-                        if self.valueRequest.is_set():
-                            returnNewValue = True
-                    result = np.sum([shared.entities[ID].Start() for ID in self.linksIn])
-                    self.edit.setText(f'{result:.3f}') if not np.isinf(result) else self.edit.setText('N/A')
-                    self.data[1] = result
-                except:
-                    pass
-                with self.lock:
-                    if returnNewValue:
-                        self.valueReady.set()
-                returnNewValue = False
-                self.stopCheckThread.wait(timeout = .2)
+            if len(self.linksIn) > 0:
+                if not isinstance(next(iter(self.linksIn)), (Kernel)):
+                    if hasattr(self, 'edit'):
+                        try:
+                            with self.lock:
+                                if self.valueRequest.is_set():
+                                    returnNewValue = True
+                            result = np.sum([shared.entities[ID].Start() for ID in self.linksIn])
+                            self.edit.setText(f'{result:.3f}') if not np.isinf(result) else self.edit.setText('N/A')
+                            self.data[1] = result
+                        except:
+                            pass
+                        with self.lock:
+                            if returnNewValue:
+                                self.valueReady.set()
+                        returnNewValue = False
             else:
-                self.data[1] = np.inf
-                self.edit.setText('N/A')
-                break
+                if hasattr(self, 'edit'):
+                    self.edit.setText('N/A')
+            self.stopCheckThread.wait(timeout = .2)
     
-    async def k(self, X1, X2):
+    def k(self, X1, X2):
         result = 0
         for ID in self.linksIn:
-            result += await shared.entities[ID].k(X1, X2)
+            result += shared.entities[ID].k(X1, X2)
         return result

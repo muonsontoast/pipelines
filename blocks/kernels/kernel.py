@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
 import asyncio
+from threading import Thread
 from ..draggable import Draggable
 from ...components.kernel import KernelComponent
 from ... import shared
@@ -37,9 +38,12 @@ class Kernel(Draggable):
         )
         for k, val in self.settings['hyperparameters'].items():
             if val['type'] == 'vec':
-                if type(val['value']) == list and val['value'] == []:
-                    self.settings['hyperparameters'][k]['value'] = np.nan
+                self.settings['hyperparameters'][k]['value'] = np.array(self.settings['hyperparameters'][k]['value'])
+                # if type(val['value']) == list and val['value'] == []:
+                #     self.settings['hyperparameters'][k]['value'] = np.nan
         self.parent = parent
+        self.fundamental = False
+        self.updateFigure = False
         self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, marginRight = 0, fontSize = 16)
         self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 16)
         # force a PV's scalar output to be shared at instantiation so modifications are seen by all connected blocks
@@ -54,7 +58,9 @@ class Kernel(Draggable):
         if self.__class__ != Kernel: # only Push immediately if not a base class instance.
             self.Push()
 
-    async def k(self, X1, X2):
+        Thread(target = self.CheckForFigureUpdate, daemon = True).start()
+
+    def k(self, X1, X2):
         '''To be overriden by all subclasses inheriting from this base class.'''
         pass
 
@@ -173,23 +179,31 @@ class Kernel(Draggable):
         self.ax.set_yticklabels([])
         self.ax.set_yticks([])
 
-    async def DrawFigure(self, ignoreDraw = False):
+    def DrawFigure(self, ignoreDraw = False):
         x = np.linspace(-5, 5, 40)
         x = x[..., np.newaxis]
         y = np.linspace(-5, 5, 40)
         y = y[..., np.newaxis]
-        Z = await self.k(x, y)
+        Z = self.k(x, y)
         if not ignoreDraw:
             im = self.ax.imshow(Z, origin = 'lower', cmap = 'viridis')
         return Z
     
-    async def DrawAndRefresh(self):
-        await self.DrawFigure()
+    def DrawAndRefresh(self):
+        self.DrawFigure()
         self.canvas.draw()
 
     def UpdateFigure(self):
-        self.ClearFigure()
-        asyncio.create_task(self.DrawAndRefresh())
+        self.updateFigure = True
+
+    def CheckForFigureUpdate(self):
+        while True:
+            if self.updateFigure:
+                self.ClearFigure()
+                self.DrawAndRefresh()
+                self.updateFigure = False
+            if self.stopCheckThread.wait(timeout = .1):
+                break
 
     def DrawHyperparameterControls(self):
         rowIdx = 3
@@ -242,7 +256,6 @@ class Kernel(Draggable):
             housing.layout().addWidget(rightInnerHousing, alignment = Qt.AlignRight)
             widget.layout().addWidget(housing, alignment = Qt.AlignVCenter)
             self.main.layout().addWidget(widget)
-            # self.mainWidget.layout().addWidget(widget, rowIdx, 1, 1, 3)
             rowIdx += 1
 
     def AddEdit(self, hyperparameterName):
@@ -275,7 +288,7 @@ class Kernel(Draggable):
         widget.layout().removeWidget(edit)
         edit.deleteLater()
         newEdit = QLineEdit(f'{val:.2f}')
-        newEdit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12))
+        newEdit.setStyleSheet(style.LineEditStyle(color = '#2e2e2e', borderRadius = 4, fontSize = 12, bold = True))
         newEdit.setFixedSize(60, 30)
         newEdit.setAlignment(Qt.AlignCenter)
         newEdit.returnPressed.connect(lambda name = name, e = newEdit: self.ChangeEditValue(name, e))

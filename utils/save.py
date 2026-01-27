@@ -65,12 +65,9 @@ def FormatComponents(components: dict):
 def FormatHyperparameters(hyperparameters: dict):
     newHyperparams = dict()
     for k, v in hyperparameters.items():
-        if v['type'] == 'vec':
-            if type(v['value']) == np.ndarray:
-                v['value'] = v['value'].tolist()
-            elif type(v['value']) in [int, float]:
-                v['value'] = [v['value']]
-            else:
-                v['value'] = []
+        if type(v['value']) == np.ndarray:
+            v['value'] = v['value'].tolist()
+        elif type(v['value']) in [int, float]:
+            v['value'] = [v['value']]
         newHyperparams[k] = v
     return newHyperparams

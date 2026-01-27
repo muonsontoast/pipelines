@@ -25,6 +25,7 @@ from ...utils import cothread
 # PerformAction is invoked when running tasks in offline mode to keep the UI responsive.
 from ...utils.multiprocessing import SetGlobalToggleState, TogglePause, StopAction, CreatePersistentWorker, runningActions
 from ..filters.filter import Filter
+from ..number import Number
 from ..pv import PV
 from ..progress import Progress
 from ... import style
@@ -536,7 +537,6 @@ class SingleTaskGP(Draggable):
                 vocs = vocs,
                 gp_constructor = constructor,
             )
-
         evaluator = Evaluator(function = evaluateFunction)
         self.X = Xopt(
             vocs = vocs,
@@ -606,6 +606,9 @@ class SingleTaskGP(Draggable):
                 self.decisions.append(shared.entities[ID])
         # objective leaf nodes that determine the final objective value witnessed by the block.
         self.fundamentalObjectives = [shared.entities[ID] for ID in self.GetObjectiveIDs(self.ID, socketNameFilter = 'objective')]
+        for o in self.fundamentalObjectives:
+            if isinstance(o, Number): # ignore numbers as settable values.
+                self.fundamentalObjectives.pop(self.fundamentalObjectives.index(o))
         # objectives with immediate connections to this block.
         self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
         immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
@@ -692,13 +695,11 @@ class SingleTaskGP(Draggable):
         '''
         numRepeats = 5
         self.simulator.numParticles = self.numParticles
-        
         if not self.sharedMemoryCreated:
             self.sharedMemory = SharedMemory(name = sharedMemoryName)
             self.sharedMemoryCreated = True
         data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
         result = np.zeros((numRepeats, self.numObjectives))
-
         for d in parameters:
             idx = int(d.split('Index: ')[1].split(')')[0])
             # convert steerer values to mrad.
@@ -706,7 +707,6 @@ class SingleTaskGP(Draggable):
                 self.lattice[idx].KickAngle[0] = parameters[d] * 1e-3
             elif 'VSTR' in d:
                 self.lattice[idx].KickAngle[1] = parameters[d] * 1e-3
-
         for r in range(numRepeats):
             tracking, _ = self.simulator.TrackBeam(self.numParticles)
             for it, o in enumerate(self.objectives):

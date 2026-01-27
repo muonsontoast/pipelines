@@ -1,11 +1,10 @@
 from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QLineEdit, QVBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt, QTimer
-import numpy as np
-import time
 from threading import Thread
 from multiprocessing import Event, Lock
 from ..draggable import Draggable
 from ..pv import PV
+from ..number import Number
 from ..kernels.kernel import Kernel
 from ..filters.filter import Filter
 from ...utils import commands
@@ -18,8 +17,8 @@ class Composition(Draggable):
             proxy, name = kwargs.pop('name', 'Composition'), type = kwargs.pop('type', 'Composition'),
             size = kwargs.pop('size', [300, 300]), headerColor = '#32936F', **kwargs
             )
-        self.fundamental = False
         self.parent = parent
+        self.fundamental = False
         self.checkDone = Event()
         self.lock = Lock()
         self.blockType = 'Add'
@@ -41,15 +40,16 @@ class Composition(Draggable):
         for linkID in self.linksIn:
             existingFundamentalType = self.GetType(linkID)
             if linkID != ID:
-                if existingFundamentalType == newFundamentalType:
+                # if existingFundamentalType in [Kernel] and newFundamentalType in [Filter, Composition]:
+                #     break
+                # elif newFundamentalType in [Kernel] and existingFundamentalType in [Filter, Composition]:
+                #     break
+                if newFundamentalType in [existingFundamentalType, Filter, Composition]:
                     break
-                elif existingFundamentalType in [PV, Kernel] and newFundamentalType in [Filter, Composition]:
-                    break
-                elif newFundamentalType in [PV, Kernel] and existingFundamentalType in [Filter, Composition]:
+                elif newFundamentalType in [PV, Number] and existingFundamentalType in [PV, Number]:
                     break
                 shared.workspace.assistant.PushMessage('Add operation must be performed on blocks of the same type.', 'Error')
                 return False
-
         successfulConnection = super().AddLinkIn(ID, socket)
 
         # Modify the widget based on the input type - only if this is the first of its kind.
@@ -62,7 +62,7 @@ class Composition(Draggable):
                     deleteAndRedraw = True
                     if (isinstance(shared.entities[ID], Kernel) or newFundamentalType == Kernel):
                         proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [350, 295])
-                    elif isinstance(shared.entities[ID], PV):
+                    elif isinstance(shared.entities[ID], (PV, Number, Composition)):
                         proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = self.settings['size'])
                     # Attach links on existing block to the new block.
                     for linkID, link in self.linksIn.items():
@@ -72,9 +72,9 @@ class Composition(Draggable):
                         newAdd.AddLinkOut(linkID, link['socket'])
                         shared.entities[linkID].AddLinkIn(newAdd.ID, link['socket'])
                 else:
-                    if isinstance(shared.entities[ID], PV):
+                    if isinstance(shared.entities[ID], (PV, Number, Composition)):
                         # add a line edit element
-                        self.edit = QLineEdit()
+                        self.edit = QLineEdit('N/A')
                         self.edit.setFixedSize(100, 40)
                         self.edit.setAlignment(Qt.AlignCenter)
                         self.edit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
@@ -82,7 +82,6 @@ class Composition(Draggable):
                         self.edit.setReadOnly(True)
                         self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
                         self.timerRunning = True
-                        # Thread(target = self.CheckValue, daemon = True).start()
                         self.checkThread = Thread(target = self.CheckValue, daemon = True)
                         self.checkThread.start()
                 if deleteAndRedraw:
@@ -136,6 +135,7 @@ class Composition(Draggable):
                 hyperparameters[f'{nm} ({shared.entities[ID].name})'] = val
         self.settings['hyperparameters'] = hyperparameters
         self.kernel = Kernel(self, self.proxy, hyperparameters = hyperparameters)
+        shared.entities.pop(self.kernel.ID) # remove the kernel from the entity variable to stop it being saved erroneously.
         self.kernel.Push()
         self.kernel.k = self.k
         self.widget.layout().addWidget(self.kernel.canvas)

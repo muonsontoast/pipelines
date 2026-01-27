@@ -12,11 +12,11 @@ class Filter(Draggable):
             type = kwargs.pop('type', 'Filter'),
             size = kwargs.pop('size', [300, 150]),
             fontsize = kwargs.pop('fontsize', 12),
-            headerColor = '#312244',
+            headerColor = '#886F68',
             **kwargs,
         )
-        self.fundamental = False
         self.parent = parent
+        self.fundamental = False
         self.CreateEmptySharedData(np.zeros(2)) # a SET value and a READ value
         self.data[:] = np.inf
         # store the shared memory name and attrs which get copied across instances

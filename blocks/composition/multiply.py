@@ -2,48 +2,61 @@ from PySide6.QtWidgets import QGraphicsProxyWidget
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
 import numpy as np
-from threading import Thread
+from ..pv import PV
+from ..kernels.kernel import Kernel
 from .composition import Composition
 from ..draggable import Draggable
 from ...utils.entity import Entity
 from ... import shared
 
 class Multiply(Composition):
-    '''Add composition block.'''
+    '''Multiply composition block.'''
     def __init__(self, parent: Entity, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(parent, proxy, name = kwargs.pop('name', 'Multiply'), type = 'Multiply', size = kwargs.pop('size', [250, 100]), **kwargs)
         self.hasBeenPushed = False
+        self.CreateEmptySharedData(np.empty(2))
     
     def Push(self):
         super().Push()
         self.AddSocket('in', 'F', acceptableTypes = [Draggable])
-    
-    # def Start(self):
-    #     result = 1
-    #     for ID in self.linksIn:
-    #         result *= shared.entities[ID].Start()
-    #     self.data = result
-    #     return self.data
 
     def Start(self):
-        result, threads = [], []
-        for ID in self.linksIn:
-            res = 0
-            def StartLinkIn(_ID, res):
-                res = shared.entities[ID].Start()
-            result.append(res)
-            t = Thread(target = StartLinkIn, args = (ID, res), daemon = True)
-            t.start()
-            threads.append(t)
-        for t in threads:
-            t.join()
-
-        result = np.prod(result)
-        self.data = result
-        return self.data
+        with self.lock:
+            self.valueRequest.set()
+        self.valueReady.wait()
+        with self.lock:
+            self.valueRequest.clear()
+            self.valueReady.clear()
+        return self.data[1]
     
-    async def k(self, X1, X2):
+    def CheckValue(self):
+        '''Periodically computes this block\'s value.'''
+        returnNewValue = False
+        while True:
+            if self.stopCheckThread.is_set():
+                break
+            if not isinstance(shared.entities[next(iter(self.linksIn))], (Kernel)):
+                if hasattr(self, 'edit'):
+                    try:
+                        with self.lock:
+                            if self.valueRequest.is_set():
+                                returnNewValue = True
+                        result = np.prod([shared.entities[ID].Start() for ID in self.linksIn])
+                        self.edit.setText(f'{result:.3f}') if not np.isinf(result) else self.edit.setText('N/A')
+                        self.data[1] = result
+                    except:
+                        pass
+                    with self.lock:
+                        if returnNewValue:
+                            self.valueReady.set()
+                    returnNewValue = False
+            else:
+                if hasattr(self, 'edit'):
+                    self.edit.setText('N/A')
+            self.stopCheckThread.wait(timeout = .2)
+    
+    def k(self, X1, X2):
         result = 1
         for ID in self.linksIn:
-            result *= await shared.entities[ID].k(X1, X2)
+            result *= shared.entities[ID].k(X1, X2)
         return result

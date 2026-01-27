@@ -11,7 +11,7 @@ class SingleControl(Filter):
             proxy,
             name = kwargs.pop('name', 'Single Control (Filter)'),
             type = kwargs.pop('type', 'Single Control'),
-            size = kwargs.pop('size', [385, 250]),
+            size = kwargs.pop('size', [400, 250]),
             fontsize = kwargs.pop('fontsize', 12),
             threshold = kwargs.pop('threshold', 0),
             **kwargs,

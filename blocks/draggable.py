@@ -153,7 +153,7 @@ class Draggable(Entity, QWidget):
         if len(shared.entities[ID].linksIn) > 0:
             return self.GetType(next(iter(shared.entities[ID].linksIn)))
         fundamentalType = type(shared.entities[ID])
-        return fundamentalType if self.fundamental else shared.entities[ID].__class__.__base__
+        return fundamentalType if shared.entities[ID].fundamental else shared.entities[ID].__class__.__base__
 
     def ClearLayout(self):
         while self.layout() and self.layout().count():
