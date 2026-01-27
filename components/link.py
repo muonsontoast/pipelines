@@ -19,9 +19,14 @@ class LinkComponent(Component):
         self.pvHasLinkedElement = 'linkedElement' in self.pv.settings.keys()
         # Lattice elements and a list of names + indexes
         if shared.elements is None:
-            shared.lattice = latticeutils.LoadLattice(shared.latticePath)
-            shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
-            shared.names = [a + f' [{shared.elements.Type[b]}] (Index: {str(b)}) @ {shared.elements['s (m)'].iloc[b]:.2f} m' for a, b in zip(shared.elements.Name, shared.elements.Index)]
+            try:
+                shared.lattice = latticeutils.LoadLattice(shared.latticePath)
+                shared.elements = latticeutils.GetLatticeInfo(shared.lattice)
+                shared.names = [a + f' [{shared.elements.Type[b]}] (Index: {str(b)}) @ {shared.elements['s (m)'].iloc[b]:.2f} m' for a, b in zip(shared.elements.Name, shared.elements.Index)]
+            except:
+                shared.lattice = None
+                shared.elements = None
+                shared.names = []
         # Completer
         self.completer = QCompleter()
         self.completer.setModel(QStringListModel(shared.names))

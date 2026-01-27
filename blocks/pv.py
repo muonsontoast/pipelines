@@ -114,8 +114,9 @@ class PV(Draggable):
         self.layout().addWidget(self.outSocket, alignment = Qt.AlignTop)
         self.ToggleStyling(active = False)
 
-    async def UpdateInspectorLimits(self, PVName, timeout = 1, makeReadOnly = True):
+    def UpdateInspectorLimits(self, PVName, timeout = 1, makeReadOnly = True):
         '''Attempts to update limits inside the inspector, if they are defined for the PV.'''
+        loop = asyncio.get_running_loop()
         if not makeReadOnly:
             # Make fields editable if there are no strict PV limits.
             if self.active:
@@ -124,8 +125,14 @@ class PV(Draggable):
                 shared.inspector.expandables['value'].widget.default.setReadOnly(False)
         else:
             try:
-                mn = await aioca.caget(PVName + ':IMIN', timeout = timeout)
-                mx = await aioca.caget(PVName + ':IMAX', timeout = timeout)
+                mn = loop.run_until_complete(
+                    aioca.caget(PVName + ':IMIN', timeout = timeout)
+                )
+                mx = loop.run_until_complete(
+                    aioca.caget(PVName + ':IMAX', timeout = timeout)
+                )
+                # mn = asyncio.caioca.caget(PVName + ':IMIN', timeout = timeout)
+                # mx = await aioca.caget(PVName + ':IMAX', timeout = timeout)
                 if mx > mn:
                     if self.active:
                         shared.inspector.expandables['value'].widget.minimum.setText(f'{mn}')
@@ -202,7 +209,6 @@ class PV(Draggable):
                             s = f'{self.data[1]:.3f}'
                             self.get.setText(s)
                             self.set.setText(s)
-                            print(f'* ABC and setting get and set text to {s}')
                             if 'STR' in PVName:
                                 self.settings['components']['value']['units'] = 'Amps'
                                 if self.active:
