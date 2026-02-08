@@ -3,6 +3,7 @@ import gc
 import yaml
 import numpy as np
 from copy import deepcopy
+from .multiprocessing import runningActions, workers
 from .. import shared
 
 def Save():
@@ -28,8 +29,23 @@ def Save():
             # tell check threads to stop
             if entity.sharingData:
                 entity.stopCheckThread.set()
+                try:
+                    if hasattr(entity, 'inQueue') and entity.inQueue is not None:
+                        entity.inQueue.close()
+                    if hasattr(entity, 'outQueue') and entity.outQueue is not None:
+                        entity.outQueue.close()
+                except: pass
         yaml.dump(settings, f)
         print('Dumped session settings to disk.')
+        # necessary to prevent leaked semaphores after close on Linux/MacOS
+        runningActions.clear()
+        workers.clear()
+        # avoids leaked semaphores on Linux/MacOS
+        for entity in shared.entities.values():
+            if entity.sharingData and entity.checkThread is not None:
+                try:
+                    entity.checkThread.join()
+                except: pass # closed itself
         # close and unlink shared memory pools
         for entity in shared.entities.values():
             if entity.sharingData:

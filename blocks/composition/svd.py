@@ -7,7 +7,7 @@ from .composition import Composition
 from ...components.slider import SliderComponent
 from ...ui.runningcircle import RunningCircle
 from ...actions.offline.svd import SVDAction
-from ...utils.multiprocessing import PerformAction
+# from ...utils.multiprocessing import PerformAction
 from ... import shared
 
 class SVD(Composition):

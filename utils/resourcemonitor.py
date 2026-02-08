@@ -1,4 +1,5 @@
-from PySide6.QtCore import QThread, Signal, QTimer
+from PySide6.QtCore import QThread, Signal
+from threading import Event
 import psutil
 from pynvml import *
 
@@ -10,6 +11,7 @@ class ResourceMonitor(QThread):
     def __init__(self):
         super().__init__()
         self.running = False
+        self.stopEvent = Event()
         try:
             nvmlInit()
             self.GPUHandle = nvmlDeviceGetHandleByIndex(0)
@@ -19,14 +21,6 @@ class ResourceMonitor(QThread):
             self.GPUMemoryTotal = 0
         except:
             self.hasGPU = False
-
-    def stop(self):
-        self.running = False
-        if self.hasGPU:
-            try:
-                nvmlShutdown()
-            except:
-                pass
 
     def PollGPU(self):
         if not self.hasGPU:
@@ -69,17 +63,9 @@ class ResourceMonitor(QThread):
             )
 
     def FetchResourceValues(self):
-        if hasattr(self, 'timer'):
-            if not self.running:
-                self.quit()
-                return
-        self.PollGPU()
-        self.PollRAM()
-        self.PollDisk()
-
-    def run(self):
-        self.running = True
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.FetchResourceValues)
-        self.timer.start(1000)
-        self.exec()
+        while True:
+            self.PollGPU()
+            self.PollRAM()
+            self.PollDisk()
+            if self.stopEvent.wait(timeout = 1):
+                break

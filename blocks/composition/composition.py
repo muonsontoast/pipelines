@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QLineEdit, QVBoxLayout, QSizePolicy
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 from threading import Thread
-from multiprocessing import Event, Lock
+# from multiprocessing import Event, Lock
+from threading import Event, Lock
 from ..draggable import Draggable
 from ..pv import PV
 from ..number import Number

@@ -1,26 +1,20 @@
-from PySide6.QtWidgets import QScrollArea, QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit, QComboBox, QLabel, QSizePolicy, QHBoxLayout, QVBoxLayout, QSpacerItem
+from PySide6.QtCore import Qt, Signal
 import numpy as np
-import aioca
-import asyncio
 import operator
 from functools import reduce
 import time
 from datetime import datetime
 from xopt import Xopt, VOCS, Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
-# rename gpytorch kernels to avoid conflict with pipelines objects
 from xopt.generators.bayesian.models.standard import StandardModelConstructor
-from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Queue
+from multiprocessing import Event
 from multiprocessing.shared_memory import SharedMemory
-from threading import Thread, Event, Lock
+from threading import Thread, Lock
+from queue import Queue
 from ...simulator import Simulator
 from ... import shared
 from ..draggable import Draggable
-from ...ui.runningcircle import RunningCircle
-from ...actions.offline.singletaskgp import SingleTaskGPAction as OfflineAction
-from ...actions.online.singletaskgp import SingleTaskGPAction as OnlineAction
 from ...utils import cothread
 # PerformAction is invoked when running tasks in offline mode to keep the UI responsive.
 from ...utils.multiprocessing import SetGlobalToggleState, TogglePause, StopAction, CreatePersistentWorker, runningActions
@@ -32,6 +26,12 @@ from ... import style
 from ... import shared
 
 class SingleTaskGP(Draggable):
+    updateProgressSignal = Signal(float)
+    updateRunTimeSignal = Signal(float)
+    updateAverageSignal = Signal(float)
+    updateBestSignal = Signal(float)
+    updateCandidateSignal = Signal(str)
+
     def __init__(self, parent, proxy, **kwargs):
         # sim numerical precision set to fp32 by default to allow much higher particle populations.
         simPrecision = kwargs.pop('simPrecision', None)
@@ -56,14 +56,18 @@ class SingleTaskGP(Draggable):
             **kwargs
         )
         self.timeBetweenPolls = 1000
-        self.runningCircle = RunningCircle()
-        self.offlineAction = OfflineAction(self)
-        self.onlineAction = OnlineAction(self)
         self.online = False
         self.isReset = False
         self.actionFinished = Event()
         self.resetApplied = Event()
         self.lock = Lock()
+
+        # connect signals to their logic
+        self.updateProgressSignal.connect(self.UpdateProgressLabel)
+        self.updateRunTimeSignal.connect(self.UpdateRunTimeLabel)
+        self.updateAverageSignal.connect(self.UpdateAverageLabel)
+        self.updateBestSignal.connect(self.UpdateBestLabel)
+        self.updateCandidateSignal.connect(self.UpdateCandidateLabel)
 
         self.streams = {
             'raw': lambda: {
@@ -262,7 +266,7 @@ class SingleTaskGP(Draggable):
         timeStart.setFixedHeight(30)
         timeStart.setLayout(QHBoxLayout())
         timeStart.layout().setContentsMargins(5, 0, 0, 0)
-        timeStartLabel = QLabel(f'Time at Start (H/M/S)')
+        timeStartLabel = QLabel(f'Start Time')
         timeStartLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
         timeStart.layout().addWidget(timeStartLabel)
         self.timestamp = QLineEdit(f'N/A')
@@ -351,13 +355,29 @@ class SingleTaskGP(Draggable):
         self.widget.layout().addWidget(progressWidget)
         self.BaseStyling()
 
-    def UpdateMetrics(self):
+    def UpdateProgressLabel(self, progress):
+        self.progressEdit.setText(f'{self.progressAmount * 1e2:.0f}')
+        self.progressBar.CheckProgress(self.progressAmount)
+
+    def UpdateRunTimeLabel(self, runTimeAmount):
+        self.runTimeEdit.setText(f'{self.runTimeAmount:.0f}')
+
+    def UpdateAverageLabel(self, avg):
+        self.averageEdit.setText(f'{avg:.3f}')
+
+    def UpdateBestLabel(self, bestValue):
+        self.bestEdit.setText(f'{self.bestValue:.3f}')
+
+    def UpdateCandidateLabel(self, candidate):
+        self.candidateEdit.setText(candidate)
+
+    def UpdateMetrics(self, updateRunTimeSignal: Signal):
         while True:
             if self.ID in runningActions:
                 tm = time.time()
                 if not runningActions[self.ID][0].is_set():
                     self.runTimeAmount += tm - self.t0
-                    self.runTimeEdit.setText(f'{self.runTimeAmount:.0f}')
+                    updateRunTimeSignal.emit(self.runTimeAmount)
                 if self.actionFinished.is_set():
                     break
                 self.t0 = tm
@@ -553,42 +573,42 @@ class SingleTaskGP(Draggable):
         self.X.data.drop(0, inplace = True)
         self.numEvals = 0
         shared.workspace.assistant.PushMessage(f'{self.name} is now running.')
-        self.X.random_evaluate(np.maximum(self.settings['numSamples'], 1))
+        # random samples
+        numSamples = max(self.settings['numSamples'], 1)
+        self.X.random_evaluate(numSamples)
+        numEvals = 0
+        while True:
+            newNumEvals = self.numEvals
+            if newNumEvals > numEvals:
+                numEvals = newNumEvals
+                self.progressAmount = numEvals / self.maxEvals
+                self.updateProgressSignal.emit(self.progressAmount)
+                self.updateAverageSignal.emit(np.nanmean(self.lastValues))
+                self.updateBestSignal.emit(self.bestValue)
+            if numEvals == numSamples:
+                break
+            if self.stopCheckThread.wait(timeout = .1):
+                break
+        shared.workspace.assistant.PushMessage(f'{self.name} has taken initial random samples.')
+        print('Done with random samples!')
+        # optimiser steps
         if self.settings['numSteps'] > 0:
             for it in range(self.settings['numSteps']):
+                print(f'step {it + 1}/{self.settings['numSteps']}')
                 self.X.step()
                 self.X.generator.train_model()
+                self.progressAmount = self.numEvals / self.maxEvals
+                self.updateProgressSignal.emit(self.progressAmount)
+                self.updateAverageSignal.emit(np.nanmean(self.lastValues))
+                self.updateBestSignal.emit(self.bestValue)
+                idx = np.argmax(self.X.data.iloc[:, -3]) if self.settings['mode'].upper() == 'MAXIMISE' else np.argmin(self.X.data.iloc[:, -3])
+                self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.X.data.iloc[idx, :-3]]))
                 # allow user to break out of this for loop.
-                if self.stopCheckThread.is_set():
-                    self.stopCheckThread.clear()
+                if self.stopCheckThread.wait(timeout = .1):
                     break
+        shared.workspace.assistant.PushMessage(f'{self.name} has finished.')
+        print('Done with optimiser steps!')
         self.inQueue.put(None)
-        # set the STOP flag to allow the runningAction to be cleaned up.
-        if self.ID in runningActions:
-            runningActions[self.ID][1].set()
-        if not self.isReset:
-            self.progressAmount = 1
-            self.progressEdit.setText('100')
-            self.progressBar.CheckProgress(self.progressAmount)
-
-    def Pause(self, changeGlobalToggleState = True):
-        with self.lock:
-            if not self.actionFinished.is_set():
-                if self.ID in runningActions and not runningActions[self.ID][0].is_set():
-                    TogglePause(self, changeGlobalToggleState)
-                    if runningActions[self.ID][0].is_set():
-                        self.progressBar.TogglePause(True)
-                    else:
-                        self.progressBar.TogglePause(False)
-
-    def Stop(self):
-        StopAction(self)
-
-    def Reset(self):
-        self.stopCheckThread.set()
-        self.isReset = True
-        super().Reset()
-        self.progressBar.Reset()
 
     def Start(self, changeGlobalToggleState = True, **kwargs):
         if self.ID in runningActions:
@@ -596,7 +616,6 @@ class SingleTaskGP(Draggable):
                 TogglePause(self, changeGlobalToggleState)
                 self.progressBar.TogglePause(False)
             return
-        
         self.isReset = False
         self.actionFinished.clear()
         self.progressBar.Reset()
@@ -627,57 +646,40 @@ class SingleTaskGP(Draggable):
         emptyArray = np.empty(len(self.fundamentalObjectives), dtype = precision)
         self.inQueue, self.outQueue = Queue(), Queue()
 
+        runningActions[self.ID] = [Event(), Event(), Event(), 0.] # pause, stop, error, progress
         if self.online:
             CreatePersistentWorker(self, emptyArray, self.inQueue, self.outQueue, self.SendMachineInstructions, 0.)
         else:
-            CreatePersistentWorker(self, emptyArray, self.inQueue, self.outQueue, self.Simulate, 0.)
-        SetGlobalToggleState()
+            worker = Thread(target = CreatePersistentWorker, args = (self, emptyArray, self.inQueue, self.outQueue, self.Simulate), kwargs = {'dtype': precision})
+            worker.start()
+        # SetGlobalToggleState()
 
         def Evaluate(dictIn: dict):
-            if self.ID not in runningActions or runningActions[self.ID][1].is_set():
-                return {immediateObjectiveName: np.nan}
-            self.progressAmount = self.numEvals / self.maxEvals
-            self.progressEdit.setText(f'{self.progressAmount * 1e2:.0f}')
-            self.progressBar.CheckProgress(self.progressAmount)
-            self.numEvals += 1
-            # update decision variables live in editor
             for v in dictIn:
                 shared.entities[self.variableNameToID[v]].data[0] = dictIn[v]
                 shared.entities[self.variableNameToID[v]].data[1] = dictIn[v]
-            self.inQueue.put([dictIn])
+            self.inQueue.put(dictIn)
             simResult = self.outQueue.get()
-            # a reset interrupt can cause this to set simResult to None -- handle this
-            if self.ID not in runningActions or runningActions[self.ID][1].is_set():
+            if simResult is None: # stop was triggered
                 return {immediateObjectiveName: np.nan}
-            # trying to change pv values from a separate process will not work.
             for it, o in enumerate(self.fundamentalObjectives):
                 o.data[1] = simResult[it]
-            t = Thread(target = self.objectives[0].Start)
-            t.start()
-            t.join()
+            self.objectives[0].Start()
             if self.initialised:
-                if self.lastValues.shape[0] > self.runningAverageWindow:
-                    self.lastValues = np.delete(self.lastValues, 0)
-                self.lastValues = np.append(self.lastValues, np.array([self.objectives[0].data[1]]))
-                self.averageEdit.setText(f'{np.nanmean(self.lastValues):.3f}')
+                with self.lock:
+                    if self.lastValues.shape[0] > self.runningAverageWindow:
+                        self.lastValues = np.delete(self.lastValues, 0)
+                    self.lastValues = np.append(self.lastValues, np.array([self.objectives[0].data[1]]))
                 if self.settings['mode'].upper() == 'MAXIMISE':
-                    if self.bestValue is None or self.bestValue < self.objectives[0].data[1]:
-                        self.bestValue = self.objectives[0].data[1]
-                        self.bestEdit.setText(f'{self.bestValue:.3f}')
-                        self.bestCandidate = np.array(list(dictIn.values()))
-                        s = ''
-                        for d in dictIn.values():
-                            s += f'{d:.3f}  '
-                        self.candidateEdit.setText(s)
+                    with self.lock:
+                        if self.bestValue is None or self.bestValue < self.objectives[0].data[1]:
+                            self.bestValue = self.objectives[0].data[1]
                 elif self.settings['mode'].upper() == 'MINIMISE':
-                    if self.bestValue is None or self.bestValue > self.objectives[0].data[1]:
-                        self.bestValue = self.objectives[0].data[1]
-                        self.bestEdit.setText(f'{self.bestValue:.3f}')
-                        self.bestCandidate = np.array(list(dictIn.values()))
-                        s = ''
-                        for d in dictIn.values():
-                            s += f'{d:.3f}  '
-                        self.candidateEdit.setText(s)
+                    with self.lock:
+                        if self.bestValue is None or self.bestValue > self.objectives[0].data[1]:
+                            self.bestValue = self.objectives[0].data[1]
+            with self.lock:
+                self.numEvals += 1
             
             return {immediateObjectiveName: self.objectives[0].data[1]}
 
@@ -686,8 +688,31 @@ class SingleTaskGP(Draggable):
         self.bestEdit.setText('N/A')
         self.candidateEdit.setText('N/A')
         self.averageEdit.setText('N/A')
+        self.numEvals = 0
         Thread(target = self.SetupAndRunOptimiser, args = (Evaluate,), daemon = True).start()
-        Thread(target = self.UpdateMetrics, daemon = True).start()
+        Thread(target = self.UpdateMetrics, args = (self.updateRunTimeSignal,), daemon = True).start()
+
+    def Pause(self, changeGlobalToggleState = True):
+        with self.lock:
+            if not self.actionFinished.is_set():
+                if self.ID in runningActions and not runningActions[self.ID][0].is_set():
+                    TogglePause(self, changeGlobalToggleState)
+                    if runningActions[self.ID][0].is_set():
+                        shared.workspace.assistant.PushMessage(f'{self.name} is paused.')
+                        self.progressBar.TogglePause(True)
+                    else:
+                        shared.workspace.assistant.PushMessage(f'{self.name} is running.')
+                        self.progressBar.TogglePause(False)
+
+    def Reset(self):
+        self.stopCheckThread.set()
+        self.isReset = True
+        super().Reset()
+        self.progressBar.Reset()
+        shared.workspace.assistant.PushMessage(f'{self.name} has been reset.')
+
+    def Stop(self):
+        StopAction(self)
 
     def SendMachineInstructions(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, parameters, **kwargs):
         if not self.sharedMemoryCreated:
@@ -701,18 +726,19 @@ class SingleTaskGP(Draggable):
         print('-------')
 
 
-    def Simulate(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, parameters, **kwargs):
+    def Simulate(self, pause, stop, error, sharedMemoryName, shape, parameters, **kwargs):
         '''Action does this:
             1. Track Beam
             2. Store objectives vector in data
             3. Return
         '''
+        dtype = kwargs.pop('dtype', np.float32)
         numRepeats = 5
         self.simulator.numParticles = self.numParticles
         if not self.sharedMemoryCreated:
             self.sharedMemory = SharedMemory(name = sharedMemoryName)
             self.sharedMemoryCreated = True
-        data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
+        data = np.ndarray(shape = shape, dtype = dtype, buffer = self.sharedMemory.buf)
         result = np.zeros((numRepeats, self.numObjectives))
         for d in parameters:
             idx = int(d.split('Index: ')[1].split(')')[0])
@@ -730,12 +756,12 @@ class SingleTaskGP(Draggable):
                     if stop.is_set():
                         self.sharedMemory.close()
                         self.sharedMemory.unlink()
-                        return
+                        return None
                     time.sleep(.1)
                 if stop.is_set():
                     self.sharedMemory.close()
                     self.sharedMemory.unlink()
-                    return
+                    return None
         np.copyto(data, np.mean(result, axis = 0))
         return data
 
@@ -761,299 +787,6 @@ class SingleTaskGP(Draggable):
     
     def GetSurvivalRate(self, tracking, index):
         return np.sum(np.where(np.any(np.isnan(tracking[:, :, index, 0]), axis = 0), False, True)) / self.numParticles
-
-    # will be removed soon ...
-    async def _Start(self, **kwargs):
-        # Prevents GP from spooling up another job if one is already running but paused.
-        if self.ID in runningActions:
-            if runningActions[self.ID][0].is_set():
-                TogglePause(self)
-            return
-        
-        # self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
-        # self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
-        # this will be deprecated soon
-        # independents = [
-        #     {'ID': d.ID, 'stream': self.streamTypesIn[d.ID]} for d in self.decisions
-        # ]
-        # waiting = False
-        # force it online for now ...
-        # self.online = True
-        # actionToRun.decisions = self.decisions
-        # actionToRun.objectives = self.objectives
-        # for decision in self.decisions:
-        #     if decision.type not in self.pvBlockTypes and np.isinf(decision.streams[self.streamTypesIn[decision.ID]]()['data']).any():
-        #         waiting = True
-        #         self.title.setText(f'{self.title.text().split(' (')[0]} (Waiting)')
-        #         await actionToRun.ReadDependents(independents)
-        #         break
-        self.decisions = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'decision']
-        self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
-        self.online = self.decisions[0].online
-        # Check states of decision variables. All must share the same online / offline state. If online, check they are streaming values.
-        for decision in self.decisions:
-            if decision.online != self.decisions[0].online:
-                shared.workspace.assistant.PushMessage(f'All decision variables of {self.name} must share the same Online or Offline state.', 'Error')
-                return
-            if decision.online:
-                if np.isinf(decision.data[1]):
-                    shared.workspace.assistant.PushMessage(f'{decision.name} is not supplying a live value to {self.name}.', 'Error')
-                    return
-        self.timestamp.setText(self.Timestamp())
-        self.progress = 0
-        self.total = self.settings['numSamples'] + self.settings['numSteps']
-        self.t0 = time.time()
-
-        async def WaitUntilInputsRead():
-            mode = 'MAXIMIZE' if self.settings['mode'] == 'maximise' else 'MINIMIZE'
-            variables = dict()
-            for _, d in enumerate(self.decisions):
-                self.activeDims[d.ID] = _
-                variables[f'{d.name} (ID: {d.ID})'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
-            vocs = VOCS(
-                variables = variables,
-                objectives = {
-                    f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': mode,
-                },
-            )
-            kernel = self.ConstructKernel()
-            constructor = StandardModelConstructor(
-                covar_modules = {
-                    f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': kernel,
-                },
-            )
-            if self.settings['acqFunction'] == 'UCB':
-                generator = UpperConfidenceBoundGenerator(
-                    vocs = vocs,
-                    gp_constructor = constructor,
-                    beta = self.settings['acqHyperparameter'],
-                )
-            else:
-                generator = ExpectedImprovementGenerator(
-                    vocs = vocs,
-                    gp_constructor = constructor,
-                )
-
-            if self.online:
-                await self.OnlineOptimisation(vocs, generator)
-            else:
-                print('Offline Optimisation for the win!')
-                await self.OfflineOptimisation(vocs, generator)
-            # async def SetDecisionsAndRecordResponse(dictIn: dict):
-            #     try:
-            #         for d in self.decisions:
-            #             dictName = f'{d.name} + (ID: {d.ID})'
-            #             if dictIn[dictName] < await aioca.caget(d.name + ':I'):
-            #                 await aioca.caput(d.name + ':SETI', dictIn[dictName] - .2)
-            #         await aioca.sleep(2)
-            #         await aioca.caput(d.name + ':SETI', dictIn[dictName])
-            #         await aioca.sleep(1)
-
-            #         result = await self.objectives[0].Start()
-            #     except:
-            #         result = -1
-            #     return {f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': result}
-            # self.progress = 0
-            # self.total = self.settings['numSamples'] + self.settings['numSteps']
-            # self.t0 = time.time()
-            # def Evaluate(dictIn: dict):
-            #     self.progress += 1
-            #     self.progressEdit.setText(f'{self.progress / self.total * 100:.1f}')
-            #     self.runTimeEdit.setText(f'{round(time.time() - self.t0)}')
-            #     dictOut = asyncio.run(SetDecisionsAndRecordResponse(dictIn))
-            #     return dictOut
-            
-            # evaluator = Evaluator(function = Evaluate)
-            # X = Xopt(
-            #     vocs = vocs,
-            #     generator = generator,
-            #     evaluator = evaluator,
-            # )
-
-            # try:
-            #     await asyncio.wait_for(
-            #         aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
-            #         timeout = 2,
-            #     )
-            #     self.runTimeEdit.setText(self.Timestamp())
-            #     shared.workspace.assistant.PushMessage(f'Optimisation beginning and LINAC successfully activated.')
-            # except Exception as e:
-            #     shared.workspace.assistant.PushMessage(f'Failed to start up the LINAC due to a PV timeout.', 'Error')
-            #     return
-                
-            # executor = ThreadPoolExecutor(max_workers = 1)
-            # job = executor.submit(X.random_evaluate, self.settings['numSamples'])
-            # job.result()
-
-            # try:
-            #     await asyncio.wait_for(
-            #         aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
-            #         timeout = 2,
-            #     )
-            #     shared.workspace.assistant.PushMessage(f'Optimisation complete and LINAC successfully deactivated.')
-            # except Exception as e:
-            #     shared.workspace.assistant.PushMessage(f'Failed to stop up the LINAC due to a PV timeout. User should manually stop it now.', 'Error')
-            #     return
-
-        # RE-ENABLE THIS ...
-        # async def WaitUntilInputsRead():
-        #     nonlocal numParticles, waiting
-        #     # RE-ENABLE THIS ...
-        #     # if waiting:
-        #     #     if not actionToRun.resultsWritten:
-        #     #         return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
-        #     #     waiting = False
-        #     #     return QTimer.singleShot(actionToRun.timeBetweenPolls, WaitUntilInputsRead)
-        #     # else:
-        #     #     if not await actionToRun.CheckForValidInputs():
-        #     #         print('Failed to Start Optimisation (Returning ...)')
-        #     #         return
-
-        #         independentsToSet = {
-        #             d.ID: d.streams[self.streamTypesIn[d.ID]]() for d in self.decisions
-        #         }
-                
-        #         counter = 0
-                    
-        #         # def PerformActionAndWait(inDict: dict):
-        #         #     '''Called on a separate worker thread so will not block the UI thread.'''
-        #         #     nonlocal counter, actionToRun
-        #         #     # Set the values of the decisions
-        #         #     actionToRun.SetIndependents(independentsToSet, inDict)
-        #         #     # crank the handle
-        #         #     PerformAction(
-        #         #         self,
-        #         #         # Raw data held by the GP block will be output from tracking simulations
-        #         #         np.empty((6, numParticles, len(shared.lattice), 1)),
-        #         #         numSteps = steps,
-        #         #         currentStep = counter,
-        #         #         numParticles = numParticles,
-        #         #     )
-        #         #     while np.isnan(self.data).any():
-        #         #         time.sleep(self.timeBetweenPolls / 1e3)
-
-        #         #     counter += 1
-        #         #     # Read the value of the objective by feeding this GP's data upstream
-        #         #     actionToRun.ReadDependents([{'ID': self.objectives[0].ID, 'stream': self.streamTypesIn[self.objectives[0].ID]}], self.data)
-
-        #         #     while not actionToRun.resultsWritten:
-        #         #         time.sleep(self.timeBetweenPolls / 1e3)
-
-        #         #     return {'f': self.objectives[0].streams[self.streamTypesIn[self.objectives[0].ID]]()['data']}
-                    
-        #         variables = dict()
-        #         # for d in self.decisions:
-        #         #     stream = d.streams[self.streamTypesIn[d.ID]]()
-        #         #     for dim in range(stream['data'].shape[0]): # each row is a new singular vector for SVD, otherwise a 1x1 for a PV.
-        #         #         variables[f'{d.ID}-{dim}'] = [-3, 3] # values get sent through tanh so restrict to sensible domain
-        #         for d in self.decisions:
-        #             variables[f'{d.name} (ID: {d.ID})'] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
-        #         vocs = VOCS(
-        #             variables = variables,
-        #             objectives = {'f': 'MINIMIZE'},
-        #         )
-        #         print('All Done!')
-
-        #         # RE-ENABLE THIS ...
-        #         # executor = ThreadPoolExecutor(max_workers = 1)
-
-        #         # async def SetDecisionsAndRecordResponse(dictIn: dict):
-        #         #     for d in self.decisions:
-        #         #         if dictIn[d.name] < await aioca.caget(d.name + ':I'):
-        #         #             await aioca.caput(d.name + ':SETI', dictIn[d.name] - .2)
-        #         #     await aioca.sleep(2)
-        #         #     await aioca.caput(d.name + ':SETI', dictIn[d.name])
-        #         #     await aioca.sleep(1)
-
-        #         #     result = await self.objectives[0].Start()
-        #         #     return {'f': result}
-
-        #         # def Evaluate(dictIn: dict):
-        #         #     dictOut = asyncio.create_task(SetDecisionsAndRecordResponse(dictIn))
-        #         #     return dictOut
-
-        #         # evaluator = Evaluator(function = Evaluate)
-        #         # generator = UpperConfidenceBoundGenerator(vocs = vocs)
-        #         # self.X = Xopt(evaluator = evaluator, generator = generator, vocs = vocs)
-
-        #         # totalSamples = steps + initialSamples
-        #         # job = executor.submit(self.X.random_evaluate, initialSamples)
-
-        #         # def StepUntilComplete():
-        #         #     '''Steps through optimisation steps until finish criterion satisfied.'''
-        #         #     if len(self.X.data) < totalSamples:
-        #         #         print(f'On step {len(self.X.data) - initialSamples + 1}/{steps}')
-        #         #         self.X.data.to_csv(shared.cwd + f'\\datadump\\{self.name}.csv', index = False)
-        #         #         job = executor.submit(self.X.step)
-        #         #         job.add_done_callback(lambda _: StepUntilComplete())
-        #         #     else:
-        #         #         # temporarily save the data automatically here
-        #         #         print('GP data temporarily saved to:', Path(shared.cwd) / 'datadump' / f'{self.name}.csv')
-        #         #         self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{self.name}.csv', index = False)
-        #         #         QTimer.singleShot(0, lambda: executor.shutdown(wait = True))
-
-        #         # await aioca.caput('LI-TI-MTGEN-01:START', 1, timeout = 2)
-        #         # print('LINAC active!')
-        #         # job.add_done_callback(lambda _: StepUntilComplete())
-        #         # await aioca.caput('LI-TI-MTGEN-01:STOP', 1, timeout = 2)
-        #         # print('LINAC deactivated!')
-        asyncio.create_task(WaitUntilInputsRead())
-
-    # will also be removed soon ...
-    async def OnlineOptimisation(self, vocs, generator):
-        async def SetDecisionsAndRecordResponse(dictIn: dict):
-            try:
-                for d in self.decisions:
-                    dictName = f'{d.name} + (ID: {d.ID})'
-                    if dictIn[dictName] < await aioca.caget(d.name + ':I'):
-                        await aioca.caput(d.name + ':SETI', dictIn[dictName] - .2)
-                await aioca.sleep(2)
-                await aioca.caput(d.name + ':SETI', dictIn[dictName])
-                await aioca.sleep(1)
-
-                result = await self.objectives[0].Start()
-            except:
-                result = -1
-            return {f'{self.objectives[0].name} (ID: {self.objectives[0].ID})': result}
-
-        def Evaluate(dictIn: dict):
-            self.progress += 1
-            self.progressEdit.setText(f'{self.progress / self.total * 100:.1f}')
-            self.runTimeEdit.setText(f'{round(time.time() - self.t0)}')
-            dictOut = asyncio.run(SetDecisionsAndRecordResponse(dictIn))
-            return dictOut
-        
-        evaluator = Evaluator(function = Evaluate)
-        X = Xopt(
-            vocs = vocs,
-            generator = generator,
-            evaluator = evaluator,
-        )
-
-        try:
-            await asyncio.wait_for(
-                aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
-                timeout = 2,
-            )
-            self.runTimeEdit.setText(self.Timestamp())
-            shared.workspace.assistant.PushMessage(f'Optimisation beginning and LINAC successfully activated.')
-        except Exception as e:
-            shared.workspace.assistant.PushMessage(f'Failed to start up the LINAC due to a PV timeout.', 'Error')
-            return
-            
-        executor = ThreadPoolExecutor(max_workers = 1)
-        job = executor.submit(X.random_evaluate, self.settings['numSamples'])
-        job.result()
-
-        try:
-            await asyncio.wait_for(
-                aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
-                timeout = 2,
-            )
-            shared.workspace.assistant.PushMessage(f'Optimisation complete and LINAC successfully deactivated.')
-        except Exception as e:
-            shared.workspace.assistant.PushMessage(f'Failed to stop up the LINAC due to a PV timeout. User should manually stop it now.', 'Error')
-            return
 
     def SwitchMode(self):
         if cothread.AVAILABLE:

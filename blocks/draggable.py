@@ -2,8 +2,8 @@ from PySide6.QtWidgets import QGraphicsProxyWidget, QComboBox, QListWidget, QLis
 from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QLineF, QPoint, QPointF
 import time
-from threading import Lock
-from multiprocessing import Event
+from threading import Lock, Event
+# from multiprocessing import Event
 from ..components.slider import SliderComponent
 from ..utils.entity import Entity
 from ..utils.transforms import MapDraggableRectToScene

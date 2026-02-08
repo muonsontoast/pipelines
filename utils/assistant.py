@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import QTimer
+from .. import shared
 
 class Assistant:
     def __init__(self, messageTitle: QLabel, messageTimeout = 10):
@@ -39,6 +40,7 @@ class Assistant:
         self.messageTitle.setText(self.message)
         if self.message != self.defaultMessage:
             self.message = self.defaultMessage
+        shared.app.processEvents()
 
     def Start(self):
         self.timer = QTimer()

@@ -1,5 +1,6 @@
 from PySide6.QtCore import QTimer
 from copy import deepcopy
+import numpy as np
 from ..utils.multiprocessing import *
 from ..simulator import Simulator
 
