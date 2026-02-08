@@ -30,7 +30,6 @@ from .utils.entity import Entity
 from .utils import memory
 from .utils.commands import ConnectShortcuts, Save, StopAllActions
 from .utils.resourcemonitor import ResourceMonitor
-# from .utils.multiprocessing import CleanUpRunningActions
 from .utils.load import Load
 from . import style
 from . import shared
@@ -288,10 +287,6 @@ class MainWindow(Entity, QMainWindow):
             Save()
         if hasattr(self, 'future') and self.future and not self.future.done():
             self.future.cancel()
-
-
-def GetMainWindow():
-    return shared.window
 
 if __name__ == "__main__":
     shared.app = QApplication(sys.argv)

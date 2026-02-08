@@ -357,7 +357,9 @@ class SingleTaskGP(Draggable):
 
     def UpdateProgressLabel(self, progress):
         self.progressEdit.setText(f'{self.progressAmount * 1e2:.0f}')
-        self.progressBar.CheckProgress(self.progressAmount)
+        with self.lock:
+            if not self.stopCheckThread.is_set():
+                self.progressBar.CheckProgress(self.progressAmount)
 
     def UpdateRunTimeLabel(self, runTimeAmount):
         self.runTimeEdit.setText(f'{self.runTimeAmount:.0f}')
@@ -613,6 +615,7 @@ class SingleTaskGP(Draggable):
     def Start(self, changeGlobalToggleState = True, **kwargs):
         if self.ID in runningActions:
             if runningActions[self.ID][0].is_set():
+                shared.workspace.assistant.PushMessage(f'{self.name} has resumed.')
                 TogglePause(self, changeGlobalToggleState)
                 self.progressBar.TogglePause(False)
             return
@@ -689,6 +692,7 @@ class SingleTaskGP(Draggable):
         self.candidateEdit.setText('N/A')
         self.averageEdit.setText('N/A')
         self.numEvals = 0
+        self.stopCheckThread.clear()
         Thread(target = self.SetupAndRunOptimiser, args = (Evaluate,), daemon = True).start()
         Thread(target = self.UpdateMetrics, args = (self.updateRunTimeSignal,), daemon = True).start()
 

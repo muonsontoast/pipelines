@@ -261,9 +261,9 @@ def SaveSettings():
     Save()
 
 def Quit():
-    if autosave:
-        Save()
-        shared.window.quitShortcutPressed = True
+    # if autosave:
+    #     Save()
+    #     shared.window.quitShortcutPressed = True
     shared.window.close()
 
 def ShowMenu(pos: QPoint):
