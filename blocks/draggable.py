@@ -212,6 +212,33 @@ class Draggable(Entity, QWidget):
         self.cursorMoved = False
         event.accept()
 
+    def MoveBlock(self, startDragPos, mousePos):
+        mousePosInSceneCoords = self.proxy.mapToScene(mousePos)
+        startDragPosInSceneCoords = self.proxy.mapToScene(startDragPos)
+        newPos = self.proxy.pos() + mousePosInSceneCoords - startDragPosInSceneCoords
+        self.proxy.setPos(newPos)
+        self.SetRect()
+        shared.activeEditor.scene.blockSignals(True)
+        # Batch update all incoming links.
+        for name in self.FSocketNames:
+            socketPos = self.GetSocketPos(name)
+            for v in self.linksIn.values():
+                if v['socket'] == name:
+                    line = v['link'].line()
+                    line.setP2(socketPos)
+                    v['link'].setLine(line)
+        # Batch update all outgoing links.
+        socketPos = self.GetSocketPos('out')
+        for k in self.linksOut.keys():
+            if k == 'free':
+                continue
+            line = shared.entities[k].linksIn[self.ID]['link'].line()
+            line.setP1(socketPos)
+            shared.entities[k].linksIn[self.ID]['link'].setLine(line)
+        self.proxy.update()
+        if self.popup.isVisible():
+            self.popup.setPos(newPos + self.FSocketWidgets.pos() + QPoint(100, -30))
+
     def HandleMouseMove(self, mousePos, buttons):
         mousePosInSceneCoords = self.proxy.mapToScene(mousePos)
         if not self.canDrag:
@@ -221,30 +248,11 @@ class Draggable(Entity, QWidget):
                 self.linksOut['free']['link'].setLine(QLineF(outputSocketPos, mousePosInSceneCoords))
         elif buttons & Qt.LeftButton and self.startDragPos:
             self.cursorMoved = True
-            startDragPosInSceneCoords = self.proxy.mapToScene(self.startDragPos)
-            newPos = self.proxy.pos() + mousePosInSceneCoords - startDragPosInSceneCoords
-            self.proxy.setPos(newPos)
-            self.SetRect()
-            shared.activeEditor.scene.blockSignals(True)
-            # Batch update all incoming links.
-            for name in self.FSocketNames:
-                socketPos = self.GetSocketPos(name)
-                for v in self.linksIn.values():
-                    if v['socket'] == name:
-                        line = v['link'].line()
-                        line.setP2(socketPos)
-                        v['link'].setLine(line)
-            # Batch update all outgoing links.
-            socketPos = self.GetSocketPos('out')
-            for k in self.linksOut.keys():
-                if k == 'free':
-                    continue
-                line = shared.entities[k].linksIn[self.ID]['link'].line()
-                line.setP1(socketPos)
-                shared.entities[k].linksIn[self.ID]['link'].setLine(line)
-            self.proxy.update()
-            if self.popup.isVisible():
-                self.popup.setPos(newPos + self.FSocketWidgets.pos() + QPoint(100, -30))
+            if len(shared.activeEditor.area.selectedBlocks) > 1:
+                for block in shared.activeEditor.area.selectedBlocks:
+                    block.MoveBlock(self.startDragPos, mousePos)
+            else:
+                self.MoveBlock(self.startDragPos, mousePos)
             shared.activeEditor.scene.blockSignals(False)
 
     def ToggleStyling(self, **kwargs):
