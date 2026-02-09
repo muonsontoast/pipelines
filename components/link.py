@@ -38,8 +38,6 @@ class LinkComponent(Component):
         self.search.setFixedSize(325, 30)
         self.search.setAlignment(Qt.AlignVCenter)
         self.search.setPlaceholderText('Search for element ...')
-        if 'linkedElement' in self.pv.settings:
-            self.search.setText(self.pv.settings['linkedElement'].Name)
         self.search.setCompleter(self.completer)
         self.search.returnPressed.connect(self.Select)
         # Assign search and list
@@ -58,8 +56,7 @@ class LinkComponent(Component):
         self.typeTitle.setFixedWidth(100)
         self.typeTitle.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.typeTitle.setAlignment(Qt.AlignLeft)
-        text = 'None' if not self.pvHasLinkedElement else self.pv.settings['linkedElement'].Type
-        self.typeEdit = QLineEdit(text)
+        self.typeEdit = QLineEdit()
         self.typeEdit.setAlignment(Qt.AlignCenter)
         self.typeEdit.setFixedWidth(100)
         self.typeEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -74,8 +71,7 @@ class LinkComponent(Component):
         self.positionTitle = QLabel('Position (m)')
         self.positionTitle.setFixedWidth(100)
         self.positionTitle.setAlignment(Qt.AlignLeft)
-        text = 'None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].iloc[2]:.3f}'
-        self.positionEdit = QLineEdit(text)
+        self.positionEdit = QLineEdit()
         self.positionEdit.setAlignment(Qt.AlignCenter)
         self.positionEdit.setFixedWidth(100)
         self.positionEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -89,8 +85,7 @@ class LinkComponent(Component):
         self.index.layout().setSpacing(0)
         self.indexTitle = QLabel('Index')
         self.indexTitle.setFixedWidth(100)
-        text = 'None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].Index}'
-        self.indexEdit = QLineEdit(text)
+        self.indexEdit = QLineEdit()
         self.indexEdit.setAlignment(Qt.AlignCenter)
         self.indexEdit.setFixedWidth(100)
         self.indexEdit.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -125,8 +120,6 @@ class LinkComponent(Component):
         self.dataComboBox.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.dataComboBox.view().parentWidget().setStyleSheet('color: transparent; background-color: transparent;')
         self.dataComboBox.addItems([f'    {dtype.upper()}' for dtype in self.pv.settings['dtypes']])
-        idx = self.pv.settings['dtypes'].index(self.pv.settings['dtype'])
-        self.dataComboBox.setCurrentIndex(idx)
         self.dataComboBox.currentTextChanged.connect(self.ChangeDataSubtype)
         self.dtypesWidget.layout().addWidget(self.dataComboBox, alignment = Qt.AlignLeft)
         self.context.layout().addWidget(self.dtypesWidget)
@@ -134,14 +127,48 @@ class LinkComponent(Component):
         self.layout().addWidget(self.context)
         self.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
 
+        if not self.multipleBlocksSelected:
+            self.typeEdit.setText('None' if not self.pvHasLinkedElement else self.pv.settings['linkedElement'].Type)
+            self.positionEdit.setText('None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].iloc[2]:.3f}')
+            self.indexEdit.setText('None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].Index}')
+            if 'linkedElement' in self.pv.settings:
+                self.search.setText(self.pv.settings['linkedElement'].Name)
+                self.dataComboBox.blockSignals(True)
+                self.dataComboBox.setCurrentIndex(self.pv.settings['dtypes'].index(self.pv.settings['dtype']))
+                self.dataComboBox.blockSignals(False)
+        else:
+            commonType, commonPosition, commonIndex = True, True, True
+            if 'linkedElement' not in self.selectedBlocks[0].settings:
+                commonType, commonPosition, commonIndex = False, False, False
+            else:
+                for block in self.selectedBlocks[1:]:
+                    if 'linkedElement' not in block.settings:
+                        commonType, commonPosition, commonIndex = False, False, False
+                        break
+                    if commonType and block.settings['linkedElement'].Type != self.selectedBlocks[0].settings['linkedElement'].Type:
+                        commonType = False
+                    if commonPosition and block.settings['linkedElement'].iloc[2] != self.selectedBlocks[0].settings['linkedElement'].iloc[2]:
+                        commonPosition = False
+                    if commonIndex and block.settings['linkedElement'].Index != self.selectedBlocks[0].settings['linkedElement'].Index:
+                        commonIndex = False
+            self.typeEdit.setText('--' if not commonType else self.selectedBlocks[0].settings['linkedElement'].Type)
+            self.positionEdit.setText('--' if not commonPosition else f'{self.selectedBlocks[0].settings['linkedElement'].iloc[2]:.3f}')
+            self.indexEdit.setText('--' if not commonIndex else f'{self.selectedBlocks[0].settings['linkedElement'].Index}')
+
         self.defaultNames = ['PV', 'QUAD', 'VSTR', 'HSTR', 'BPM', 'AP', 'DRIFT', 'COLL']
 
         self.UpdateColors()
 
     def ChangeDataSubtype(self):
         newdtype = self.dataComboBox.currentText().split()[0]
-        self.pv.settings['dtype'] = newdtype
-        shared.workspace.assistant.PushMessage(f'{self.pv.name} data subtype changed to {newdtype}.')
+        # self.pv.settings['dtype'] = newdtype
+        # shared.workspace.assistant.PushMessage(f'{self.pv.name} data subtype changed to {newdtype}.')
+        for block in self.selectedBlocks:
+            block.settings['dtype'] = newdtype
+        if self.multipleBlocksSelected:
+            shared.workspace.assistant.PushMessage(f'Changed data subtype of {len(self.selectedBlocks)} blocks to {newdtype}.')
+        else:
+            shared.workspace.assistant.PushMessage(f'Changed data subtype of {self.pv.name} to {newdtype}.')
 
     def Select(self):
         self.search.clearFocus()
@@ -153,43 +180,47 @@ class LinkComponent(Component):
         self.typeEdit.setText(self.linkedElement.Type)
         self.positionEdit.setText(f'{self.linkedElement.iloc[2]:.3f}')
         self.indexEdit.setText(f'{self.linkedElement.Index}')
-        self.pv.settings['linkedElement'] = self.linkedElement
-        # linked element-specific logic
-        if self.linkedElement.Type == 'Quadrupole':
-            if 'alignment' in self.pv.settings:
-                self.pv.settings.pop('alignment')
-            self.pv.settings['components']['value']['name'] = 'Setpoint'
-            self.pv.settings['components']['value']['units'] = 'm⁻²'
-            self.pv.settings['components']['value']['value'] = shared.lattice[self.pv.settings['linkedElement'].Index].K
-            self.pv.settings['components']['value']['default'] = shared.lattice[self.pv.settings['linkedElement'].Index].K
-        elif self.linkedElement.Type == 'Corrector':
-            self.pv.settings['alignment'] = 'Horizontal' if 'alignment' not in self.pv.settings else self.pv.settings['alignment']
-            self.pv.settings['components']['value']['name'] = 'Kick'
-            self.pv.settings['components']['value']['units'] = 'mrad'
-            idx = 0 if self.pv.settings['alignment'] == 'Horizontal' else 1
-            self.pv.settings['components']['value']['value'] = float(shared.lattice[self.pv.settings['linkedElement'].Index].KickAngle[idx])
-            self.pv.settings['components']['value']['default'] = float(shared.lattice[self.pv.settings['linkedElement'].Index].KickAngle[idx])
-        # Adjust slider range if necessary for the relevant types
-        if self.linkedElement.Type in ['Corrector', 'Quadrupole']: # this list will grow over time
-            if self.pv.settings['components']['value']['value'] < self.pv.settings['components']['value']['min']:
-                self.pv.settings['components']['value']['min'] = self.pv.settings['components']['value']['value']
-            elif self.pv.settings['components']['value']['value'] > self.pv.settings['components']['value']['max']:
-                self.pv.settings['components']['value']['max'] = self.pv.settings['components']['value']['value']
-        if self.pv.name.split()[0] in self.defaultNames or ('(Index: ' in self.pv.name and self.pv.name.split(' (Index: ')[0] in self.defaultNames):
-            newName = self.linkedElement.Name + f' (Index: {self.linkedElement.Index})'
-            self.pv.settings['name'] = newName
-            self.pv.name = newName
-            self.pv.title.setText(newName)
-        # Handle data subtypes
-        # Since this component is only relevant for simulation, allow access to full beam information at every element.
-        if self.linkedElement.Name == 'BPM':
-            self.pv.settings['dtype'] = 'CHARGE'
-        elif self.linkedElement.Name == 'HSTR':
-            self.pv.settings['dtype'] = 'X'
-        elif self.linkedElement.Name == 'VSTR':
-            self.pv.settings['dtype'] = 'Y'
+        for block in self.selectedBlocks:
+            block.settings['linkedElement'] = self.linkedElement
+            # linked element-specific logic
+            if self.linkedElement.Type == 'Quadrupole':
+                if 'alignment' in block.settings:
+                    block.settings.pop('alignment')
+                block.settings['components']['value']['name'] = 'Setpoint'
+                block.settings['components']['value']['units'] = 'm⁻²'
+                block.settings['components']['value']['value'] = shared.lattice[block.settings['linkedElement'].Index].K
+                block.settings['components']['value']['default'] = shared.lattice[block.settings['linkedElement'].Index].K
+            elif self.linkedElement.Type == 'Corrector':
+                block.settings['alignment'] = 'Horizontal' if 'alignment' not in block.settings else block.settings['alignment']
+                block.settings['components']['value']['name'] = 'Kick'
+                block.settings['components']['value']['units'] = 'mrad'
+                idx = 0 if block.settings['alignment'] == 'Horizontal' else 1
+                block.settings['components']['value']['value'] = float(shared.lattice[block.settings['linkedElement'].Index].KickAngle[idx])
+                block.settings['components']['value']['default'] = float(shared.lattice[block.settings['linkedElement'].Index].KickAngle[idx])
+            # Adjust slider range if necessary for the relevant types
+            if self.linkedElement.Type in ['Corrector', 'Quadrupole']: # this list will grow over time
+                if block.settings['components']['value']['value'] < block.settings['components']['value']['min']:
+                    block.settings['components']['value']['min'] = block.settings['components']['value']['value']
+                elif block.settings['components']['value']['value'] > block.settings['components']['value']['max']:
+                    block.settings['components']['value']['max'] = block.settings['components']['value']['value']
+            if block.name.split()[0] in self.defaultNames or ('(Index: ' in block.name and block.name.split(' (Index: ')[0] in self.defaultNames):
+                newName = self.linkedElement.Name + f' (Index: {self.linkedElement.Index})'
+                block.settings['name'] = newName
+                block.name = newName
+                block.title.setText(newName)
+            # Handle data subtypes
+            # Since this component is only relevant for simulation, allow access to full beam information at every element.
+            if self.linkedElement.Name == 'BPM':
+                block.settings['dtype'] = 'CHARGE'
+            elif self.linkedElement.Name == 'HSTR':
+                block.settings['dtype'] = 'X'
+            elif self.linkedElement.Name == 'VSTR':
+                block.settings['dtype'] = 'Y'
         
-        shared.inspector.Push(self.pv)
+        if self.multipleBlocksSelected:
+            shared.inspector.PushMultiple()
+        else:
+            shared.inspector.Push(self.pv)
 
     def UpdateColors(self):
         if shared.lightModeOn:

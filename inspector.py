@@ -56,6 +56,7 @@ class Inspector(Entity, QTabWidget):
             self.main.hide()
             self.mainWindowTitleWidget.hide()
             return
+        self.mainWindowTitle.setReadOnly(False)
         if not component:
             if 'value' in pv.settings['components']:
                 component = pv.settings['components']['value']['name']
@@ -75,11 +76,7 @@ class Inspector(Entity, QTabWidget):
         if self.mainWindowTitleWidget.isHidden():
             self.main.setUpdatesEnabled(True)
 
-        def SortName(item):
-            key, component = item
-            return key == 'linkedLatticeElement'
-
-        for k, c in sorted(pv.settings['components'].items(), key = SortName):
+        for k, c in sorted(pv.settings['components'].items(), key = self.SortName):
             if 'units' in c.keys() and c['units'] != '':
                 name = c['name'] + f' ({c['units']})'
             else:
@@ -97,6 +94,46 @@ class Inspector(Entity, QTabWidget):
             self.mainWindowTitleWidget.show()
             self.main.show()
         self.ToggleStyling()
+
+    def PushMultiple(self):
+        '''Displays common components amongst selected blocks.'''
+        self.main.setUpdatesEnabled(False)
+        self.main.clear()
+        self.mainWindowTitle.blockSignals(True)
+        self.mainWindowTitle.setText(f'{len(shared.activeEditor.area.selectedItems)} selected items.')
+        self.mainWindowTitle.setReadOnly(True)
+        self.mainWindowTitle.blockSignals(False)
+
+        self.items = dict()
+        self.expandables = dict()
+
+        if self.mainWindowTitleWidget.isHidden():
+            self.main.setUpdatesEnabled(True)
+
+        commonComponents = dict()
+        selectedBlock = shared.activeEditor.area.selectedItems[0].widget()
+        for common in shared.activeEditor.commonComponents:
+            c = selectedBlock.settings['components'][common]
+            commonComponents[common] = c
+        for k, c in sorted(commonComponents.items(), key = self.SortName):
+            if 'units' in c.keys() and c['units'] != '':
+                name = c['name'] + f' ({c['units']})'
+            else:
+                name = c['name']
+            self.items[k] = QListWidgetItem()
+            self.expandables[k] = Expandable(self.main, self.items[k], name, selectedBlock, k)
+            self.expandables[k].ToggleContent()
+            self.items[k].setSizeHint(self.expandables[k].sizeHint())
+            self.main.addItem(self.items[k])
+            self.main.setItemWidget(self.items[k], self.expandables[k])
+        shared.expandables = self.expandables
+
+        self.main.setUpdatesEnabled(True)
+        self.main.show()
+
+    def SortName(self, item):
+        key, component = item
+        return key == 'linkedLatticeElement'
 
     def UpdateListWidgetItemWidths(self):
         for k, e in self.expandables.items():

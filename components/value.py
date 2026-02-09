@@ -44,8 +44,6 @@ class ValueComponent(Component):
 
     def UpdateColors(self, **kwargs):
         '''Override `fillColorLight` and `fillColorDark` with a #ABCDEF color string.'''
-        fillColorDark = kwargs.get('fillColorDark', "#4E4E4E")
-        fillColorLight = kwargs.get('fillColorLight', "#AFAFAF")
         if shared.lightModeOn:
             self.value.setStyleSheet(style.LineEditStyle(color = '#D2C5A0', fontColor = '#1e1e1e', paddingLeft = self.paddingLeft, paddingBottom = self.paddingBottom))
             return

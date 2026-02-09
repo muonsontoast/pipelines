@@ -53,14 +53,12 @@ class SliderComponent(Component):
         self.slider = SliderBar(Qt.Horizontal, self)
         self.slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.slider.setRange(0, sliderSteps)
-        self.slider.setValue(self.ToSliderValue(pv.settings['components'][component]['value']))
         self.slider.valueChanged.connect(self.UpdateSliderValue)
         self.slider.valueChanged.connect(self.UpdatePVSetValueCheck)
         self.sliderRow.layout().addWidget(self.slider)
         self.sliderRow.layout().addItem(QSpacerItem(self.sliderRowSpacing, 0, QSizePolicy.Fixed, QSizePolicy.Preferred))
         # Value
-        v = f'{pv.settings['components'][component]['value']:.{self.floatdp}f}' if np.abs(pv.settings['components'][component]['value']) > self.eps else '0.000'
-        self.value = QLineEdit(v)
+        self.value = QLineEdit()
         self.value.setAlignment(Qt.AlignCenter)
         self.value.setFixedSize(75, 25)
         self.value.returnPressed.connect(self.SetSliderValue)
@@ -80,13 +78,12 @@ class SliderComponent(Component):
             self.minimumLabel = QLabel('Minimum')
             self.minimumLabel.setFixedWidth(100)
             self.minimumLabel.setAlignment(Qt.AlignLeft)
-            self.minimum = QLineEdit(f'{pv.settings['components'][component]['min']:.{self.floatdp}f}')
+            self.minimum = QLineEdit()
             self.minimum.setAlignment(Qt.AlignCenter)
             self.minimum.setFixedSize(75, 25)
             self.minimum.returnPressed.connect(self.SetMinimum)
             self.minimumRow.layout().addWidget(self.minimumLabel, alignment = Qt.AlignLeft)
             self.minimumRow.layout().addWidget(self.minimum, alignment = Qt.AlignLeft)
-            # self.minimumRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
             # Maximum
             self.maximumRow = QWidget()
             self.maximumRow.setLayout(QHBoxLayout())
@@ -95,13 +92,12 @@ class SliderComponent(Component):
             self.maximumLabel = QLabel('Maximum')
             self.maximumLabel.setFixedWidth(100)
             self.maximumLabel.setAlignment(Qt.AlignLeft)
-            self.maximum = QLineEdit(f'{pv.settings['components'][component]['max']:.{self.floatdp}f}')
+            self.maximum = QLineEdit()
             self.maximum.setAlignment(Qt.AlignCenter)
             self.maximum.setFixedSize(75, 25)
             self.maximum.returnPressed.connect(self.SetMaximum)
             self.maximumRow.layout().addWidget(self.maximumLabel, alignment = Qt.AlignLeft)
             self.maximumRow.layout().addWidget(self.maximum, alignment = Qt.AlignLeft)
-            # self.maximumRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
             # Default
             self.defaultRow = QWidget()
             self.defaultRow.setLayout(QHBoxLayout())
@@ -110,18 +106,47 @@ class SliderComponent(Component):
             self.defaultLabel = QLabel('Default')
             self.defaultLabel.setFixedWidth(100)
             self.defaultLabel.setAlignment(Qt.AlignLeft)
-            self.default = QLineEdit(f'{pv.settings['components'][component]['default']:.{self.floatdp}f}')
+            self.default = QLineEdit()
             self.default.setAlignment(Qt.AlignCenter)
             self.default.setFixedSize(75, 25)
             self.default.returnPressed.connect(self.SetDefault)
             self.defaultRow.layout().addWidget(self.defaultLabel, alignment = Qt.AlignLeft)
             self.defaultRow.layout().addWidget(self.default, alignment = Qt.AlignLeft)
-            # self.defaultRow.layout().addItem(QSpacerItem(200, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
             # make read-only if there is a PV match
             if self.pv.PVMatch:
                 self.minimum.setReadOnly(True)
                 self.maximum.setReadOnly(True)
                 self.default.setReadOnly(True)
+        # Conditional multiple block logic
+        self.slider.blockSignals(True)
+        if not self.multipleBlocksSelected:
+            self.slider.setValue(self.ToSliderValue(pv.settings['components'][component]['value']))
+            v = f'{pv.settings['components'][component]['value']:.{self.floatdp}f}' if np.abs(pv.settings['components'][component]['value']) > self.eps else '0.000'
+            self.value.setText(v)
+            self.minimum.setText(f'{pv.settings['components'][component]['min']:.{self.floatdp}f}')
+            self.maximum.setText(f'{pv.settings['components'][component]['max']:.{self.floatdp}f}')
+            self.default.setText(f'{pv.settings['components'][component]['default']:.{self.floatdp}f}')
+            self.slider.setEnabled(True)
+        else:
+            # if blocks share the same values, populate these in the inspector
+            self.slider.setValue(0)
+            commonValue, commonMin, commonMax, commonDefault = True, True, True, True
+            for block in self.selectedBlocks[1:]:
+                if commonValue and block.settings['components'][self.component]['value'] != self.selectedBlocks[0].settings['components'][self.component]['value']:
+                    commonValue = False
+                if commonMin and block.settings['components'][self.component]['min'] != self.selectedBlocks[0].settings['components'][self.component]['min']:
+                    commonMin = False
+                if commonMax and block.settings['components'][self.component]['max'] != self.selectedBlocks[0].settings['components'][self.component]['max']:
+                    commonMax = False
+                if commonDefault and block.settings['components'][self.component]['default'] != self.selectedBlocks[0].settings['components'][self.component]['default']:
+                    commonDefault = False
+            self.value.setText('--') if not commonValue else self.value.setText(f'{self.selectedBlocks[0].settings['components'][self.component]['value']:.3f}')
+            self.minimum.setText('--') if not commonMin else self.minimum.setText(f'{self.selectedBlocks[0].settings['components'][self.component]['min']:.3f}')
+            self.maximum.setText('--') if not commonMax else self.maximum.setText(f'{self.selectedBlocks[0].settings['components'][self.component]['max']:.3f}')
+            self.default.setText('--') if not commonDefault else self.default.setText(f'{self.selectedBlocks[0].settings['components'][self.component]['default']:.3f}')
+            self.slider.setEnabled(False) if not commonMin or not commonMax else self.slider.setEnabled(True)
+        self.slider.blockSignals(False)
+
         # Add rows
         self.layout().addWidget(self.sliderRow)
         if not self.hideRange:
@@ -132,10 +157,9 @@ class SliderComponent(Component):
         self.UpdateColors()
 
     def UpdatePVSetValueCheck(self):
-        # If this block has a SET value, it will automatically update it as the slider value changes
-        if self.pv is not None:
-            if hasattr(self.pv, 'set'):
-                self.pv.set.setText(self.value.text())
+        for block in self.selectedBlocks:
+            if hasattr(block, 'set'):
+                block.set.setText(self.value.text())
 
     def ToAbsolute(self, v):
         self.range = 1 if self.range == 0 else self.range
@@ -149,22 +173,22 @@ class SliderComponent(Component):
         v = self.ToAbsolute(self.slider.value())
         v = v if np.abs(v) > self.eps else 0
         self.value.setText(f'{v:.{self.floatdp}f}')
-        if 'valueType' not in self.pv.settings['components'][self.component].keys():
-            self.pv.settings['components'][self.component]['valueType'] = float
-        self.pv.settings['components'][self.component]['value'] = self.pv.settings['components'][self.component]['valueType'](v)
-        if 'linkedElement' in self.pv.settings:
-            self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
-        else:
-            if self.pv.type in self.pv.pvBlockTypes:
-                self.pv.data[0] = v
+        for block in self.selectedBlocks:
+            if 'valueType' not in block.settings['components'][self.component].keys():
+                block.settings['components'][self.component]['valueType'] = float
+            block.settings['components'][self.component]['value'] = block.settings['components'][self.component]['valueType'](v)
+            if 'linkedElement' in block.settings:
+                block.UpdateLinkedElement(self.slider, self.ToAbsolute)
+            else:
+                if block.type in block.pvBlockTypes:
+                    block.data[0] = v
 
     def SetSliderValue(self):
+        rangeSpecified = self.minimum.text() != '--' and self.maximum.text() != '--'
         self.value.clearFocus()
-        v = self.value.text() if float(self.value.text()) > self.eps else '0.000'
-        self.value.setText(v)
-        if 'valueType' not in self.pv.settings['components'][self.component].keys():
-            self.pv.settings['components'][self.component]['valueType'] = float
-        self.pv.settings['components'][self.component]['value'] = self.pv.settings['components'][self.component]['valueType'](self.value.text())
+        v = float(self.value.text())
+        v = v if abs(v) > self.eps else 0
+        self.value.setText(f'{v:.3f}')
         if self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
             value = QLineEdit(f'{self.pv.settings['components'][self.component]['value']:.{self.floatdp}f}')
             value.setAlignment(Qt.AlignCenter)
@@ -176,7 +200,19 @@ class SliderComponent(Component):
             shared.app.processEvents()
             self.value = value
             self.UpdateColors()
-        self.UpdateSlider()
+        if not self.multipleBlocksSelected:
+            self.UpdateSlider()
+        else:
+            for block in self.selectedBlocks:
+                if 'valueType' not in self.pv.settings['components'][self.component].keys():
+                    block.settings['components'][self.component]['valueType'] = float
+                block.settings['components'][self.component]['value'] = max(min(block.settings['components'][self.component]['valueType'](self.value.text()), block.settings['components'][self.component]['max']), block.settings['components'][self.component]['min'])
+                if hasattr(block, 'set'):
+                    block.set.setText(f'{block.settings['components'][self.component]['value']:.3f}')
+            if rangeSpecified:
+                self.slider.blockSignals(True)
+                self.UpdateSlider()
+                self.slider.blockSignals(False)
 
     def UpdateSlider(self):
         newValue = float(self.value.text())
@@ -187,23 +223,35 @@ class SliderComponent(Component):
             self.pv.data[0] = self.ToAbsolute(self.slider.value())
 
     def Reset(self):
-        self.slider.setValue(self.ToSliderValue(self.pv.settings['components'][self.component]['default']))
-        if 'linkedElement' in self.pv.settings:
-            self.pv.UpdateLinkedElement(self.slider, self.ToAbsolute)
+        if self.default.text() != '--':
+            default = float(self.default.text())
+            default = default if abs(default) > self.eps else 0
+            self.slider.setValue(self.ToSliderValue(default))
+        for block in self.selectedBlocks:
+            if 'linkedElement' in block.settings:
+                block.UpdateLinkedElement(self.slider, self.ToAbsolute)
+            else:
+                block.data[0] = self.ToAbsolute(self.slider.value())
+            block.settings['components'][self.component]['value'] = block.settings['components'][self.component]['default']
+            if hasattr(block, 'set'):
+                block.set.setText(f'{block.settings['components'][self.component]['value']:.3f}')
+        if self.multipleBlocksSelected:
+            shared.workspace.assistant.PushMessage(f'Reset {self.component.capitalize()} component on {len(self.selectedBlocks)} blocks.')
         else:
-            self.pv.data[0] = self.ToAbsolute(self.slider.value())
-        self.UpdatePVSetValueCheck()
+            shared.workspace.assistant.PushMessage(f'Reset {self.component.capitalize()} component on {self.pv.name}.')
 
     def SetDefault(self, override = False):
         if not override:
             self.default.clearFocus()
-            default = max(self.pv.settings['components'][self.component]['min'], min(self.pv.settings['components'][self.component]['max'], float(self.default.text())))
-            v = default if default > self.eps else 0
+            v = float(self.default.text())
+            v = v if abs(v) > self.eps else 0
+            for block in self.selectedBlocks:
+                block.settings['components'][self.component]['default'] = max(min(v, block.settings['components'][self.component]['max']), block.settings['components'][self.component]['min'])
             self.default.setText(f'{v:.{self.floatdp}f}')
-        else:
-            default = max(self.pv.settings['components'][self.component]['min'], min(self.pv.settings['components'][self.component]['max'], self.pv.settings['components'][self.component]['default']))
-        
-        self.pv.settings['components'][self.component]['default'] = default
+            if self.multipleBlocksSelected:
+                shared.workspace.assistant.PushMessage(f'Updated default of {self.component.capitalize()} component on {len(self.selectedBlocks)} blocks.')
+            else:
+                shared.workspace.assistant.PushMessage(f'Updated default of {self.component.capitalize()} component on {self.pv.name}.')
         
         if not self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
             default = QLineEdit(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
@@ -216,35 +264,51 @@ class SliderComponent(Component):
             shared.app.processEvents()
             self.default = default
             self.UpdateColors()
-        self.UpdatePVSetValueCheck()
 
     def SetMinimum(self, override = False):
         '''`override` is a bool. Component should be updated before calling this override. '''
+        rangeSpecified = self.minimum.text() != '--' and self.maximum.text() != '--'
         if not override:
             self.minimum.clearFocus()
             v = float(self.minimum.text())
-            if v >= self.pv.settings['components'][self.component]['max']:
-                return
-            self.pv.settings['components'][self.component]['min'] = v
-            self.pv.settings['components'][self.component]['default'] = max(v, self.pv.settings['components'][self.component]['default'])
-            formattedDefault = self.pv.settings['components'][self.component]['default'] if self.pv.settings['components'][self.component]['default'] > self.eps else 0
-            self.default.setText(f'{formattedDefault:.{self.floatdp}f}')
-            self.range = self.pv.settings['components'][self.component]['max'] - v
-            # self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
-            formattedMin = v if v > self.eps else 0
+            for block in self.selectedBlocks:
+                if v >= block.settings['components'][self.component]['max']:
+                    continue
+                block.settings['components'][self.component]['min'] = v
+                block.settings['components'][self.component]['default'] = max(v, block.settings['components'][self.component]['default'])
+            if rangeSpecified:
+                if self.default.text() != '--':
+                    default = max(v, float(self.default.text()))
+                    formattedDefault = default if abs(default) > self.eps else 0
+                    self.default.setText(f'{formattedDefault:.{self.floatdp}f}')
+                    for block in self.selectedBlocks:
+                        block.settings['components'][self.component]['default'] = default
+                self.range = block.settings['components'][self.component]['max'] - v
+                newSliderValue = max(float(self.value.text()), v) if self.value.text() != '--' else block.settings['components']['value']['min'] + .5 * self.range
+                formattedValue = newSliderValue if abs(newSliderValue) > self.eps else 0
+                self.value.setText(f'{formattedValue:.{self.floatdp}f}')
+                self.slider.blockSignals(True)
+                self.slider.setValue(self.ToSliderValue(formattedValue))
+                self.slider.blockSignals(False)
+            if self.multipleBlocksSelected:
+                for block in self.selectedBlocks:
+                    print('checking', block.name)
+                    block.settings['components'][self.component]['value'] = max(block.settings['components'][self.component]['value'], v)
+                    if hasattr(block, 'set'):
+                        print(f'{block.name} has a set and text is being changed to: {block.settings['components'][self.component]['value']:.3f}')
+                        block.set.setText(f'{block.settings['components'][self.component]['value']:.3f}')
+            # else:
+            #     self.slider.setValue(self.ToSliderValue(formattedValue))
+            formattedMin = v if abs(v) > self.eps else 0
             self.minimum.setText(f'{formattedMin:.{self.floatdp}f}')
-            newSliderValue = max(float(self.value.text()), v)
-            formattedValue = newSliderValue if newSliderValue > self.eps else 0
-            self.value.setText(f'{formattedValue:.{self.floatdp}f}')
-        else:
+        elif not self.multipleBlocksSelected:
             self.range = 1
             self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min'] - 1)
             newSliderValue = max(self.pv.settings['components'][self.component]['value'], self.pv.settings['components'][self.component]['min'])
+            self.pv.settings['components'][self.component]['value'] = newSliderValue
+            self.slider.setValue(self.ToSliderValue(newSliderValue))
 
-        self.pv.settings['components'][self.component]['value'] = newSliderValue
-        self.slider.setValue(self.ToSliderValue(newSliderValue)) # assign the value of the slider
-
-        if not self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
+        if not self.hideRange and not self.multipleBlocksSelected: # blinking cursor error in proxy widgets, so redraw the line edit.
             minimum = QLineEdit(f'{self.pv.settings['components'][self.component]['min']:.{self.floatdp}f}')
             minimum.setAlignment(Qt.AlignCenter)
             minimum.setFixedSize(75, 25)
@@ -255,29 +319,52 @@ class SliderComponent(Component):
             shared.app.processEvents()
             self.minimum = minimum
             self.UpdateColors()
-        self.UpdatePVSetValueCheck()
+        if not self.multipleBlocksSelected:
+            self.UpdatePVSetValueCheck()
+            shared.workspace.assistant.PushMessage(f'Updated minimum of {self.component.capitalize()} component on {self.pv.name}.')
+        else:
+            shared.workspace.assistant.PushMessage(f'Updated minimum of {self.component.capitalize()} component on {len(self.selectedBlocks)} blocks.')
+        self.slider.setEnabled(True) if rangeSpecified else self.slider.setEnabled(False)
     
     def SetMaximum(self, override = False):
         '''`override` is a bool. Component should be updated before calling this override. '''
+        rangeSpecified = self.minimum.text() != '--' and self.maximum.text() != '--'
         if not override:
             self.maximum.clearFocus()
             v = float(self.maximum.text())
-            if v <= self.pv.settings['components'][self.component]['min']:
-                return
-            self.pv.settings['components'][self.component]['max'] = v
-            self.pv.settings['components'][self.component]['default'] = min(v, self.pv.settings['components'][self.component]['default'])
-            self.default.setText(f'{self.pv.settings['components'][self.component]['default']:.{self.floatdp}f}')
-            self.range = v - self.pv.settings['components'][self.component]['min']
-            self.maximum.setText(f'{v:.{self.floatdp}f}')
-            newSliderValue = min(float(self.value.text()), v)
-            self.value.setText(f'{newSliderValue:.{self.floatdp}f}')
-        else:
+            for block in self.selectedBlocks:
+                if v <= block.settings['components'][self.component]['min']:
+                    continue
+                block.settings['components'][self.component]['max'] = v
+                block.settings['components'][self.component]['default'] = min(v, block.settings['components'][self.component]['default'])
+            if rangeSpecified:
+                if self.default.text() != '--':
+                    default = min(v, float(self.default.text()))
+                    formattedDefault = default if abs(default) > self.eps else 0
+                    self.default.setText(f'{formattedDefault:.{self.floatdp}f}')
+                    for block in self.selectedBlocks:
+                        block.settings['components'][self.component]['default'] = default
+                self.range = v - block.settings['components'][self.component]['min']
+                self.maximum.setText(f'{v:.{self.floatdp}f}')
+                newSliderValue = min(float(self.value.text()), v) if self.value.text() != '--' else block.settings['components'][self.component]['min'] + .5 * self.range
+                formattedValue = newSliderValue if abs(newSliderValue) > self.eps else 0
+                self.value.setText(f'{formattedValue:.{self.floatdp}f}')
+                self.slider.blockSignals(True)
+                self.slider.setValue(self.ToSliderValue(formattedValue))
+                self.slider.blockSignals(False)
+                if self.multipleBlocksSelected:
+                    for block in self.selectedBlocks:
+                        block.settings['components'][self.component]['value'] = min(block.settings['components'][self.component]['value'], v)
+                        if hasattr(block, 'set'):
+                            block.set.setText(f'{block.settings['components'][self.component]['value']:.3f}')
+                # else:
+                #     self.slider.setValue(self.ToSliderValue(formattedValue))
+        elif not self.multipleBlocksSelected:
             self.range = 1
             self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - 1)
             newSliderValue = min(self.pv.settings['components'][self.component]['value'], self.pv.settings['components'][self.component]['max'])
-        
-        self.pv.settings['components'][self.component]['value'] = newSliderValue
-        self.slider.setValue(self.ToSliderValue(newSliderValue))
+            self.pv.settings['components'][self.component]['value'] = newSliderValue
+            self.slider.setValue(self.ToSliderValue(newSliderValue)) # assign the value of the slider
         
         if not self.hideRange: # blinking cursor error in proxy widgets, so redraw the line edit.
             maximum = QLineEdit(f'{self.pv.settings['components'][self.component]['max']:.{self.floatdp}f}')
@@ -290,7 +377,12 @@ class SliderComponent(Component):
             shared.app.processEvents()
             self.maximum = maximum
             self.UpdateColors()
-        self.UpdatePVSetValueCheck()
+        if not self.multipleBlocksSelected:
+            self.UpdatePVSetValueCheck()
+            shared.workspace.assistant.PushMessage(f'Updated maximum of {self.component.capitalize()} component on {self.pv.name}.')
+        else:
+            shared.workspace.assistant.PushMessage(f'Updated maximum of {self.component.capitalize()} component on {len(self.selectedBlocks)} blocks.')
+        self.slider.setEnabled(True) if rangeSpecified else self.slider.setEnabled(False)
 
     def UpdateColors(self, **kwargs):
         '''Override `fillColorLight` and `fillColorDark` with a #ABCDEF color string.'''

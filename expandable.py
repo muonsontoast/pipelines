@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton,
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QListWidget, QListWidgetItem, QSpacerItem, QSizePolicy
 )
 from PySide6.QtCore import Qt, QSize

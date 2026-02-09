@@ -51,6 +51,7 @@ class Editor(Entity, QGraphicsView):
         self.keysPressed:list[Qt.Key] = []
         self.area:BoxSelect = BoxSelect()
         self.areaEnabled:bool = False
+        self.commonComponents:set = {} # common components amongst selected items.
 
         self.coordsTitle = QLabel()
         self.zoomTitle = QLabel()
@@ -197,6 +198,7 @@ class Editor(Entity, QGraphicsView):
                 return super().mouseReleaseEvent(event)
             if ds.x() ** 2 + ds.y() ** 2 < shared.cursorTolerance ** 2:
                 item = intersectingWidgets[0]
+                block = item.widget()
                 mousePosInProxyCoords = item.mapFromScene(mousePos)
                 proxyChildUnderCursor = item.widget().childAt(mousePosInProxyCoords.toPoint())
                 # close kernel menu if it is open anywhere
@@ -210,22 +212,33 @@ class Editor(Entity, QGraphicsView):
                 if type(proxyChildUnderCursor) not in [QPushButton]:
                     # check for shift click
                     if self.keysPressed == [Qt.Key_Shift]:
-                        item.widget().ToggleStyling()
+                        block.ToggleStyling()
                         # remove if inactive after toggle, else add
-                        if item.widget().active:
+                        numSelectedItems = len(self.area.selectedItems)
+                        if block.active:
+                            self.commonComponents = {} if numSelectedItems == 0 else self.commonComponents
                             self.area.selectedItems.append(item)
-                            if type(item.widget().type) in ['BPM', 'Corrector', 'PV']:
-                                shared.inspector.Push(item.widget())
+                            self.commonComponents = set(block.settings['components'].keys()).intersection(self.commonComponents)
+                            if numSelectedItems == 0:
+                                shared.inspector.Push(pv = block)
+                            else:
+                                shared.inspector.PushMultiple()
                         else:
                             if item in self.area.selectedItems:
                                 self.area.selectedItems.remove(item)
-                                shared.inspector.Push()
+                                if numSelectedItems == 1:
+                                    shared.inspector.Push()
+                                elif numSelectedItems == 2:
+                                    shared.inspector.Push(pv = self.area.selectedItems[0].widget())
+                                else:
+                                    shared.inspector.PushMultiple()
                         self.SetCacheMode('None')
                         return
                     else:
                         for _item in self.area.selectedItems:
                             if _item != item:
                                 _item.widget().ToggleStyling(active = False)
+                        self.commonComponents = set(block.settings['components'].keys())
                         self.area.selectedItems = [item]
                         if shared.editorSelectMode:
                             widget = self.GetEntityWidgetAtClick(proxyChildUnderCursor)
