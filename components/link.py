@@ -127,7 +127,7 @@ class LinkComponent(Component):
         self.layout().addWidget(self.context)
         self.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
 
-        if not self.multipleBlocksSelected:
+        if not shared.activeEditor.area.multipleBlocksSelected:
             self.typeEdit.setText('None' if not self.pvHasLinkedElement else self.pv.settings['linkedElement'].Type)
             self.positionEdit.setText('None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].iloc[2]:.3f}')
             self.indexEdit.setText('None' if not self.pvHasLinkedElement else f'{self.pv.settings['linkedElement'].Index}')
@@ -138,22 +138,22 @@ class LinkComponent(Component):
                 self.dataComboBox.blockSignals(False)
         else:
             commonType, commonPosition, commonIndex = True, True, True
-            if 'linkedElement' not in self.selectedBlocks[0].settings:
+            if 'linkedElement' not in shared.activeEditor.area.selectedBlocks[0].settings:
                 commonType, commonPosition, commonIndex = False, False, False
             else:
-                for block in self.selectedBlocks[1:]:
+                for block in shared.activeEditor.area.selectedBlocks[1:]:
                     if 'linkedElement' not in block.settings:
                         commonType, commonPosition, commonIndex = False, False, False
                         break
-                    if commonType and block.settings['linkedElement'].Type != self.selectedBlocks[0].settings['linkedElement'].Type:
+                    if commonType and block.settings['linkedElement'].Type != shared.activeEditor.area.selectedBlocks[0].settings['linkedElement'].Type:
                         commonType = False
-                    if commonPosition and block.settings['linkedElement'].iloc[2] != self.selectedBlocks[0].settings['linkedElement'].iloc[2]:
+                    if commonPosition and block.settings['linkedElement'].iloc[2] != shared.activeEditor.area.selectedBlocks[0].settings['linkedElement'].iloc[2]:
                         commonPosition = False
-                    if commonIndex and block.settings['linkedElement'].Index != self.selectedBlocks[0].settings['linkedElement'].Index:
+                    if commonIndex and block.settings['linkedElement'].Index != shared.activeEditor.area.selectedBlocks[0].settings['linkedElement'].Index:
                         commonIndex = False
-            self.typeEdit.setText('--' if not commonType else self.selectedBlocks[0].settings['linkedElement'].Type)
-            self.positionEdit.setText('--' if not commonPosition else f'{self.selectedBlocks[0].settings['linkedElement'].iloc[2]:.3f}')
-            self.indexEdit.setText('--' if not commonIndex else f'{self.selectedBlocks[0].settings['linkedElement'].Index}')
+            self.typeEdit.setText('--' if not commonType else shared.activeEditor.area.selectedBlocks[0].settings['linkedElement'].Type)
+            self.positionEdit.setText('--' if not commonPosition else f'{shared.activeEditor.area.selectedBlocks[0].settings['linkedElement'].iloc[2]:.3f}')
+            self.indexEdit.setText('--' if not commonIndex else f'{shared.activeEditor.area.selectedBlocks[0].settings['linkedElement'].Index}')
 
         self.defaultNames = ['PV', 'QUAD', 'VSTR', 'HSTR', 'BPM', 'AP', 'DRIFT', 'COLL']
 
@@ -161,12 +161,10 @@ class LinkComponent(Component):
 
     def ChangeDataSubtype(self):
         newdtype = self.dataComboBox.currentText().split()[0]
-        # self.pv.settings['dtype'] = newdtype
-        # shared.workspace.assistant.PushMessage(f'{self.pv.name} data subtype changed to {newdtype}.')
-        for block in self.selectedBlocks:
+        for block in shared.activeEditor.area.selectedBlocks:
             block.settings['dtype'] = newdtype
-        if self.multipleBlocksSelected:
-            shared.workspace.assistant.PushMessage(f'Changed data subtype of {len(self.selectedBlocks)} blocks to {newdtype}.')
+        if shared.activeEditor.area.multipleBlocksSelected:
+            shared.workspace.assistant.PushMessage(f'Changed data subtype of {len(shared.activeEditor.area.selectedBlocks)} blocks to {newdtype}.')
         else:
             shared.workspace.assistant.PushMessage(f'Changed data subtype of {self.pv.name} to {newdtype}.')
 
@@ -180,7 +178,7 @@ class LinkComponent(Component):
         self.typeEdit.setText(self.linkedElement.Type)
         self.positionEdit.setText(f'{self.linkedElement.iloc[2]:.3f}')
         self.indexEdit.setText(f'{self.linkedElement.Index}')
-        for block in self.selectedBlocks:
+        for block in shared.activeEditor.area.selectedBlocks:
             block.settings['linkedElement'] = self.linkedElement
             # linked element-specific logic
             if self.linkedElement.Type == 'Quadrupole':
@@ -217,7 +215,7 @@ class LinkComponent(Component):
             elif self.linkedElement.Name == 'VSTR':
                 block.settings['dtype'] = 'Y'
         
-        if self.multipleBlocksSelected:
+        if shared.activeEditor.area.multipleBlocksSelected:
             shared.inspector.PushMultiple()
         else:
             shared.inspector.Push(self.pv)

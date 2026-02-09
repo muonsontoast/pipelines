@@ -7,5 +7,5 @@ class Component(QWidget):
         self.pv = pv
         self.component = component
         self.expandable = expandable
-        self.multipleBlocksSelected = len(shared.activeEditor.area.selectedItems) > 1
-        self.selectedBlocks = [item.widget() for item in shared.activeEditor.area.selectedItems]
+        # self.multipleBlocksSelected = len(shared.activeEditor.area.selectedItems) > 1
+        # self.selectedBlocks = [item.widget() for item in shared.activeEditor.area.selectedItems]

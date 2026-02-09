@@ -50,6 +50,9 @@ class Editor(Entity, QGraphicsView):
         self.mouseButtonPressed = None # to be deprecated
         self.keysPressed:list[Qt.Key] = []
         self.area:BoxSelect = BoxSelect()
+        self.area.selectedItems = []
+        self.area.selectedBlocks = []
+        self.area.multipleBlocksSelected = False
         self.areaEnabled:bool = False
         self.commonComponents:set = {} # common components amongst selected items.
 
@@ -161,17 +164,56 @@ class Editor(Entity, QGraphicsView):
                 ]
 
                 # remove newly deselected items
+                itemsWereRemoved = False
                 for item in self.area.selectedItems:
                     if item not in intersectingWidgets:
                         item.widget().ToggleStyling(active = False)
                         self.area.selectedItems.remove(item)
+                        self.area.selectedBlocks.remove(item.widget())
+                        itemsWereRemoved = True
                 
                 # add newly selected items
+                itemsWereAdded = False
                 for item in intersectingWidgets:
                     if item not in self.area.selectedItems:
-                        item.widget().ToggleStyling(active = True)
+                        block = item.widget()
+                        block.ToggleStyling(active = True)
                         self.area.selectedItems.append(item)
+                        self.area.selectedBlocks.append(block)
+                        itemsWereAdded = True
 
+                numSelectedItems = len(self.area.selectedItems)
+
+                if itemsWereRemoved:
+                    if numSelectedItems == 0:
+                        self.commonComponents = set()
+                        self.area.multipleBlocksSelected = False
+                        shared.inspector.Push()
+                    elif numSelectedItems == 1:
+                        self.commonComponents = set(self.area.selectedBlocks[0].settings['components'].keys())
+                        self.area.multipleBlocksSelected = False
+                        shared.inspector.Push(self.area.selectedItems[0].widget())
+                    else:
+                        self.commonComponents = set(self.area.selectedBlocks[0].settings['components'].keys()).intersection(*[block.settings['components'].keys() for block in self.area.selectedBlocks[1:]])
+                        self.area.multipleBlocksSelected = True
+                        shared.inspector.mainWindowTitle.blockSignals(True)
+                        shared.inspector.mainWindowTitle.setText(f'{numSelectedItems} selected items.')
+                        shared.inspector.mainWindowTitle.blockSignals(False)
+                elif itemsWereAdded:
+                    if numSelectedItems == 1:
+                        self.commonComponents = set(self.area.selectedBlocks[0].settings['components'].keys())
+                        self.area.multipleBlocksSelected = False
+                        shared.inspector.Push(self.area.selectedItems[0].widget())
+                    elif numSelectedItems == 2:
+                        self.commonComponents = set(self.area.selectedBlocks[-1].settings['components'].keys()).intersection(self.commonComponents)
+                        self.area.multipleBlocksSelected = True
+                        shared.inspector.PushMultiple()
+                    else:
+                        self.commonComponents = set(self.area.selectedBlocks[-1].settings['components'].keys()).intersection(self.commonComponents)
+                        self.area.multipleBlocksSelected = True
+                        shared.inspector.mainWindowTitle.blockSignals(True)
+                        shared.inspector.mainWindowTitle.setText(f'{numSelectedItems} selected items.')
+                        shared.inspector.mainWindowTitle.blockSignals(False)
                 return event.ignore()
         super().mouseMoveEvent(event)
 
@@ -218,12 +260,16 @@ class Editor(Entity, QGraphicsView):
                         if block.active:
                             self.commonComponents = {} if numSelectedItems == 0 else self.commonComponents
                             self.area.selectedItems.append(item)
+                            self.area.selectedBlocks.append(block)
+                            self.area.multipleBlocksSelected = len(self.area.selectedBlocks) > 1
                             self.commonComponents = set(block.settings['components'].keys()).intersection(self.commonComponents)
                             if numSelectedItems == 0:
                                 shared.inspector.Push(pv = block)
                             else:
                                 shared.inspector.PushMultiple()
                         else:
+                            self.area.selectedBlocks.remove(block)
+                            self.area.multipleBlocksSelected = len(self.area.selectedBlocks) > 1
                             if item in self.area.selectedItems:
                                 self.area.selectedItems.remove(item)
                                 if numSelectedItems == 1:
@@ -240,6 +286,8 @@ class Editor(Entity, QGraphicsView):
                                 _item.widget().ToggleStyling(active = False)
                         self.commonComponents = set(block.settings['components'].keys())
                         self.area.selectedItems = [item]
+                        self.area.selectedBlocks = [item.widget()]
+                        self.area.multipleBlocksSelected = False
                         if shared.editorSelectMode:
                             widget = self.GetEntityWidgetAtClick(proxyChildUnderCursor)
                             if not isinstance(widget, PV):
@@ -273,6 +321,8 @@ class Editor(Entity, QGraphicsView):
                         shared.entities[ID].BaseStyling()
                     shared.selected = []
                 self.area.selectedItems = []
+                self.area.selectedBlocks = []
+                self.area.multipleBlocksSelected = False
                 shared.inspector.Push()
 
         self.SetCacheMode('None')

@@ -119,7 +119,7 @@ class SliderComponent(Component):
                 self.default.setReadOnly(True)
         # Conditional multiple block logic
         self.slider.blockSignals(True)
-        if not self.multipleBlocksSelected:
+        if not shared.activeEditor.area.multipleBlocksSelected:
             self.slider.setValue(self.ToSliderValue(pv.settings['components'][component]['value']))
             v = f'{pv.settings['components'][component]['value']:.{self.floatdp}f}' if np.abs(pv.settings['components'][component]['value']) > self.eps else '0.000'
             self.value.setText(v)
@@ -131,19 +131,19 @@ class SliderComponent(Component):
             # if blocks share the same values, populate these in the inspector
             self.slider.setValue(0)
             commonValue, commonMin, commonMax, commonDefault = True, True, True, True
-            for block in self.selectedBlocks[1:]:
-                if commonValue and block.settings['components'][self.component]['value'] != self.selectedBlocks[0].settings['components'][self.component]['value']:
+            for block in shared.activeEditor.area.selectedBlocks[1:]:
+                if commonValue and block.settings['components'][self.component]['value'] != shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['value']:
                     commonValue = False
-                if commonMin and block.settings['components'][self.component]['min'] != self.selectedBlocks[0].settings['components'][self.component]['min']:
+                if commonMin and block.settings['components'][self.component]['min'] != shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['min']:
                     commonMin = False
-                if commonMax and block.settings['components'][self.component]['max'] != self.selectedBlocks[0].settings['components'][self.component]['max']:
+                if commonMax and block.settings['components'][self.component]['max'] != shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['max']:
                     commonMax = False
-                if commonDefault and block.settings['components'][self.component]['default'] != self.selectedBlocks[0].settings['components'][self.component]['default']:
+                if commonDefault and block.settings['components'][self.component]['default'] != shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['default']:
                     commonDefault = False
-            self.value.setText('--') if not commonValue else self.value.setText(f'{self.selectedBlocks[0].settings['components'][self.component]['value']:.3f}')
-            self.minimum.setText('--') if not commonMin else self.minimum.setText(f'{self.selectedBlocks[0].settings['components'][self.component]['min']:.3f}')
-            self.maximum.setText('--') if not commonMax else self.maximum.setText(f'{self.selectedBlocks[0].settings['components'][self.component]['max']:.3f}')
-            self.default.setText('--') if not commonDefault else self.default.setText(f'{self.selectedBlocks[0].settings['components'][self.component]['default']:.3f}')
+            self.value.setText('--') if not commonValue else self.value.setText(f'{shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['value']:.3f}')
+            self.minimum.setText('--') if not commonMin else self.minimum.setText(f'{shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['min']:.3f}')
+            self.maximum.setText('--') if not commonMax else self.maximum.setText(f'{shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['max']:.3f}')
+            self.default.setText('--') if not commonDefault else self.default.setText(f'{shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['default']:.3f}')
             self.slider.setEnabled(False) if not commonMin or not commonMax else self.slider.setEnabled(True)
         self.slider.blockSignals(False)
 
@@ -157,7 +157,7 @@ class SliderComponent(Component):
         self.UpdateColors()
 
     def UpdatePVSetValueCheck(self):
-        for block in self.selectedBlocks:
+        for block in shared.activeEditor.area.selectedBlocks:
             if hasattr(block, 'set'):
                 block.set.setText(self.value.text())
 
@@ -173,7 +173,7 @@ class SliderComponent(Component):
         v = self.ToAbsolute(self.slider.value())
         v = v if np.abs(v) > self.eps else 0
         self.value.setText(f'{v:.{self.floatdp}f}')
-        for block in self.selectedBlocks:
+        for block in shared.activeEditor.area.selectedBlocks:
             if 'valueType' not in block.settings['components'][self.component].keys():
                 block.settings['components'][self.component]['valueType'] = float
             block.settings['components'][self.component]['value'] = block.settings['components'][self.component]['valueType'](v)
@@ -200,10 +200,10 @@ class SliderComponent(Component):
             shared.app.processEvents()
             self.value = value
             self.UpdateColors()
-        if not self.multipleBlocksSelected:
+        if not shared.activeEditor.area.multipleBlocksSelected:
             self.UpdateSlider()
         else:
-            for block in self.selectedBlocks:
+            for block in shared.activeEditor.area.selectedBlocks:
                 if 'valueType' not in self.pv.settings['components'][self.component].keys():
                     block.settings['components'][self.component]['valueType'] = float
                 block.settings['components'][self.component]['value'] = max(min(block.settings['components'][self.component]['valueType'](self.value.text()), block.settings['components'][self.component]['max']), block.settings['components'][self.component]['min'])
@@ -227,7 +227,7 @@ class SliderComponent(Component):
             default = float(self.default.text())
             default = default if abs(default) > self.eps else 0
             self.slider.setValue(self.ToSliderValue(default))
-        for block in self.selectedBlocks:
+        for block in shared.activeEditor.area.selectedBlocks:
             if 'linkedElement' in block.settings:
                 block.UpdateLinkedElement(self.slider, self.ToAbsolute)
             else:
@@ -235,8 +235,8 @@ class SliderComponent(Component):
             block.settings['components'][self.component]['value'] = block.settings['components'][self.component]['default']
             if hasattr(block, 'set'):
                 block.set.setText(f'{block.settings['components'][self.component]['value']:.3f}')
-        if self.multipleBlocksSelected:
-            shared.workspace.assistant.PushMessage(f'Reset {self.component.capitalize()} component on {len(self.selectedBlocks)} blocks.')
+        if shared.activeEditor.area.multipleBlocksSelected:
+            shared.workspace.assistant.PushMessage(f'Reset {self.component.capitalize()} component on {len(shared.activeEditor.area.selectedBlocks)} blocks.')
         else:
             shared.workspace.assistant.PushMessage(f'Reset {self.component.capitalize()} component on {self.pv.name}.')
 
@@ -245,11 +245,11 @@ class SliderComponent(Component):
             self.default.clearFocus()
             v = float(self.default.text())
             v = v if abs(v) > self.eps else 0
-            for block in self.selectedBlocks:
+            for block in shared.activeEditor.area.selectedBlocks:
                 block.settings['components'][self.component]['default'] = max(min(v, block.settings['components'][self.component]['max']), block.settings['components'][self.component]['min'])
             self.default.setText(f'{v:.{self.floatdp}f}')
-            if self.multipleBlocksSelected:
-                shared.workspace.assistant.PushMessage(f'Updated default of {self.component.capitalize()} component on {len(self.selectedBlocks)} blocks.')
+            if shared.activeEditor.area.multipleBlocksSelected:
+                shared.workspace.assistant.PushMessage(f'Updated default of {self.component.capitalize()} component on {len(shared.activeEditor.area.selectedBlocks)} blocks.')
             else:
                 shared.workspace.assistant.PushMessage(f'Updated default of {self.component.capitalize()} component on {self.pv.name}.')
         
@@ -271,7 +271,7 @@ class SliderComponent(Component):
         if not override:
             self.minimum.clearFocus()
             v = float(self.minimum.text())
-            for block in self.selectedBlocks:
+            for block in shared.activeEditor.area.selectedBlocks:
                 if v >= block.settings['components'][self.component]['max']:
                     continue
                 block.settings['components'][self.component]['min'] = v
@@ -281,7 +281,7 @@ class SliderComponent(Component):
                     default = max(v, float(self.default.text()))
                     formattedDefault = default if abs(default) > self.eps else 0
                     self.default.setText(f'{formattedDefault:.{self.floatdp}f}')
-                    for block in self.selectedBlocks:
+                    for block in shared.activeEditor.area.selectedBlocks:
                         block.settings['components'][self.component]['default'] = default
                 self.range = block.settings['components'][self.component]['max'] - v
                 newSliderValue = max(float(self.value.text()), v) if self.value.text() != '--' else block.settings['components']['value']['min'] + .5 * self.range
@@ -290,25 +290,23 @@ class SliderComponent(Component):
                 self.slider.blockSignals(True)
                 self.slider.setValue(self.ToSliderValue(formattedValue))
                 self.slider.blockSignals(False)
-            if self.multipleBlocksSelected:
-                for block in self.selectedBlocks:
-                    print('checking', block.name)
+            if shared.activeEditor.area.multipleBlocksSelected:
+                for block in shared.activeEditor.area.selectedBlocks:
                     block.settings['components'][self.component]['value'] = max(block.settings['components'][self.component]['value'], v)
                     if hasattr(block, 'set'):
-                        print(f'{block.name} has a set and text is being changed to: {block.settings['components'][self.component]['value']:.3f}')
                         block.set.setText(f'{block.settings['components'][self.component]['value']:.3f}')
             # else:
             #     self.slider.setValue(self.ToSliderValue(formattedValue))
             formattedMin = v if abs(v) > self.eps else 0
             self.minimum.setText(f'{formattedMin:.{self.floatdp}f}')
-        elif not self.multipleBlocksSelected:
+        elif not shared.activeEditor.area.multipleBlocksSelected:
             self.range = 1
             self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - self.pv.settings['components'][self.component]['min'] - 1)
             newSliderValue = max(self.pv.settings['components'][self.component]['value'], self.pv.settings['components'][self.component]['min'])
             self.pv.settings['components'][self.component]['value'] = newSliderValue
             self.slider.setValue(self.ToSliderValue(newSliderValue))
 
-        if not self.hideRange and not self.multipleBlocksSelected: # blinking cursor error in proxy widgets, so redraw the line edit.
+        if not self.hideRange and not shared.activeEditor.area.multipleBlocksSelected: # blinking cursor error in proxy widgets, so redraw the line edit.
             minimum = QLineEdit(f'{self.pv.settings['components'][self.component]['min']:.{self.floatdp}f}')
             minimum.setAlignment(Qt.AlignCenter)
             minimum.setFixedSize(75, 25)
@@ -319,11 +317,11 @@ class SliderComponent(Component):
             shared.app.processEvents()
             self.minimum = minimum
             self.UpdateColors()
-        if not self.multipleBlocksSelected:
+        if not shared.activeEditor.area.multipleBlocksSelected:
             self.UpdatePVSetValueCheck()
             shared.workspace.assistant.PushMessage(f'Updated minimum of {self.component.capitalize()} component on {self.pv.name}.')
         else:
-            shared.workspace.assistant.PushMessage(f'Updated minimum of {self.component.capitalize()} component on {len(self.selectedBlocks)} blocks.')
+            shared.workspace.assistant.PushMessage(f'Updated minimum of {self.component.capitalize()} component on {len(shared.activeEditor.area.selectedBlocks)} blocks.')
         self.slider.setEnabled(True) if rangeSpecified else self.slider.setEnabled(False)
     
     def SetMaximum(self, override = False):
@@ -332,7 +330,7 @@ class SliderComponent(Component):
         if not override:
             self.maximum.clearFocus()
             v = float(self.maximum.text())
-            for block in self.selectedBlocks:
+            for block in shared.activeEditor.area.selectedBlocks:
                 if v <= block.settings['components'][self.component]['min']:
                     continue
                 block.settings['components'][self.component]['max'] = v
@@ -342,7 +340,7 @@ class SliderComponent(Component):
                     default = min(v, float(self.default.text()))
                     formattedDefault = default if abs(default) > self.eps else 0
                     self.default.setText(f'{formattedDefault:.{self.floatdp}f}')
-                    for block in self.selectedBlocks:
+                    for block in shared.activeEditor.area.selectedBlocks:
                         block.settings['components'][self.component]['default'] = default
                 self.range = v - block.settings['components'][self.component]['min']
                 self.maximum.setText(f'{v:.{self.floatdp}f}')
@@ -352,14 +350,14 @@ class SliderComponent(Component):
                 self.slider.blockSignals(True)
                 self.slider.setValue(self.ToSliderValue(formattedValue))
                 self.slider.blockSignals(False)
-                if self.multipleBlocksSelected:
-                    for block in self.selectedBlocks:
+                if shared.activeEditor.area.multipleBlocksSelected:
+                    for block in shared.activeEditor.area.selectedBlocks:
                         block.settings['components'][self.component]['value'] = min(block.settings['components'][self.component]['value'], v)
                         if hasattr(block, 'set'):
                             block.set.setText(f'{block.settings['components'][self.component]['value']:.3f}')
                 # else:
                 #     self.slider.setValue(self.ToSliderValue(formattedValue))
-        elif not self.multipleBlocksSelected:
+        elif not shared.activeEditor.area.multipleBlocksSelected:
             self.range = 1
             self.slider.setRange(0, self.pv.settings['components'][self.component]['max'] - 1)
             newSliderValue = min(self.pv.settings['components'][self.component]['value'], self.pv.settings['components'][self.component]['max'])
@@ -377,11 +375,11 @@ class SliderComponent(Component):
             shared.app.processEvents()
             self.maximum = maximum
             self.UpdateColors()
-        if not self.multipleBlocksSelected:
+        if not shared.activeEditor.area.multipleBlocksSelected:
             self.UpdatePVSetValueCheck()
             shared.workspace.assistant.PushMessage(f'Updated maximum of {self.component.capitalize()} component on {self.pv.name}.')
         else:
-            shared.workspace.assistant.PushMessage(f'Updated maximum of {self.component.capitalize()} component on {len(self.selectedBlocks)} blocks.')
+            shared.workspace.assistant.PushMessage(f'Updated maximum of {self.component.capitalize()} component on {len(shared.activeEditor.area.selectedBlocks)} blocks.')
         self.slider.setEnabled(True) if rangeSpecified else self.slider.setEnabled(False)
 
     def UpdateColors(self, **kwargs):

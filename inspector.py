@@ -16,6 +16,8 @@ class Inspector(Entity, QTabWidget):
         super().__init__(name = 'Inspector', type = 'Inspector', size = size)
         shared.inspector = self
         self.parent = parent
+        self.selectedBlocks = [item.widget() for item in shared.activeEditor.area.selectedItems]
+        self.multipleBlocksSelected = len(self.selectedBlocks) > 1
         self.setMaximumWidth(size[0])
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.mainWindow = QWidget()
