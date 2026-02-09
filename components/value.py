@@ -11,7 +11,6 @@ from .component import Component
 from .. import shared
 from .. import style
 
-# class ValueComponent(QWidget):
 class ValueComponent(Component):
     def __init__(self, pv, component, floatdp = 3, expandable = None, **kwargs):
         '''Leave `sliderSteps` at 1e6 for smooth sliding, or restrict to a low number for discrete applications.\n

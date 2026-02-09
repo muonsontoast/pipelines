@@ -196,9 +196,7 @@ class Editor(Entity, QGraphicsView):
                     else:
                         self.commonComponents = set(self.area.selectedBlocks[0].settings['components'].keys()).intersection(*[block.settings['components'].keys() for block in self.area.selectedBlocks[1:]])
                         self.area.multipleBlocksSelected = True
-                        shared.inspector.mainWindowTitle.blockSignals(True)
-                        shared.inspector.mainWindowTitle.setText(f'{numSelectedItems} selected items.')
-                        shared.inspector.mainWindowTitle.blockSignals(False)
+                        shared.inspector.PushMultiple()
                 elif itemsWereAdded:
                     if numSelectedItems == 1:
                         self.commonComponents = set(self.area.selectedBlocks[0].settings['components'].keys())
@@ -211,9 +209,7 @@ class Editor(Entity, QGraphicsView):
                     else:
                         self.commonComponents = set(self.area.selectedBlocks[-1].settings['components'].keys()).intersection(self.commonComponents)
                         self.area.multipleBlocksSelected = True
-                        shared.inspector.mainWindowTitle.blockSignals(True)
-                        shared.inspector.mainWindowTitle.setText(f'{numSelectedItems} selected items.')
-                        shared.inspector.mainWindowTitle.blockSignals(False)
+                        shared.inspector.PushMultiple()
                 return event.ignore()
         super().mouseMoveEvent(event)
 
