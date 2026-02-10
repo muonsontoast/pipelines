@@ -78,7 +78,12 @@ def Load(path):
                     editorSettings = v
                     break
             def PopulateScene():
+                groups = dict() # process groups separately
                 for ID, v in settings.items():
+                    if v['type'] == 'Group':
+                        groups[ID] = v
+                        shared.numGroups += 1
+                        continue
                     # Populate scene blocks
                     if v['type'] in blockTypes.keys():
                         '''Block type, name, position, size, (optional) override ID.'''
@@ -99,6 +104,8 @@ def Load(path):
                             mode = v.get('mode', None),
                             dtype = v.get('dtype', None),
                             numberValue = v.get('numberValue', None),
+                            numBlocks = v.get('numBlocks', None),
+                            IDs = v.get('IDs', None),
                         )
                         if 'alignment' in v:
                             entity.settings['alignment'] = v['alignment']
@@ -123,6 +130,17 @@ def Load(path):
                             for h in v['hyperparameters']:
                                 v['hyperparameters'][h]['value'] = np.array(v['hyperparameters'][h]['value'])
                             entity.settings['hyperparameters'] = v['hyperparameters']
+                # process groups after populating the scene
+                for ID, v in groups.items():
+                    proxy, entity = CreateBlock(
+                        blockTypes[v['type']], 
+                        v['name'],
+                        QPoint(v['position'][0], v['position'][1]), 
+                        ID,
+                        size = v['size'],
+                        numBlocks = v.get('numBlocks', None),
+                        IDs = v.get('IDs', None),
+                    )
                 LinkBlocks()
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')
                 shared.workspace.assistant.PushMessage(f'Loaded saved session from {path}')

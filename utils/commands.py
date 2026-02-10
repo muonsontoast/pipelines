@@ -27,6 +27,7 @@ from ..blocks.filters.greaterthan import GreaterThan
 from ..blocks.filters.lessthan import LessThan
 from ..blocks.filters.singlecontrol import SingleControl
 from ..blocks.filters.invert import Invert
+from ..blocks.group import Group
 from ..ui.groupmenu import GroupMenu
 from .multiprocessing import TogglePause, StopActions, runningActions
 from .save import Save
@@ -48,7 +49,7 @@ blockTypes = {
     'Number': Number,
     'SVD': SVD,
     'Single Task GP': SingleTaskGP,
-    'Group': None,
+    'Group': Group,
     'Group Menu': GroupMenu,
     'Kernel': Kernel,
     'Linear Kernel': LinearKernel,
@@ -133,18 +134,17 @@ def DetailedView(active = True):
 
 def CreateBlock(blockType, name: str, pos: QPoint = None, overrideID = None, *args, **kwargs):
     '''Returns a proxy along with its widget.'''
-    if blockType != blockTypes['Group']:
-        proxy = QGraphicsProxyWidget()
-        editor.scene.addItem(proxy)
-        w = blockType(editor, proxy, name = name, overrideID = overrideID, **kwargs)
-        print(f'Added {w.name} with ID: {w.ID}')
-        name = w.name
-        prefix = 'an' if w.name in ['Orbit Response'] else 'a'
-    else:
-        proxy = blockType(*args, **kwargs)
-        print(f'Added {proxy.name} with ID: {proxy.ID}')
-        prefix = 'a'
-        name = proxy.name
+    proxy = QGraphicsProxyWidget()
+    editor.scene.addItem(proxy)
+    w = blockType(editor, proxy, name = name, overrideID = overrideID, **kwargs)
+    print(f'Added {w.name} with ID: {w.ID}')
+    name = w.name
+    prefix = 'an' if w.name in ['Orbit Response'] else 'a'
+    # else:
+    #     proxy = blockType(*args, **kwargs)
+    #     print(f'Added {proxy.name} with ID: {proxy.ID}')
+    #     prefix = 'a'
+    #     name = proxy.name
     if pos:
         proxy.setWidget(w)
         proxy.setPos(pos)
@@ -152,9 +152,10 @@ def CreateBlock(blockType, name: str, pos: QPoint = None, overrideID = None, *ar
         w.settings['position'] = [pos.x(), pos.y()]
     rectCenter = proxy.sceneBoundingRect().center()
     shared.workspace.assistant.PushMessage(f'Created {prefix} {name} at ({rectCenter.x():.0f}, {rectCenter.y():.0f})')
-    if pos:
-        return proxy, w
-    return proxy
+    return proxy, w
+    # if pos:
+    #     return proxy, w
+    # return proxy
 
 def CreatePV(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['PV'], 'PV', pos)
@@ -218,8 +219,9 @@ def CreateInvert(pos: QPoint):
 
 def CreateGroup():
     if len(shared.activeEditor.area.selectedItems) < 2:
-        return print('Too few elements to create a group!')
-    proxy = CreateBlock(blockTypes['Group'], 'Group', None, None, *shared.activeEditor.area.selectedItems)
+        shared.workspace.assistant.PushMessage('At least two blocks needed to form a group.', 'Warning')
+        return
+    proxy, widget = CreateBlock(blockTypes['Group'], 'Group', numBlocks = len(shared.activeEditor.area.selectedBlocks), IDs = [block.ID for block in shared.activeEditor.area.selectedBlocks])
 
 def Delete():
     selectedItems = shared.activeEditor.area.selectedItems
@@ -240,13 +242,18 @@ def Delete():
         if widget.type == 'PV':
             shared.PVIDs.remove(widget.ID)
             for ID in shared.kernels:
-                shared.entities[ID].RemoveLinkedPV(widget.ID)
+                if shared.entities[ID].type != 'KernelMenu':
+                    shared.entities[ID].RemoveLinkedPV(widget.ID)
         elif isinstance(widget, Kernel):
             shared.kernels.pop(shared.kernels.index(widget.ID))
         shared.selectedPV = None
         if widget in shared.activePVs:
             shared.activePVs.remove(widget)
         message = f'Deleted {widget.name}.'
+        # if widget is a Group, remove any block references to it
+        if widget.type == 'Group':
+            for block in widget.groupBlocks:
+                block.groupID = None
         widget.stopCheckThread.set()
         widget.deleteLater()
     if len(selectedItems) > 1:
@@ -281,7 +288,7 @@ commands = {
     'Paste': dict(shortcut = ['Ctrl+V'], func = Paste, args = []),
     'Save': dict(shortcut = ['Ctrl+S'], func = SaveSettings, args = []),
     # 'Area Select': dict(shortcut = ['Shift+LMB'], func = lambda: None, args = []),
-    # 'Group': dict(shortcut = ['Ctrl+G'], func = CreateGroup, args = []),
+    'Group': dict(shortcut = ['Ctrl+G'], func = CreateGroup, args = []),
     # 'Snip': dict(shortcut = ['Ctrl+S'], func = Snip, args = []),
     'PV (Process Variable)': dict(shortcut = ['Shift+P'], func = CreatePV, args = [GetMousePos]),
     'Corrector': dict(shortcut = ['Shift+C'], func = CreateCorrector, args = [GetMousePos]),

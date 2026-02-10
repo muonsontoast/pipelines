@@ -51,3 +51,4 @@ kernels = [] # list of kernels
 toggleState = False # should blocks be run (True) or paused (False) when Spacebar is pressed?
 changeToggleState = True # override the change toggle state logic
 stopCleanUpTimer = False
+numGroups = 0

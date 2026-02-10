@@ -141,15 +141,15 @@ class SingleTaskGP(Draggable):
         }
 
     def Push(self):
-        from ..kernels.periodic import PeriodicKernel
         from ..composition.composition import Composition
         from ..kernels.kernel import Kernel
         super().Push()
         self.widget.layout().setContentsMargins(5, 10, 20, 10)
         self.widget.layout().setSpacing(20)
-        self.AddSocket('decision', 'F', 'Decision', 175, acceptableTypes = [PV])
+        self.AddSocket('decision', 'F', 'Decision', 185, acceptableTypes = [PV])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
-        self.AddSocket('kernel', 'F', 'Kernel', 175, acceptableTypes = [Kernel, Composition, Filter])
+        self.AddSocket('constraint', 'F', 'Constraint', 185, acceptableTypes = [Filter])
+        self.AddSocket('kernel', 'F', 'Kernel', 185, acceptableTypes = [Kernel, Composition, Filter])
         self.AddSocket('out', 'M')
         self.content = QWidget()
         self.content.setLayout(QVBoxLayout())

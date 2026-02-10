@@ -30,6 +30,7 @@ class Draggable(Entity, QWidget):
         self.checkThread = None # every draggable has an optional check thread responsible for updating its value displayed to the user regularly.
         self.stopCheckThread = Event() # force the check thread to close when exiting and saving.
         self.checkThreadIsClosed = Event()
+        self.groupID = None # a reference to a group
         self.setLayout(QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
@@ -127,17 +128,18 @@ class Draggable(Entity, QWidget):
     def Push(self):
         # Add widget sections to the layout.
         self.layout().addWidget(self.FSocketWidgets)
-        self.AddHeader()
+        self.AddHeader(isGroup = self.type == 'Group')
         self.layout().addWidget(self.main)
         self.layout().addWidget(self.MSocketWidgets)
-        if any(match in self.type for match in ['GP', 'Orbit Response']):
+        if any(match in self.type for match in ['GP', 'Orbit Response', 'Group']):
             self.widget = QWidget()
             self.widget.setLayout(QVBoxLayout())
             self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.widget.setContentsMargins(0, 5, 0, 5)
             self.widget.setStyleSheet(style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadiusBottomLeft = 12, borderRadiusBottomRight = 12))
             self.main.layout().addWidget(self.widget)
-            self.AddButtons()
+            if self.type != 'Group':
+                self.AddButtons()
 
     def GetSocketPos(self, name):
         try: 
@@ -217,6 +219,7 @@ class Draggable(Entity, QWidget):
         startDragPosInSceneCoords = self.proxy.mapToScene(startDragPos)
         newPos = self.proxy.pos() + mousePosInSceneCoords - startDragPosInSceneCoords
         self.proxy.setPos(newPos)
+        self.settings['position'] = [newPos.x(), newPos.y()]
         self.SetRect()
         shared.activeEditor.scene.blockSignals(True)
         # Batch update all incoming links.
@@ -248,8 +251,14 @@ class Draggable(Entity, QWidget):
                 self.linksOut['free']['link'].setLine(QLineF(outputSocketPos, mousePosInSceneCoords))
         elif buttons & Qt.LeftButton and self.startDragPos:
             self.cursorMoved = True
-            if len(shared.activeEditor.area.selectedBlocks) > 1:
-                for block in shared.activeEditor.area.selectedBlocks:
+            if self.groupID is not None:
+                blocksToMove = shared.entities[self.groupID].groupBlocks
+            elif self.type == 'Group':
+                blocksToMove = self.groupBlocks
+            else:
+                blocksToMove = shared.activeEditor.area.selectedBlocks
+            if len(blocksToMove) > 1:
+                for block in blocksToMove:
                     block.MoveBlock(self.startDragPos, mousePos)
             else:
                 self.MoveBlock(self.startDragPos, mousePos)
@@ -404,16 +413,18 @@ class Draggable(Entity, QWidget):
             self.buttons.layout().addWidget(self.clear)
         self.main.layout().addWidget(self.buttons)
 
-    def AddHeader(self):
+    def AddHeader(self, isGroup = False):
         self.header = QWidget()
         self.header.setFixedHeight(40)
+        if isGroup:
+            self.header.setFixedWidth(150)
         self.header.setLayout(QHBoxLayout())
         self.header.layout().setContentsMargins(15, 0, 5, 0)
         self.title = QLabel(f'{self.settings['name']}', alignment = Qt.AlignCenter)
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         self.main.layout().addWidget(self.header, alignment = Qt.AlignTop)
 
-    async def Start(self, changeGlobalToggleState = True, **kwargs):
+    def Start(self, changeGlobalToggleState = True, **kwargs):
         pass
 
     def Pause(self, changeGlobalToggleState = True):
