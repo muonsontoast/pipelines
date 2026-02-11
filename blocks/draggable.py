@@ -459,8 +459,6 @@ class Draggable(Entity, QWidget):
         if self.type != 'Group' and shared.entities[ID].groupID is not None and shared.entities[ID].groupID != self.groupID:
             self.AddLinkIn(shared.entities[ID].groupID, socket, Z = -101, hide = True)
             shared.entities[shared.entities[ID].groupID].AddLinkOut(self.ID, socket)
-
-
         return True
 
     # this can be overridden to trigger logic that should run when removing incoming links to a block.

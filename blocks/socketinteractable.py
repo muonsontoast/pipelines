@@ -29,6 +29,7 @@ class SocketInteractable(QFrame):
         self.setAttribute(Qt.WA_Hover, True)
 
     def enterEvent(self, event):
+        from .composition.composition import Composition
         '''Another PV mouseMove event is in control until the mouse is released, this method will then be called upon release.'''
         print(f'Hovering {self.parent.name}Socket')
         self.MapRectToScene()
@@ -58,7 +59,7 @@ class SocketInteractable(QFrame):
                     pushMessage = False
                     shared.activeEditor.scene.removeItem(self.parent.parent.linksIn[shared.PVLinkSource.ID]['link'])
                 successfulLinkIn = self.parent.parent.AddLinkIn(shared.PVLinkSource.ID, self.parent.name) # returns False if connection fails to complete
-                if successfulLinkIn:
+                if successfulLinkIn and not isinstance(self.parent.parent, Composition):
                     shared.PVLinkSource.AddLinkOut(self.parent.parent.ID, self.parent.name)
                 # Update settings of the two blocks with the block IDs and the F socket the link attaches to.
                 if pushMessage and successfulLinkIn:

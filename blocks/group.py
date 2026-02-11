@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy, QTextEdit, QGraphicsProxyWidget
 from PySide6.QtCore import Qt, QPoint
 from .draggable import Draggable
 from .. import shared
@@ -26,6 +26,7 @@ class Group(Draggable):
             numBlocks = numBlocks,
             IDs = IDs,
             showing = kwargs.pop('showing', True),
+            note = kwargs.pop('note', ''),
             **kwargs
         )
         for ID in IDs:
@@ -63,15 +64,23 @@ class Group(Draggable):
         self.content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.content.setLayout(QVBoxLayout())
         self.content.layout().setContentsMargins(5, 5, 5, 5)
-        self.label = QLabel('WOW')
-        self.label.hide()
-        self.content.layout().addWidget(self.label, alignment = Qt.AlignTop)
+        self.note = QTextEdit()
+        self.note.setPlaceholderText('Add a note here ...')
+        if self.settings['note'] != '':
+            self.note.setText(self.settings['note'])
+        self.note.textChanged.connect(self.UpdateNote)
+        self.note.hide()
+        self.content.layout().addWidget(self.note, alignment = Qt.AlignTop)
         self.widget.layout().addWidget(self.content)
         self.proxy.setWidget(self)
         self.proxy.setZValue(-100)
 
+    def UpdateNote(self):
+        self.settings['note'] = self.note.toPlainText()
+
     def mouseReleaseEvent(self, event):
         # Store temporary values since Draggable overwrites them in its mouseReleaseEvent override.
+        self.content.setFocus()
         isActive = self.active
         hasCursorMoved = self.cursorMoved
         canDrag = self.canDrag
@@ -87,5 +96,6 @@ class Group(Draggable):
 
     def BaseStyling(self):
         super().BaseStyling()
+        self.note.setStyleSheet(style.WidgetStyle(fontColor = '#c4c4c4'))
         self.widget.setStyleSheet(style.WidgetStyle(color = '#6A7062', borderRadiusBottomLeft = 10, borderRadiusBottomRight = 10, borderRadiusTopRight = 10))
         self.content.setStyleSheet(style.WidgetStyle(color = '#1a1a1a', borderRadius = 8))

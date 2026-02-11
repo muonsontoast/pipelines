@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
 )
 from PySide6.QtGui import QIcon, QPixmap
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 import qasync
 import asyncio
 import matplotlib.pyplot as plt
@@ -252,9 +252,15 @@ class MainWindow(Entity, QMainWindow):
         shared.activeEditor.setFocus()
 
         # Load in settings if they exist and apply to existing entities, and create new ones if they don't already exist.
+        self.setWindowOpacity(0)
+        self.setEnabled(False)
+        self.showMaximized()
         print('Loading settings from:', settingsPath)
         Load(settingsPath)
-        self.showMaximized()
+        def DisplayWindow():
+            self.setWindowOpacity(1)
+            self.setEnabled(True)
+        QTimer.singleShot(1000, lambda: DisplayWindow())
     
     async def ConfigureLoop(self):
         # Setup an event loop to handle asynchronous PV I/O without blocking the UI thread.
@@ -293,5 +299,4 @@ if __name__ == "__main__":
     shared.app.setStyle(QStyleFactory.create('Fusion'))
     # skip first arg which is app name.
     window = MainWindow(*sys.argv[1:])
-    window.show()
     qasync.run(window.ConfigureLoop())

@@ -379,16 +379,12 @@ class Editor(Entity, QGraphicsView):
                         if p['rect'].contains(cursorPos):
                             shared.app.sendEvent(p['pv'], event)
                             return event.accept()
-        # elif self.keysPressed == [Qt.Key_Alt]:
-        #     DetailedView()
 
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         if event.isAutoRepeat():
             return
-        # if Qt.Key_Alt in self.keysPressed:
-        #     DetailedView(False)
         if event.key() in self.keysPressed:
             self.keysPressed.remove(event.key())
         return super().keyReleaseEvent(event)

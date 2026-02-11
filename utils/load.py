@@ -149,6 +149,7 @@ def Load(path):
                         numBlocks = v.get('numBlocks', None),
                         IDs = v.get('IDs', None),
                         showing = v.get('showing', True),
+                        note = v.get('note', ''),
                     )
                 LinkBlocks()
                 for ID in groups:

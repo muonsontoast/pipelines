@@ -232,7 +232,7 @@ def ToggleGroup(entity):
                 shared.entities[ID].linksIn[block.ID]['link'].hide()
         entity.proxy.setWidget(None)
         entity.setFixedSize(325, 150)
-        entity.label.show()
+        entity.note.show()
         entity.layout().activate()
         entity.proxy.setWidget(entity)
 
@@ -244,6 +244,8 @@ def ToggleGroup(entity):
             entity.linksIn[ID]['link'].setLine(ln)
             link['link'].show()
         for ID in entity.linksOut:
+            if ID == 'free':
+                continue
             ln = shared.entities[ID].linksIn[entity.ID]['link'].line()
             ln.setP1(outPos)
             shared.entities[ID].linksIn[entity.ID]['link'].setLine(ln)
@@ -267,7 +269,7 @@ def ToggleGroup(entity):
             if ID == 'free':
                 continue
             shared.entities[ID].linksIn[entity.ID]['link'].hide()
-        entity.label.hide()
+        entity.note.hide()
         entity.inSocket.hide()
         entity.outSocket.hide()
         entity.proxy.setWidget(None)

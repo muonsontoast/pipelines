@@ -22,7 +22,6 @@ from ..filters.filter import Filter
 from ..number import Number
 from ..pv import PV
 from ..progress import Progress
-from ...components import slider
 from ... import style
 from ... import shared
 
@@ -468,7 +467,7 @@ class SingleTaskGP(Draggable):
     def ConstructKernel(self):
         '''Traces the kernel structure up the pipeline and returns an Xopt compatible composition.'''
         # fetch the block attached to the kernel socket
-        kernel = [ID for ID, link in self.linksIn.items() if link['socket'] == 'kernel'][0] # assume a single match for now ... (will be replaced)
+        kernel = [ID for ID, link in self.linksIn.items() if link['socket'] == 'kernel' and shared.entities[ID].type != 'Group'][0] # assume a single match for now ... (will be replaced)
         return self.GetKernelStructure(kernel)
 
     def GetKernelStructureString(self, ID):
@@ -625,6 +624,8 @@ class SingleTaskGP(Draggable):
         self.progressBar.Reset()
         self.decisions = []
         for ID, v in self.linksIn.items():
+            if shared.entities[ID].type == 'Group':
+                continue
             if v['socket'] == 'decision':
                 self.decisions.append(shared.entities[ID])
         # objective leaf nodes that determine the final objective value witnessed by the block.

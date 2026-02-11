@@ -1,8 +1,6 @@
 from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QLineEdit, QVBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt
-from threading import Thread
-# from multiprocessing import Event, Lock
-from threading import Event, Lock
+from threading import Thread, Event, Lock
 from ..draggable import Draggable
 from ..pv import PV
 from ..number import Number
@@ -55,6 +53,7 @@ class Composition(Draggable):
 
         # Modify the widget based on the input type - only if this is the first of its kind.
         if successfulConnection: # and not ignoreForFirstTime:
+            shared.entities[ID].AddLinkOut(self.ID, socket)
             numLinksIn = len(self.linksIn)
             # 1. Kernel
             if numLinksIn == 1:
@@ -68,7 +67,7 @@ class Composition(Draggable):
                     # Attach links on existing block to the new block.
                     for linkID, link in self.linksIn.items():
                         newAdd.AddLinkIn(linkID, link['socket'], ignoreForFirstTime = True)
-                        shared.entities[linkID].AddLinkOut(newAdd.ID, link['socket'])
+                        # shared.entities[linkID].AddLinkOut(newAdd.ID, link['socket'])
                     for linkID, link in self.linksOut.items():
                         newAdd.AddLinkOut(linkID, link['socket'])
                         shared.entities[linkID].AddLinkIn(newAdd.ID, link['socket'])
@@ -87,8 +86,8 @@ class Composition(Draggable):
                         self.checkThread.start()
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
-                    # QTimer.singleShot(0, commands.Delete)
-                    Thread(target = commands.Delete).start()
+                    print(f'{self.name} ID is: {self.ID}')
+                    commands.Delete()
                 else:
                     if newFundamentalType == Kernel:
                         if not self.hasBeenPushed:
@@ -96,7 +95,6 @@ class Composition(Draggable):
             else:
                 if newFundamentalType == Kernel:
                     self.UpdateFigure()
-
         self.hasBeenPushed = True
         return successfulConnection
     
