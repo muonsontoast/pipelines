@@ -22,6 +22,7 @@ from ..filters.filter import Filter
 from ..number import Number
 from ..pv import PV
 from ..progress import Progress
+from ...components import slider
 from ... import style
 from ... import shared
 
@@ -42,9 +43,9 @@ class SingleTaskGP(Draggable):
 
         super().__init__(
             proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 615]), 
-            components = {
-                'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float),
-            },
+            # components = {
+            #     'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float, type = slider.SliderComponent),
+            # },
             acqFunction = kwargs.pop('acqFunction', 'UCB'),
             acqHyperparameter = kwargs.pop('acqHyperparameter', 2),
             numSamples = kwargs.pop('numSamples', 5),

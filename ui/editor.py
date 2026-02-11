@@ -131,6 +131,10 @@ class Editor(Entity, QGraphicsView):
         ]
         # check whether shift alone is being pressed
         if self.keysPressed == [Qt.Key_Shift]:
+            if not intersectingWidgets:
+                self.area.selectedItems = []
+                self.area.selectedBlocks = []
+                self.area.multipleBlocksSelected = False
             self.area.setPos(self.startPos)
             self.area.resize(0, 0)
             self.scene.addItem(self.area)
@@ -177,6 +181,8 @@ class Editor(Entity, QGraphicsView):
                 for item in intersectingWidgets:
                     if item not in self.area.selectedItems:
                         block = item.widget()
+                        if block.type == 'Group':
+                            continue
                         block.ToggleStyling(active = True)
                         self.area.selectedItems.append(item)
                         self.area.selectedBlocks.append(block)
@@ -373,16 +379,16 @@ class Editor(Entity, QGraphicsView):
                         if p['rect'].contains(cursorPos):
                             shared.app.sendEvent(p['pv'], event)
                             return event.accept()
-        elif self.keysPressed == [Qt.Key_Alt]:
-            DetailedView()
+        # elif self.keysPressed == [Qt.Key_Alt]:
+        #     DetailedView()
 
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         if event.isAutoRepeat():
             return
-        if Qt.Key_Alt in self.keysPressed:
-            DetailedView(False)
+        # if Qt.Key_Alt in self.keysPressed:
+        #     DetailedView(False)
         if event.key() in self.keysPressed:
             self.keysPressed.remove(event.key())
         return super().keyReleaseEvent(event)

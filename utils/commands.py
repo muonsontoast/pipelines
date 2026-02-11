@@ -1,8 +1,8 @@
 '''Commands performed inside the editor. Tracks undo and redo actions.'''
 
-from PySide6.QtWidgets import QGraphicsProxyWidget
+from PySide6.QtWidgets import QGraphicsProxyWidget, QApplication, QGraphicsScene
 from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtCore import QPoint
+from PySide6.QtCore import QPoint, QPointF, QRectF, QSizeF
 import asyncio
 from ..blocks.draggable import Draggable
 from ..blocks.pv import PV
@@ -217,11 +217,79 @@ def CreateSingleControl(pos: QPoint):
 def CreateInvert(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Invert'], 'Invert (Filter)', pos)
 
+def ToggleGroup(entity):
+    entity.settings['showing'] = not entity.settings['showing']
+    if not entity.settings['showing']:
+        entity.dropdown.setText('\u25BC')
+        for item in entity.groupItems:
+            item.hide()
+            block = item.widget()
+            for link in block.linksIn.values():
+                link['link'].hide()
+            for ID in block.linksOut:
+                if ID == 'free':
+                    continue
+                shared.entities[ID].linksIn[block.ID]['link'].hide()
+        entity.proxy.setWidget(None)
+        entity.setFixedSize(325, 150)
+        entity.label.show()
+        entity.layout().activate()
+        entity.proxy.setWidget(entity)
+
+        inPos = entity.GetSocketPos('in')
+        outPos = entity.GetSocketPos('out')
+        for ID, link in entity.linksIn.items():
+            ln = link['link'].line()
+            ln.setP2(inPos)
+            entity.linksIn[ID]['link'].setLine(ln)
+            link['link'].show()
+        for ID in entity.linksOut:
+            ln = shared.entities[ID].linksIn[entity.ID]['link'].line()
+            ln.setP1(outPos)
+            shared.entities[ID].linksIn[entity.ID]['link'].setLine(ln)
+            shared.entities[ID].linksIn[entity.ID]['link'].show()
+        entity.inSocket.show()
+        entity.outSocket.show()
+    else:
+        entity.dropdown.setText('\u25BA')
+        for item in entity.groupItems:
+            item.show()
+            block = item.widget()
+            for link in block.linksIn.values():
+                link['link'].show()
+            for ID in block.linksOut:
+                if ID == 'free':
+                    continue
+                shared.entities[ID].linksIn[block.ID]['link'].show()
+        for link in entity.linksIn.values():
+            link['link'].hide()
+        for ID in entity.linksOut:
+            if ID == 'free':
+                continue
+            shared.entities[ID].linksIn[entity.ID]['link'].hide()
+        entity.label.hide()
+        entity.inSocket.hide()
+        entity.outSocket.hide()
+        entity.proxy.setWidget(None)
+        entity.setFixedSize(*entity.settings['size'])
+        entity.layout().activate()
+        entity.proxy.setWidget(entity)
+    shared.activeEditor.scene.update()
+
 def CreateGroup():
     if len(shared.activeEditor.area.selectedItems) < 2:
-        shared.workspace.assistant.PushMessage('At least two blocks needed to form a group.', 'Warning')
+        shared.workspace.assistant.PushMessage('At least two blocks needed to form a group.', 'Error')
         return
+    else:
+        invalidIDs = []
+        for block in shared.activeEditor.area.selectedBlocks:
+            if block.groupID is not None:
+                invalidIDs.append(block.ID)
+        if invalidIDs != []:
+            shared.workspace.assistant.PushMessage(f'The following blocks already belong to other group(s): {', '.join(shared.entities[ID].name for ID in invalidIDs)}.', 'Error')
+            return
     proxy, widget = CreateBlock(blockTypes['Group'], 'Group', numBlocks = len(shared.activeEditor.area.selectedBlocks), IDs = [block.ID for block in shared.activeEditor.area.selectedBlocks])
+    widget.dropdown.pressed.connect(lambda w = widget: ToggleGroup(w))
 
 def Delete():
     selectedItems = shared.activeEditor.area.selectedItems
@@ -313,7 +381,7 @@ commands = {
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),
-    'Detailed View': dict(shortcut = ['Alt+X'], func = DetailedView, args = []),
+    # 'Detailed View': dict(shortcut = ['Alt+X'], func = DetailedView, args = []),
     'Quit': dict(shortcut = ['Ctrl+W'], func = Quit, args = []),
     'Show Menu': dict(shortcut = ['Ctrl+M'], func = ShowMenu, args = [GetMousePos]),
 }

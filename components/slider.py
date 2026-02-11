@@ -113,7 +113,7 @@ class SliderComponent(Component):
             self.defaultRow.layout().addWidget(self.defaultLabel, alignment = Qt.AlignLeft)
             self.defaultRow.layout().addWidget(self.default, alignment = Qt.AlignLeft)
             # make read-only if there is a PV match
-            if self.pv.PVMatch:
+            if hasattr(self.pv, 'PVMatch') and self.pv.PVMatch:
                 self.minimum.setReadOnly(True)
                 self.maximum.setReadOnly(True)
                 self.default.setReadOnly(True)
@@ -126,7 +126,7 @@ class SliderComponent(Component):
             self.minimum.setText(f'{pv.settings['components'][component]['min']:.{self.floatdp}f}')
             self.maximum.setText(f'{pv.settings['components'][component]['max']:.{self.floatdp}f}')
             self.default.setText(f'{pv.settings['components'][component]['default']:.{self.floatdp}f}')
-            self.slider.setEnabled(True)
+            # self.slider.setEnabled(True)
         else:
             # if blocks share the same values, populate these in the inspector
             self.slider.setValue(0)

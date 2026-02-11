@@ -106,8 +106,8 @@ class Inspector(Entity, QTabWidget):
         self.mainWindowTitle.setReadOnly(True)
         self.mainWindowTitle.blockSignals(False)
 
-        self.items = dict()
-        self.expandables = dict()
+        items = dict()
+        expandables = dict()
 
         if self.mainWindowTitleWidget.isHidden():
             self.main.setUpdatesEnabled(True)
@@ -122,14 +122,14 @@ class Inspector(Entity, QTabWidget):
                 name = c['name'] + f' ({c['units']})'
             else:
                 name = c['name']
-            self.items[k] = QListWidgetItem()
-            self.expandables[k] = Expandable(self.main, self.items[k], name, selectedBlock, k)
-            self.expandables[k].ToggleContent()
-            self.items[k].setSizeHint(self.expandables[k].sizeHint())
+            items[k] = QListWidgetItem()
+            expandables[k] = Expandable(self.main, items[k], name, selectedBlock, k)
+            expandables[k].ToggleContent()
+            items[k].setSizeHint(expandables[k].sizeHint())
+            self.items, self.expandables = items, expandables
             self.main.addItem(self.items[k])
             self.main.setItemWidget(self.items[k], self.expandables[k])
         shared.expandables = self.expandables
-
         self.main.setUpdatesEnabled(True)
         self.main.show()
 

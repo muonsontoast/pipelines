@@ -5,7 +5,7 @@ import time
 import multiprocessing
 from pathlib import Path
 import numpy as np
-from .commands import blockTypes, CreateBlock
+from .commands import blockTypes, CreateBlock, ToggleGroup
 from ..blocks.composition.composition import Composition
 from ..blocks.kernels.kernel import Kernel
 from ..lattice.latticeutils import LoadLattice, GetLatticeInfo
@@ -45,17 +45,25 @@ def UpdateLinkedLatticeElements():
             if 'value' in entity.settings['components']:
                 if 'type' in entity.settings['components']['value']:
                     if entity.settings['components']['value']['type'] == slider.SliderComponent:
-                        entity.UpdateLinkedElement(override = entity.settings['components']['value']['value'])
+                        if 'linkedLatticeElement' in entity.settings['components']:
+                            entity.UpdateLinkedElement(override = entity.settings['components']['value']['value'])
     UpdateHyperparameters()
 
 # Have to loop over entities again as they won't all be added before the prior loop.
 def LinkBlocks():
     global settings
     for ID, v in settings.items():
-        if v['type'] in blockTypes:
+        if v['type'] == 'Group':
             for sourceID, socket in v['linksIn'].items():
+                shared.entities[ID].AddLinkIn(sourceID, socket, Z = -101, hide = True, updateGroupLinks = False)
+            for targetID, socket in v['linksOut'].items():
+                shared.entities[ID].AddLinkOut(targetID, socket)
+        elif v['type'] in blockTypes:
+            for sourceID, socket in v['linksIn'].items():
+                if shared.entities[sourceID].type == 'Group':
+                    continue
                 ignoreForFirstTime = isinstance(shared.entities[ID], Composition)
-                shared.entities[ID].AddLinkIn(sourceID, socket, ignoreForFirstTime = ignoreForFirstTime)
+                shared.entities[ID].AddLinkIn(sourceID, socket, ignoreForFirstTime = ignoreForFirstTime, updateGroupLinks = False)
             for targetID, socket in v['linksOut'].items():
                 shared.entities[ID].AddLinkOut(targetID, socket)
     UpdateLinkedLatticeElements()
@@ -140,8 +148,14 @@ def Load(path):
                         size = v['size'],
                         numBlocks = v.get('numBlocks', None),
                         IDs = v.get('IDs', None),
+                        showing = v.get('showing', True),
                     )
                 LinkBlocks()
+                for ID in groups:
+                    shared.entities[ID].dropdown.pressed.connect(lambda _ID = ID: ToggleGroup(shared.entities[_ID]))
+                    if not shared.entities[ID].settings['showing']:
+                        shared.entities[ID].settings['showing'] = True
+                        ToggleGroup(shared.entities[ID])
                 print(f'Previous session state loaded in {time.time() - t:.2f} seconds.')
                 shared.workspace.assistant.PushMessage(f'Loaded saved session from {path}')
             def CenterEditor():

@@ -81,37 +81,37 @@ class Draggable(Entity, QWidget):
         self.main.layout().setSpacing(0)
         self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # Every draggable has a popup box hidden until 'Alt' is pressed
-        self.popup = QGraphicsProxyWidget()
-        self.popup.setZValue(100)
-        self.popupContainer = QWidget()
-        self.popupContainer.setStyleSheet(style.WidgetStyle())
-        self.popupContainer.setFixedWidth(350)
-        self.popupContainer.setMaximumHeight(450)
-        self.popupContainer.setLayout(QVBoxLayout())
-        self.popupContainer.layout().setContentsMargins(0, 0, 0, 0)
-        self.popupContainer.layout().setSpacing(5)
-        self.popupHeader = QWidget()
-        self.popupHeader.setStyleSheet(style.WidgetStyle(color = "#ab4e34", borderRadiusTopLeft = 6, borderRadiusTopRight = 6))
-        self.popupHeader.setLayout(QHBoxLayout())
-        self.popupHeader.layout().setContentsMargins(5, 10, 10, 10)
-        self.popupTitle = QLabel('Input Links')
-        self.popupTitle.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4", fontSize = 14))
-        self.popupHeader.layout().addWidget(self.popupTitle)
-        self.popupContainer.layout().addWidget(self.popupHeader)
-        self.popupWidget = QWidget()
-        self.popupWidget.setLayout(QVBoxLayout())
-        self.popupWidget.setStyleSheet(style.WidgetStyle(color = '#ab4e34', borderRadiusBottomLeft = 6, borderRadiusBottomRight = 6))
-        # TODO: Add scroll area showing input blocks and their streams.
-        self.popupList = QListWidget()
-        self.popupList.setFocusPolicy(Qt.NoFocus)
-        self.popupList.setSelectionMode(QListWidget.NoSelection)
-        self.popupList.setStyleSheet(style.InspectorSectionStyle())
-        self.popupList.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.popupList.setMaximumHeight(350)
-        self.popupWidget.layout().addWidget(self.popupList)
-        self.popupContainer.layout().addWidget(self.popupWidget)
-        self.popup.setWidget(self.popupContainer)
-        self.popup.hide()
+        # self.popup = QGraphicsProxyWidget()
+        # self.popup.setZValue(100)
+        # self.popupContainer = QWidget()
+        # self.popupContainer.setStyleSheet(style.WidgetStyle())
+        # self.popupContainer.setFixedWidth(350)
+        # self.popupContainer.setMaximumHeight(450)
+        # self.popupContainer.setLayout(QVBoxLayout())
+        # self.popupContainer.layout().setContentsMargins(0, 0, 0, 0)
+        # self.popupContainer.layout().setSpacing(5)
+        # self.popupHeader = QWidget()
+        # self.popupHeader.setStyleSheet(style.WidgetStyle(color = "#ab4e34", borderRadiusTopLeft = 6, borderRadiusTopRight = 6))
+        # self.popupHeader.setLayout(QHBoxLayout())
+        # self.popupHeader.layout().setContentsMargins(5, 10, 10, 10)
+        # self.popupTitle = QLabel('Input Links')
+        # self.popupTitle.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4", fontSize = 14))
+        # self.popupHeader.layout().addWidget(self.popupTitle)
+        # self.popupContainer.layout().addWidget(self.popupHeader)
+        # self.popupWidget = QWidget()
+        # self.popupWidget.setLayout(QVBoxLayout())
+        # self.popupWidget.setStyleSheet(style.WidgetStyle(color = '#ab4e34', borderRadiusBottomLeft = 6, borderRadiusBottomRight = 6))
+        # # TODO: Add scroll area showing input blocks and their streams.
+        # self.popupList = QListWidget()
+        # self.popupList.setFocusPolicy(Qt.NoFocus)
+        # self.popupList.setSelectionMode(QListWidget.NoSelection)
+        # self.popupList.setStyleSheet(style.InspectorSectionStyle())
+        # self.popupList.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.popupList.setMaximumHeight(350)
+        # self.popupWidget.layout().addWidget(self.popupList)
+        # self.popupContainer.layout().addWidget(self.popupWidget)
+        # self.popup.setWidget(self.popupContainer)
+        # self.popup.hide()
 
         if kwargs.pop('addToShared', True):
             shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))
@@ -148,7 +148,7 @@ class Draggable(Entity, QWidget):
             return -1
         anchor = QPointF(30, socket.rect().height() / 2) # add a small horizontal pad for display tidiness
         localPos = socket.mapTo(self.proxy.widget(), anchor)
-        return self.proxy.scenePos() + localPos
+        return self.proxy.mapToScene(localPos)
     
     def GetType(self, ID):
         '''Drills down into tree to find leaf node type.'''
@@ -238,9 +238,7 @@ class Draggable(Entity, QWidget):
             line = shared.entities[k].linksIn[self.ID]['link'].line()
             line.setP1(socketPos)
             shared.entities[k].linksIn[self.ID]['link'].setLine(line)
-        self.proxy.update()
-        if self.popup.isVisible():
-            self.popup.setPos(newPos + self.FSocketWidgets.pos() + QPoint(100, -30))
+        shared.activeEditor.scene.update()
 
     def HandleMouseMove(self, mousePos, buttons):
         mousePosInSceneCoords = self.proxy.mapToScene(mousePos)
@@ -416,12 +414,15 @@ class Draggable(Entity, QWidget):
     def AddHeader(self, isGroup = False):
         self.header = QWidget()
         self.header.setFixedHeight(40)
-        if isGroup:
-            self.header.setFixedWidth(150)
         self.header.setLayout(QHBoxLayout())
         self.header.layout().setContentsMargins(15, 0, 5, 0)
         self.title = QLabel(f'{self.settings['name']}', alignment = Qt.AlignCenter)
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
+        if isGroup:
+            self.header.setFixedWidth(200)
+            self.dropdown = QPushButton('\u25BC')
+            self.dropdown.setStyleSheet(style.PushButtonBorderlessStyle(color = 'none', fontColor = '#c4c4c4'))
+            self.header.layout().addWidget(self.dropdown, alignment = Qt.AlignRight)
         self.main.layout().addWidget(self.header, alignment = Qt.AlignTop)
 
     def Start(self, changeGlobalToggleState = True, **kwargs):
@@ -435,54 +436,38 @@ class Draggable(Entity, QWidget):
         StopAction(self, restart = True)
         shared.workspace.assistant.PushMessage(f'{self.name} has been reset.')
 
-    def AddLinkIn(self, ID:int, socket, streamTypeIn:str = '', **kwargs):
-        '''`socket` the source is connected to and the `ID` of its parent.\n'''
+    def AddLinkIn(self, ID:int, socket, streamTypeIn:str = '', updateGroupLinks = True, **kwargs):
+        '''`socket` the source is connected to and the `ID` of its parent.\n
+        `Z` int for sorting.\n
+        `hide` bool for hiding.'''
         self.linksIn[ID] = dict(link = QGraphicsLineItem(), socket = socket)
         self.settings['linksIn'][ID] = socket
         link = self.linksIn[ID]['link'].line()
         link.setP1(shared.entities[ID].GetSocketPos('out'))
         link.setP2(self.GetSocketPos(socket))
         self.linksIn[ID]['link'].setLine(link)
-        self.linksIn[ID]['link'].setZValue(-20)
+        self.linksIn[ID]['link'].setZValue(kwargs.get('Z', -20))
         self.linksIn[ID]['link'].setPen(QPen(QColor("#323232"), 12))
+        if kwargs.pop('hide', False):
+            self.linksIn[ID]['link'].hide()
         shared.activeEditor.scene.addItem(self.linksIn[ID]['link'])
-        # update the link in detailed view widget
-        entity = shared.entities[ID]
-        item = QListWidgetItem(self.popupList)
-        content = QWidget()
-        content.setLayout(QHBoxLayout())
-        content.layout().setContentsMargins(0, 0, 0, 0)
-        source = QLabel(entity.name)
-        source.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
-        source.setWordWrap(True)
-        content.layout().addWidget(source)
-        content.layout().addItem(QSpacerItem(20, 0, QSizePolicy.Preferred, QSizePolicy.Preferred))
-        filterComponent = QWidget()
-        filterComponent.setLayout(QHBoxLayout())
-        filterComponent.layout().setContentsMargins(0, 0, 0, 0)
-        filterComponent.layout().setSpacing(2)
-        stream = QComboBox()
-        stream.setStyleSheet(style.ComboStyle(fontColor = '#c4c4c4', color = "#345cab"))
-        stream.addItems(entity.streams)
-        self.streamTypesIn[ID] = streamTypeIn if streamTypeIn != '' else next(iter(shared.entities[ID].streams))
-        stream.setCurrentIndex(stream.findText(self.streamTypesIn[ID]))
-        filterText = QLabel('stream:')
-        filterText.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
-        filterComponent.layout().addWidget(stream)
-        content.layout().addWidget(filterComponent)
-        content.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        content.setFixedHeight(30)
-        item.setSizeHint(content.sizeHint())
-        self.popupList.addItem(item)
-        self.popupList.setItemWidget(item, content)
-        self.popupList.sortItems(Qt.AscendingOrder)
+        # Add link to this draggable's group if it has one.
+        if updateGroupLinks and self.groupID is not None:
+            if ID not in shared.entities[self.groupID].settings['IDs']:
+                shared.entities[self.groupID].AddLinkIn(ID, 'in', Z = -101, hide = True)
+                shared.entities[ID].AddLinkOut(self.groupID, 'in')
+        if self.type != 'Group' and shared.entities[ID].groupID is not None and shared.entities[ID].groupID != self.groupID:
+            self.AddLinkIn(shared.entities[ID].groupID, socket, Z = -101, hide = True)
+            shared.entities[shared.entities[ID].groupID].AddLinkOut(self.ID, socket)
+
+
         return True
 
     # this can be overridden to trigger logic that should run when removing incoming links to a block.
     def RemoveLinkIn(self, ID):
         shared.editors[0].scene.removeItem(self.linksIn[ID]['link'])
         self.linksIn.pop(ID)
-        self.streamTypesIn.pop(ID)
+        # self.streamTypesIn.pop(ID)
         self.settings['linksIn'].pop(ID)
 
     def AddLinkOut(self, ID, socket):
