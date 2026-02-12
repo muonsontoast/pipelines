@@ -9,7 +9,7 @@ class SingleControl(Filter):
         super().__init__(
             parent, 
             proxy,
-            name = kwargs.pop('name', 'Single Control (Filter)'),
+            name = kwargs.pop('name', 'Single Control'),
             type = kwargs.pop('type', 'Single Control'),
             size = kwargs.pop('size', [400, 250]),
             fontsize = kwargs.pop('fontsize', 12),
@@ -30,7 +30,8 @@ class SingleControl(Filter):
         if count < 2 or inID == None:
             return np.nan
         # returns nan if the control is not supplying a number otherwise, returns the input data.
-        return shared.entities[inID].data[1] if not isinstance(shared.entities[controlID].data[1], np.nan) else np.nan
+        # return shared.entities[inID].data[1] if not isinstance(shared.entities[controlID].data[1], np.nan) else np.nan
+        return shared.entities[inID].Start() if not isinstance(shared.entities[controlID].Start(), np.nan) else np.nan
         
     def Push(self):
         super().Push()

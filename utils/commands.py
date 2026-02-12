@@ -27,6 +27,7 @@ from ..blocks.filters.greaterthan import GreaterThan
 from ..blocks.filters.lessthan import LessThan
 from ..blocks.filters.singlecontrol import SingleControl
 from ..blocks.filters.invert import Invert
+from ..blocks.filters.absolute import Absolute
 from ..blocks.group import Group
 from ..ui.groupmenu import GroupMenu
 from .multiprocessing import TogglePause, StopActions, runningActions
@@ -60,6 +61,7 @@ blockTypes = {
     'Less Than': LessThan,
     'Single Control': SingleControl,
     'Invert': Invert,
+    'Absolute': Absolute,
 }
 
 def Undo():
@@ -206,16 +208,19 @@ def CreateRBFKernel(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['RBF Kernel'], 'RBF Kernel', pos)
 
 def CreateGreaterThan(pos: QPoint):
-    proxy, widget = CreateBlock(blockTypes['Greater Than'], 'Greater Than (Filter)', pos)
+    proxy, widget = CreateBlock(blockTypes['Greater Than'], 'Greater Than', pos)
 
 def CreateLessThan(pos: QPoint):
-    proxy, widget = CreateBlock(blockTypes['Less Than'], 'Less Than (Filter)', pos)
+    proxy, widget = CreateBlock(blockTypes['Less Than'], 'Less Than', pos)
 
 def CreateSingleControl(pos: QPoint):
-    proxy, widget = CreateBlock(blockTypes['Single Control'], 'Single Control (Filter)', pos)
+    proxy, widget = CreateBlock(blockTypes['Single Control'], 'Single Control', pos)
 
 def CreateInvert(pos: QPoint):
-    proxy, widget = CreateBlock(blockTypes['Invert'], 'Invert (Filter)', pos)
+    proxy, widget = CreateBlock(blockTypes['Invert'], 'Invert', pos)
+
+def CreateAbsolute(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Absolute'], 'Absolute', pos)
 
 def ToggleGroup(entity):
     entity.settings['showing'] = not entity.settings['showing']
@@ -380,6 +385,7 @@ commands = {
     'Less Than (Filter)': dict(shortcut = [], func = CreateLessThan, args = [GetMousePos]),
     'Single Control (Filter)': dict(shortcut = [], func = CreateSingleControl, args = [GetMousePos]),
     'Invert (Filter)': dict(shortcut = [], func = CreateInvert, args = [GetMousePos]),
+    'Absolute (Filter)': dict(shortcut = [], func = CreateAbsolute, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),
     'Stop All Actions': dict(shortcut = ['Ctrl+Space'], func = StopAllActions, args = []),
     'Delete': dict(shortcut = ['Delete', 'Backspace'], func = Delete, args = []),

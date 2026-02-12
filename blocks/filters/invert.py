@@ -10,7 +10,7 @@ class Invert(Filter):
         super().__init__(
             parent, 
             proxy,
-            name = kwargs.pop('name', 'Invert (Filter)'),
+            name = kwargs.pop('name', 'Invert'),
             type = kwargs.pop('type', 'Invert'),
             size = kwargs.pop('size', [350, 150]),
             fontsize = kwargs.pop('fontsize', 12),
@@ -21,7 +21,8 @@ class Invert(Filter):
         '''Returns NaN if there is signal in otherwise returns 1.'''
         if len(self.linksIn) > 0:
             ID = next(iter(self.linksIn))
-            return np.inf if not np.isinf(shared.entities[ID].data[1]) and shared.entities[ID].data[1] != 0 else 1
+            result = shared.entities[ID].Start()
+            return np.inf if not np.isinf(result) and result != 0 else 1
         
     def Push(self):
         super().Push()

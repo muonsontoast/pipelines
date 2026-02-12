@@ -11,8 +11,9 @@ class Filter(Draggable):
             name = kwargs.pop('name', 'filter'),
             type = kwargs.pop('type', 'Filter'),
             size = kwargs.pop('size', [300, 150]),
+            threshold = kwargs.pop('threshold', 0),
             fontsize = kwargs.pop('fontsize', 12),
-            headerColor = '#886F68',
+            headerColor = '#33673B',
             **kwargs,
         )
         self.parent = parent

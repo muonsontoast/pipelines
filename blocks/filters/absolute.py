@@ -1,17 +1,16 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget
+from PySide6.QtWidgets import QLineEdit, QGraphicsProxyWidget
 from PySide6.QtCore import Qt
-import numpy as np
 from .filter import Filter
 from ... import shared
 from ... import style
 
-class GreaterThan(Filter):
+class Absolute(Filter):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(
             parent, 
             proxy,
-            name = kwargs.pop('name', 'Greater Than'),
-            type = kwargs.pop('type', 'Greater Than'),
+            name = kwargs.pop('name', 'Absolute'),
+            type = kwargs.pop('type', 'Absolute'),
             size = kwargs.pop('size', [265, 100]),
             fontsize = kwargs.pop('fontsize', 12),
             threshold = kwargs.pop('threshold', 0),
@@ -21,18 +20,10 @@ class GreaterThan(Filter):
     def Start(self):
         if len(self.linksIn) > 0:
             ID = next(iter(self.linksIn))
-            # return np.maximum(shared.entities[ID].data[1], self.settings['threshold'])
-            return np.maximum(shared.entities[ID].Start(), self.settings['threshold'])
+            return abs(shared.entities[ID].Start())
         
     def Push(self):
         super().Push()
-        # add a line edit element
-        self.edit = QLineEdit(f'{self.settings['threshold']:.3f}')
-        self.edit.setFixedSize(100, 40)
-        self.edit.setAlignment(Qt.AlignCenter)
-        self.edit.setStyleSheet(style.LineEditStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 14))
-        self.edit.returnPressed.connect(self.ChangeEdit)
-        self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
         self.main.layout().addWidget(self.widget)
 
     def ChangeEdit(self):
@@ -50,4 +41,3 @@ class GreaterThan(Filter):
         newEdit.returnPressed.connect(self.ChangeEdit)
         self.edit = newEdit
         self.widget.layout().insertWidget(editIdx, newEdit, alignment = Qt.AlignCenter)
-        self.settings['threshold'] = value

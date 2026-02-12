@@ -151,6 +151,17 @@ def PushButtonBorderlessStyle(**kwargs):
     border-radius: 3px;
     }}''' 
 
+def CheckStyle(**kwargs):
+    return f'''
+    QCheckBox::indicator {{
+        background-color: {kwargs.get('color', 'transparent')};
+        border: 2px solid {kwargs.get('borderColor', '#c4c4c4')};
+    }}
+    QCheckBox::indicator:checked {{
+        background-color: {kwargs.get('checkedColor', "#848484")};
+        border: 2px solid {kwargs.get('borderColor', '#c4c4c4')};
+    }}'''
+
 def InspectorSectionStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
     `fontColor`, `fontSize`, `fontFamily`'''
@@ -407,8 +418,9 @@ def FrameStyle(**kwargs):
 
 def LabelStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
-    `textAlign`, `padding`, `borderRadius`, `bold`, `fontColor`, `fontSize`, `fontFamily`'''
-    bold = 'font-weight: bold' if kwargs.get('bold', True) else ''
+    `textAlign`, `padding`, `borderRadius`, `bold`, `underline`, `fontColor`, `fontSize`, `fontFamily`'''
+    underline = '' if not kwargs.get('underline', False) else 'text-decoration: underline;'
+    bold = 'font-weight: bold;' if kwargs.get('bold', True) else ''
     return f'''
     QLabel {{
     border: none;
@@ -420,6 +432,7 @@ def LabelStyle(**kwargs):
     text-align: {kwargs.get('textAlign', 'center')};
     border-radius: {kwargs.get('borderRadius', 0)};
     {bold}
+    {underline}
     }}'''
 
 def InspectorHeaderStyle(**kwargs):

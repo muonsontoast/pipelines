@@ -114,6 +114,8 @@ def Load(path):
                             numberValue = v.get('numberValue', None),
                             numBlocks = v.get('numBlocks', None),
                             IDs = v.get('IDs', None),
+                            magnitudeOnly = v.get('magnitudeOnly', None),
+                            threshold = v.get('threshold', None),
                         )
                         if 'alignment' in v:
                             entity.settings['alignment'] = v['alignment']

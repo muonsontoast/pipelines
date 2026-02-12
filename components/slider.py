@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
     QWidget, QLineEdit, QSlider, QLabel, QPushButton,
-    QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
+    QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QCheckBox,
 )
 from PySide6.QtCore import Qt
 import numpy as np
@@ -117,6 +117,32 @@ class SliderComponent(Component):
                 self.minimum.setReadOnly(True)
                 self.maximum.setReadOnly(True)
                 self.default.setReadOnly(True)
+        # Advanced
+        self.advanced = QWidget()
+        self.advanced.setFixedSize(225, 35)
+        self.advanced.setLayout(QHBoxLayout())
+        self.advanced.layout().setContentsMargins(0, 0, 0, 0)
+        self.advanced.layout().setSpacing(10)
+        self.advancedLabel = QLabel('ADVANCED')
+        self.advanced.layout().addWidget(self.advancedLabel)
+        # Magnitude only
+        self.magnitudeRow = QWidget()
+        self.magnitudeRow.setLayout(QHBoxLayout())
+        self.magnitudeRow.layout().setContentsMargins(0, 0, 0, 0)
+        self.magnitudeRow.layout().setSpacing(5)
+        self.magnitudeLabel = QLabel('Magnitude Only?')
+        self.magnitudeLabel.setFixedSize(125, 35)
+        self.magnitudeState = QLineEdit('Yes' if self.pv.settings['magnitudeOnly'] else 'No')
+        self.magnitudeState.setFixedSize(50, 25)
+        self.magnitudeState.setAlignment(Qt.AlignCenter)
+        self.magnitudeState.setEnabled(False)
+        self.magnitudeSwitch = QPushButton('Switch')
+        self.magnitudeSwitch.setFixedWidth(65)
+        self.magnitudeSwitch.pressed.connect(self.ToggleMagnitudeState)
+        self.magnitudeRow.layout().addWidget(self.magnitudeLabel, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        self.magnitudeRow.layout().addWidget(self.magnitudeState, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        self.magnitudeRow.layout().addWidget(self.magnitudeSwitch)
+
         # Conditional multiple block logic
         self.slider.blockSignals(True)
         if not shared.activeEditor.area.multipleBlocksSelected:
@@ -130,7 +156,7 @@ class SliderComponent(Component):
         else:
             # if blocks share the same values, populate these in the inspector
             self.slider.setValue(0)
-            commonValue, commonMin, commonMax, commonDefault = True, True, True, True
+            commonValue, commonMin, commonMax, commonDefault, commonMagnitudeState = True, True, True, True, True
             for block in shared.activeEditor.area.selectedBlocks[1:]:
                 if commonValue and block.settings['components'][self.component]['value'] != shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['value']:
                     commonValue = False
@@ -140,10 +166,14 @@ class SliderComponent(Component):
                     commonMax = False
                 if commonDefault and block.settings['components'][self.component]['default'] != shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['default']:
                     commonDefault = False
+                if commonMagnitudeState and block.settings['magnitudeOnly'] != shared.activeEditor.area.selectedBlocks[0].settings['magnitudeOnly']:
+                    commonMagnitudeState = False
+                
             self.value.setText('--') if not commonValue else self.value.setText(f'{shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['value']:.3f}')
             self.minimum.setText('--') if not commonMin else self.minimum.setText(f'{shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['min']:.3f}')
             self.maximum.setText('--') if not commonMax else self.maximum.setText(f'{shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['max']:.3f}')
             self.default.setText('--') if not commonDefault else self.default.setText(f'{shared.activeEditor.area.selectedBlocks[0].settings['components'][self.component]['default']:.3f}')
+            self.magnitudeState.setText('--') if not commonMagnitudeState else self.magnitudeState.setText('Yes' if shared.activeEditor.area.selectedBlocks[0].settings['magnitudeOnly'] else 'No')
             self.slider.setEnabled(False) if not commonMin or not commonMax else self.slider.setEnabled(True)
         self.slider.blockSignals(False)
 
@@ -153,8 +183,21 @@ class SliderComponent(Component):
             self.layout().addWidget(self.minimumRow)
             self.layout().addWidget(self.maximumRow)
             self.layout().addWidget(self.defaultRow)
+        self.layout().addWidget(self.advanced)
+        self.layout().addWidget(self.magnitudeRow)
         # Apply colors
         self.UpdateColors()
+
+    def ToggleMagnitudeState(self):
+        if shared.activeEditor.area.multipleBlocksSelected and self.magnitudeState.text() == '--':
+            shared.activeEditor.area.selectedBlocks[0].settings['magnitudeOnly'] = False
+        originalState = shared.activeEditor.area.selectedBlocks[0].settings['magnitudeOnly']
+        for block in shared.activeEditor.area.selectedBlocks:
+            block.settings['magnitudeOnly'] = not originalState
+        if originalState:
+            self.magnitudeState.setText('No')
+        else:
+            self.magnitudeState.setText('Yes')
 
     def UpdatePVSetValueCheck(self):
         for block in shared.activeEditor.area.selectedBlocks:
@@ -407,4 +450,8 @@ class SliderComponent(Component):
             self.minimumLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
             self.maximumLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
             self.defaultLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4'))
+        self.advancedLabel.setStyleSheet(style.LabelStyle(fontColor = '#d44931', bold = True, underline = True))
+        self.magnitudeLabel.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4"))
+        self.magnitudeState.setStyleSheet(style.LineEditStyle(color = '#222222', fontColor = '#c4c4c4', paddingLeft = 0, paddingBottom = 0))
+        self.magnitudeSwitch.setStyleSheet(style.PushButtonStyle(color = '#2e2e2e', hoverColor = '#3e3e3e', fontColor = '#c4c4c4', padding = 5))
         self.resetButton.setStyleSheet(style.PushButtonStyle(color = '#2e2e2e', hoverColor = '#3e3e3e', fontColor = '#c4c4c4', padding = 5))

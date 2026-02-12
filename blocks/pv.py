@@ -25,6 +25,7 @@ class PV(Draggable):
                 'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', type = slider.SliderComponent),
                 'linkedLatticeElement': dict(name = 'Linked Lattice Element', type = link.LinkComponent),
             },
+            magnitudeOnly = kwargs.pop('magnitudeOnly', False),
             **kwargs
         )
         self.parent = parent
@@ -152,7 +153,7 @@ class PV(Draggable):
 
     def Start(self):
         '''Unlike more complex blocks, a PV just returns its current value, indicating the end of a graph.'''
-        return self.data[1]
+        return self.data[1] if not self.settings['magnitudeOnly'] else np.abs(self.data[1])
     
     def FetchAndReadValue(self, timeout = 1):
         '''Asynchronously fetch and update current value, without blocking the UI thread.'''
@@ -204,7 +205,7 @@ class PV(Draggable):
                             self.online = True
                             if self.stopCheckThread.is_set():
                                 break
-                            s = f'{self.data[1]:.3f}'
+                            s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
                             self.get.setText(s)
                             self.set.setText(s)
                             if 'STR' in PVName:
@@ -224,25 +225,26 @@ class PV(Draggable):
             except:
                 self.PVMatch = False
                 self.online = False
-                if not np.isinf(self.data[1]):
+                if not np.isinf(self.data[1]) and not np.isnan(self.data[1]):
                     try:
+                        s = f'{self.data[1]:.3f}'
                         if lastMatch != PVName:
                             if self.online:
                                 if self.stopCheckThread.is_set():
                                     break
-                                s = f'{self.data[1]:.3f}'
+                                # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
                                 self.get.setText(s)
                                 self.set.setText(s)
                             else:
                                 if self.stopCheckThread.is_set():
                                     break
-                                s = f'{self.data[1]:.3f}'
+                                # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
                                 self.get.setText(s)
                                 self.set.setText(s)
                         else:
                             if self.stopCheckThread.is_set():
                                 break
-                            s = f'{self.data[1]:.3f}'
+                            # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
                             self.get.setText(s)
                             self.set.setText(s)
                     except: pass

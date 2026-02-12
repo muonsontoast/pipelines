@@ -1,6 +1,5 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget
+from PySide6.QtWidgets import QLineEdit, QGraphicsProxyWidget
 from PySide6.QtCore import Qt
-import numpy as np
 from .filter import Filter
 from ... import shared
 from ... import style
@@ -10,9 +9,9 @@ class LessThan(Filter):
         super().__init__(
             parent, 
             proxy,
-            name = kwargs.pop('name', 'Less Than (Filter)'),
+            name = kwargs.pop('name', 'Less Than'),
             type = kwargs.pop('type', 'Less Than'),
-            size = kwargs.pop('size', [350, 150]),
+            size = kwargs.pop('size', [265, 100]),
             fontsize = kwargs.pop('fontsize', 12),
             threshold = kwargs.pop('threshold', 0),
             **kwargs,
@@ -21,14 +20,10 @@ class LessThan(Filter):
     def Start(self):
         if len(self.linksIn) > 0:
             ID = next(iter(self.linksIn))
-            return np.minimum(shared.entities[ID].data[1], self.settings['threshold'])
+            return shared.entities[ID].Start()
         
     def Push(self):
         super().Push()
-        # add a label
-        self.thresholdLabel = QLabel('Threshold')
-        self.thresholdLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 14, padding = 0))
-        self.widget.layout().addWidget(self.thresholdLabel, alignment = Qt.AlignCenter)
         # add a line edit element
         self.edit = QLineEdit(f'{self.settings['threshold']:.3f}')
         self.edit.setFixedSize(100, 40)

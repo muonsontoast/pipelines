@@ -45,7 +45,8 @@ class Add(Composition):
                                 if self.valueRequest.is_set():
                                     returnNewValue = True
                             result = np.sum([shared.entities[ID].Start() for ID in self.linksIn])
-                            self.edit.setText(f'{result:.3f}') if not np.isinf(result) else self.edit.setText('N/A')
+                            print('*** Add result is:', result)
+                            self.edit.setText(f'{result:.3f}') if not (np.isinf(result) or np.isnan(result)) else self.edit.setText('N/A')
                             self.data[1] = result
                         except:
                             pass
