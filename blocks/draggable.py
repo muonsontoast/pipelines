@@ -419,7 +419,7 @@ class Draggable(Entity, QWidget):
         self.title = QLabel(f'{self.settings['name']}', alignment = Qt.AlignCenter)
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         if isGroup:
-            self.header.setFixedWidth(200)
+            self.header.setFixedWidth(210)
             self.dropdown = QPushButton('\u25BC')
             self.dropdown.setStyleSheet(style.PushButtonBorderlessStyle(color = 'none', fontColor = '#c4c4c4'))
             self.header.layout().addWidget(self.dropdown, alignment = Qt.AlignRight)

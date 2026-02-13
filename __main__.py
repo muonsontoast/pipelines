@@ -260,7 +260,7 @@ class MainWindow(Entity, QMainWindow):
         def DisplayWindow():
             self.setWindowOpacity(1)
             self.setEnabled(True)
-        QTimer.singleShot(1000, lambda: DisplayWindow())
+        QTimer.singleShot(1500, lambda: DisplayWindow())
     
     async def ConfigureLoop(self):
         # Setup an event loop to handle asynchronous PV I/O without blocking the UI thread.

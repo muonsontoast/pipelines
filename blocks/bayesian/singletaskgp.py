@@ -12,6 +12,7 @@ from multiprocessing import Event
 from multiprocessing.shared_memory import SharedMemory
 from threading import Thread, Lock
 from queue import Queue
+from pathlib import Path
 from ...simulator import Simulator
 from ... import shared
 from ..draggable import Draggable
@@ -400,8 +401,14 @@ class SingleTaskGP(Draggable):
                 break
             time.sleep(.2)
 
-    def Timestamp(self):
-        return datetime.now().strftime('%H:%M:%S')
+    def Timestamp(self, includeDate = False, stripColons = False):
+        if includeDate:
+            timestamp = datetime.now().strftime('%Y-%m-%d__%H:%M:%S')
+        else:
+            timestamp = datetime.now().strftime('%H:%M:%S')
+        if stripColons:
+            timestamp = '-'.join(timestamp.split(':'))
+        return timestamp
 
     def ChangeMode(self):
         self.settings['mode'] = 'MAXIMISE' if self.settings['mode'] == 'MINIMISE' else 'MINIMISE'
@@ -542,11 +549,13 @@ class SingleTaskGP(Draggable):
         if self.numConstraints > 0:
             try:
                 cond = []
-                for _ in range(self.numConstraints):
-                    if self.constraints[_].type == 'Less Than':
-                        cond.append(self.X.data[self.constraintsIDToName[self.constraints[_].ID]] < self.constraints[_].settings['threshold'])
+                for c in self.constraints:
+                    if c.type == 'Less Than':
+                        for ID in c.linksIn:
+                            cond.append(self.X.data[self.constraintsIDToName[ID]] < c.settings['threshold'])
                     else:
-                        cond.append(self.X.data[self.constraintsIDToName[self.constraints[_].ID]] > self.constraints[_].settings['threshold'])
+                        for ID in c.linksIn:
+                            cond.append(self.X.data[self.constraintsIDToName[ID]] > c.settings['threshold'])
                 mask = np.logical_and.reduce(cond)
                 if self.settings['mode'].upper() == 'MAXIMISE':
                     self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmax()]
@@ -569,7 +578,7 @@ class SingleTaskGP(Draggable):
         mode = 'MAXIMIZE' if self.settings['mode'].upper() == 'MAXIMISE' else 'MINIMIZE'
         variables = dict()
         self.variableNameToID = dict()
-        constraints = dict()
+        self.optimiserConstraints = dict()
         self.constraintsIDToName = dict()
         self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
         for _, d in enumerate(self.decisions):
@@ -577,19 +586,21 @@ class SingleTaskGP(Draggable):
             nm = f'{d.name} (ID: {d.ID})'
             variables[nm] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
             self.variableNameToID[nm] = d.ID
+        # Treat each block attached to a constraint as its own individual constraint.
         for _, c in enumerate(self.constraints):
-            nm = f'{c.name} (ID: {c.ID})'
-            if c.type == 'Less Than':
-                constraints[nm] = ['LESS_THAN', c.settings['threshold']]
-            elif c.type == 'Greater Than':
-                constraints[nm] = ['GREATER_THAN', c.settings['threshold']]
-            self.constraintsIDToName[c.ID] = nm
+            for ID in c.linksIn:
+                nm = f'{shared.entities[ID].name} (ID: {ID})'
+                if c.type == 'Less Than':
+                    self.optimiserConstraints[nm] = ['LESS_THAN', c.settings['threshold']]
+                else:
+                    self.optimiserConstraints[nm] = ['GREATER_THAN', c.settings['threshold']]
+                self.constraintsIDToName[ID] = nm
         vocs = VOCS(
             variables = variables,
             objectives = {
                 self.immediateObjectiveName: mode,
             },
-            constraints = constraints,
+            constraints = self.optimiserConstraints,
         )
         kernel = self.ConstructKernel()
         constructor = StandardModelConstructor(
@@ -620,6 +631,7 @@ class SingleTaskGP(Draggable):
         self.lastValues = np.array([])
         self.initialised = False
         self.notAllNaNs = False
+        timestamp = self.Timestamp(includeDate = True, stripColons = True)
         self.X.random_evaluate(1) # run once to initialise shared memory array
         self.initialised = True
         self.X.data.drop(0, inplace = True)
@@ -697,9 +709,17 @@ class SingleTaskGP(Draggable):
                 # allow user to break out of this for loop.
                 if self.stopCheckThread.wait(timeout = .1):
                     break
-        shared.workspace.assistant.PushMessage(f'{self.name} has finished.')
+        if self.bestRow is None:
+            if self.numConstraints > 0:
+                shared.workspace.assistant.PushMessage(f'{self.name} has finished, but it failed to find a candidate satisfying the constraints.', 'Warning')
+            else:
+                shared.workspace.assistant.PushMessage(f'{self.name} has finished, but it only recorded NaNs.', 'Warning')
+        else:
+            shared.workspace.assistant.PushMessage(f'{self.name} has finished and found a solution')
         print('Done with optimiser steps!')
         self.inQueue.put(None)
+        # self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+        self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'lol--{timestamp}.csv', index = False)
 
     def Start(self, changeGlobalToggleState = True, **kwargs):
         if self.ID in runningActions:
@@ -772,7 +792,8 @@ class SingleTaskGP(Draggable):
             for it, c in enumerate(self.fundamentalConstraints):
                 c.data[1] = simResult[it + numFundamentalObjectives]
             result = self.objectives[0].Start()
-            constraints = {self.constraintsIDToName[c.ID]: c.Start() for c in self.constraints}
+            # constraints = {self.constraintsIDToName[c.ID]: c.Start() for c in self.constraints}
+            constraints = dict([[self.constraintsIDToName[k], v] for c in self.constraints for k, v in c.Start().items()])
             with self.lock:
                 self.numEvals += 1
             

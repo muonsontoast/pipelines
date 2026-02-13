@@ -1,11 +1,11 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget
+from PySide6.QtWidgets import QLineEdit, QGraphicsProxyWidget
 from PySide6.QtCore import Qt
-import numpy as np
 from .filter import Filter
 from ... import shared
 from ... import style
 
 class GreaterThan(Filter):
+    '''Can accept multiple blocks at once, treating each as its own constraint of this type.'''
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(
             parent, 
@@ -19,10 +19,14 @@ class GreaterThan(Filter):
         )
 
     def Start(self):
-        if len(self.linksIn) > 0:
-            ID = next(iter(self.linksIn))
-            # return np.maximum(shared.entities[ID].data[1], self.settings['threshold'])
-            return np.maximum(shared.entities[ID].Start(), self.settings['threshold'])
+        # if len(self.linksIn) > 0:
+        #     ID = next(iter(self.linksIn))
+        #     # return np.maximum(shared.entities[ID].data[1], self.settings['threshold'])
+        #     return np.maximum(shared.entities[ID].Start(), self.settings['threshold'])
+        result = dict()
+        for ID in self.linksIn:
+            result[ID] = shared.entities[ID].Start()
+        return result
         
     def Push(self):
         super().Push()

@@ -5,6 +5,7 @@ from ... import shared
 from ... import style
 
 class LessThan(Filter):
+    '''Can accept multiple blocks at once, treating each as its own constraint of this type.'''
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(
             parent, 
@@ -18,9 +19,13 @@ class LessThan(Filter):
         )
 
     def Start(self):
-        if len(self.linksIn) > 0:
-            ID = next(iter(self.linksIn))
-            return shared.entities[ID].Start()
+        result = dict()
+        for ID in self.linksIn:
+            result[ID] = shared.entities[ID].Start()
+        return result
+        # if len(self.linksIn) > 0:
+        #     ID = next(iter(self.linksIn))
+        #     return shared.entities[ID].Start()
         
     def Push(self):
         super().Push()
