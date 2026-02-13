@@ -742,7 +742,10 @@ class SingleTaskGP(Draggable):
             else:
                 self.updateAssistantSignal.emit(f'{self.name} has finished, but it only recorded NaNs.', 'Warning')
         else:
-            self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution')
+            if self.numConstraints > 0:
+                self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution satisfying the constraints.', '')    
+            else:
+                self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution.', '')
         print('Done with optimiser steps!')
         self.inQueue.put(None)
         self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
@@ -842,10 +845,10 @@ class SingleTaskGP(Draggable):
                 if self.ID in runningActions and not runningActions[self.ID][0].is_set():
                     TogglePause(self, changeGlobalToggleState)
                     if runningActions[self.ID][0].is_set():
-                        self.updateAssistantSignal.emit(f'{self.name} is paused.')
+                        self.updateAssistantSignal.emit(f'{self.name} is paused.', '')
                         self.progressBar.TogglePause(True)
                     else:
-                        self.updateAssistantSignal.emit(f'{self.name} is running.')
+                        self.updateAssistantSignal.emit(f'{self.name} is running.', '')
                         self.progressBar.TogglePause(False)
 
     def Reset(self):
