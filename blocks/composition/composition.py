@@ -14,7 +14,7 @@ class Composition(Draggable):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(
             proxy, name = kwargs.pop('name', 'Composition'), type = kwargs.pop('type', 'Composition'),
-            size = kwargs.pop('size', [300, 300]), headerColor = '#32936F', **kwargs
+            size = kwargs.pop('size', [300, 300]), headerColor = '#A4243B', **kwargs
             )
         self.parent = parent
         self.fundamental = False

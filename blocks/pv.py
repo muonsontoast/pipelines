@@ -153,7 +153,7 @@ class PV(Draggable):
 
     def Start(self):
         '''Unlike more complex blocks, a PV just returns its current value, indicating the end of a graph.'''
-        return self.data[1] if not self.settings['magnitudeOnly'] else np.abs(self.data[1])
+        return self.data[1] if not self.settings['magnitudeOnly'] else abs(self.data[1])
     
     def FetchAndReadValue(self, timeout = 1):
         '''Asynchronously fetch and update current value, without blocking the UI thread.'''

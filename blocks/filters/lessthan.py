@@ -21,6 +21,8 @@ class LessThan(Filter):
     def Start(self):
         result = dict()
         for ID in self.linksIn:
+            if shared.entities[ID].type == 'Group':
+                continue
             result[ID] = shared.entities[ID].Start()
         return result
         # if len(self.linksIn) > 0:

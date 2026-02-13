@@ -32,6 +32,7 @@ class SingleTaskGP(Draggable):
     updateAverageSignal = Signal(float)
     updateBestSignal = Signal(float)
     updateCandidateSignal = Signal(str)
+    updateAssistantSignal = Signal(str, str)
 
     def __init__(self, parent, proxy, **kwargs):
         # sim numerical precision set to fp32 by default to allow much higher particle populations.
@@ -69,6 +70,7 @@ class SingleTaskGP(Draggable):
         self.updateAverageSignal.connect(self.UpdateAverageLabel)
         self.updateBestSignal.connect(self.UpdateBestLabel)
         self.updateCandidateSignal.connect(self.UpdateCandidateLabel)
+        self.updateAssistantSignal.connect(self.UpdateAssistant)
 
         self.streams = {
             'raw': lambda: {
@@ -386,6 +388,12 @@ class SingleTaskGP(Draggable):
 
     def UpdateCandidateLabel(self, candidate):
         self.candidateEdit.setText(candidate)
+    
+    def UpdateAssistant(self, message, messageType = ''):
+        if messageType == '':
+            shared.workspace.assistant.PushMessage(message)
+        else:
+            shared.workspace.assistant.PushMessage(message, messageType)
 
     def UpdateMetrics(self, updateRunTimeSignal: Signal):
         while True:
@@ -546,22 +554,29 @@ class SingleTaskGP(Draggable):
         return True
     
     def GetBestRow(self):
+        if not self.notAllNaNs:
+            self.bestRow = None
+            return
         if self.numConstraints > 0:
             try:
                 cond = []
                 for c in self.constraints:
                     if c.type == 'Less Than':
                         for ID in c.linksIn:
+                            if shared.entities[ID].type == 'Group':
+                                continue
                             cond.append(self.X.data[self.constraintsIDToName[ID]] < c.settings['threshold'])
                     else:
                         for ID in c.linksIn:
+                            if shared.entities[ID].type == 'Group':
+                                continue
                             cond.append(self.X.data[self.constraintsIDToName[ID]] > c.settings['threshold'])
                 mask = np.logical_and.reduce(cond)
                 if self.settings['mode'].upper() == 'MAXIMISE':
                     self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmax()]
                 else:
                     self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmin()]
-            except:
+            except Exception as e:
                 self.bestRow = None
         else:
             try:
@@ -582,13 +597,19 @@ class SingleTaskGP(Draggable):
         self.constraintsIDToName = dict()
         self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
         for _, d in enumerate(self.decisions):
+            if d.type == 'Group':
+                continue
             self.activeDims[d.ID] = _
             nm = f'{d.name} (ID: {d.ID})'
             variables[nm] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
             self.variableNameToID[nm] = d.ID
         # Treat each block attached to a constraint as its own individual constraint.
         for _, c in enumerate(self.constraints):
+            if c.type == 'Group':
+                continue
             for ID in c.linksIn:
+                if shared.entities[ID].type == 'Group':
+                    continue
                 nm = f'{shared.entities[ID].name} (ID: {ID})'
                 if c.type == 'Less Than':
                     self.optimiserConstraints[nm] = ['LESS_THAN', c.settings['threshold']]
@@ -647,7 +668,6 @@ class SingleTaskGP(Draggable):
                 numEvals = newNumEvals
                 self.progressAmount = numEvals / self.maxEvals
                 self.updateProgressSignal.emit(self.progressAmount)
-                # if (~np.isnan(self.X.data.iloc[:, -3])).any():
                 self.GetBestRow()
                 if self.bestRow is not None:
                     with self.lock:
@@ -671,14 +691,21 @@ class SingleTaskGP(Draggable):
         if self.settings['numSteps'] > 0:
             for it in range(self.settings['numSteps']):
                 print(f'step {it + 1}/{self.settings['numSteps']}')
-                self.notAllNaNs = (~np.isnan(self.X.data.iloc[:, -3])).any()
+                # self.notAllNaNs = (~np.isnan(self.X.data.iloc[:, self.numDecisions:-3])).any()
+                self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
                 if self.notAllNaNs:
+                    # self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
                     self.X.step()
                 else:
                     self.X.random_evaluate(1)
+                self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
                 # If there are no valid numbers recorded yet, don't bother training the model.
-                if (~np.isnan(self.X.data.iloc[:, -3])).any():
+                # if (~np.isnan(self.X.data.iloc[:, -3])).any():
+                # self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
+                self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
+                if self.notAllNaNs:
                     self.X.generator.train_model()
+
                 self.progressAmount = self.numEvals / self.maxEvals
                 self.updateProgressSignal.emit(self.progressAmount)
                 try:
@@ -711,15 +738,14 @@ class SingleTaskGP(Draggable):
                     break
         if self.bestRow is None:
             if self.numConstraints > 0:
-                shared.workspace.assistant.PushMessage(f'{self.name} has finished, but it failed to find a candidate satisfying the constraints.', 'Warning')
+                self.updateAssistantSignal.emit(f'{self.name} has finished, but it failed to find a candidate satisfying the constraints.', 'Warning')
             else:
-                shared.workspace.assistant.PushMessage(f'{self.name} has finished, but it only recorded NaNs.', 'Warning')
+                self.updateAssistantSignal.emit(f'{self.name} has finished, but it only recorded NaNs.', 'Warning')
         else:
-            shared.workspace.assistant.PushMessage(f'{self.name} has finished and found a solution')
+            self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution')
         print('Done with optimiser steps!')
         self.inQueue.put(None)
-        # self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-        self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'lol--{timestamp}.csv', index = False)
+        self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
 
     def Start(self, changeGlobalToggleState = True, **kwargs):
         if self.ID in runningActions:
@@ -816,10 +842,10 @@ class SingleTaskGP(Draggable):
                 if self.ID in runningActions and not runningActions[self.ID][0].is_set():
                     TogglePause(self, changeGlobalToggleState)
                     if runningActions[self.ID][0].is_set():
-                        shared.workspace.assistant.PushMessage(f'{self.name} is paused.')
+                        self.updateAssistantSignal.emit(f'{self.name} is paused.')
                         self.progressBar.TogglePause(True)
                     else:
-                        shared.workspace.assistant.PushMessage(f'{self.name} is running.')
+                        self.updateAssistantSignal.emit(f'{self.name} is running.')
                         self.progressBar.TogglePause(False)
 
     def Reset(self):

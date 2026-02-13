@@ -25,6 +25,8 @@ class GreaterThan(Filter):
         #     return np.maximum(shared.entities[ID].Start(), self.settings['threshold'])
         result = dict()
         for ID in self.linksIn:
+            if shared.entities[ID].type == 'Group':
+                continue
             result[ID] = shared.entities[ID].Start()
         return result
         
