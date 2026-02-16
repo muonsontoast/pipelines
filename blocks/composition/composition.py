@@ -62,17 +62,16 @@ class Composition(Draggable):
                     deleteAndRedraw = True
                     if (isinstance(shared.entities[ID], Kernel) or newFundamentalType == Kernel):
                         proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [350, 295])
-                    elif isinstance(shared.entities[ID], (PV, Number, Composition)):
+                    elif isinstance(shared.entities[ID], (PV, Number, Composition, Filter)):
                         proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = self.settings['size'])
                     # Attach links on existing block to the new block.
                     for linkID, link in self.linksIn.items():
                         newAdd.AddLinkIn(linkID, link['socket'], ignoreForFirstTime = True)
-                        # shared.entities[linkID].AddLinkOut(newAdd.ID, link['socket'])
                     for linkID, link in self.linksOut.items():
                         newAdd.AddLinkOut(linkID, link['socket'])
                         shared.entities[linkID].AddLinkIn(newAdd.ID, link['socket'])
                 else:
-                    if isinstance(shared.entities[ID], (PV, Number, Composition)):
+                    if isinstance(shared.entities[ID], (PV, Number, Composition, Filter)):
                         # add a line edit element
                         self.edit = QLineEdit('N/A')
                         self.edit.setFixedSize(100, 40)

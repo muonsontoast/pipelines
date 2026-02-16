@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QLineEdit, QGraphicsProxyWidget
 from PySide6.QtCore import Qt
+import numpy as np
 from .filter import Filter
 from ... import shared
 from ... import style
@@ -10,24 +11,19 @@ class LessThan(Filter):
         super().__init__(
             parent, 
             proxy,
-            name = kwargs.pop('name', 'Less Than'),
-            type = kwargs.pop('type', 'Less Than'),
-            size = kwargs.pop('size', [265, 100]),
+            name = kwargs.pop('name', '< (Filter)'),
+            type = kwargs.pop('type', '< (Filter)'),
+            size = kwargs.pop('size', [250, 100]),
             fontsize = kwargs.pop('fontsize', 12),
             threshold = kwargs.pop('threshold', 0),
             **kwargs,
         )
 
     def Start(self):
-        result = dict()
-        for ID in self.linksIn:
-            if shared.entities[ID].type == 'Group':
-                continue
-            result[ID] = shared.entities[ID].Start()
-        return result
-        # if len(self.linksIn) > 0:
-        #     ID = next(iter(self.linksIn))
-        #     return shared.entities[ID].Start()
+        data = shared.entities[next(iter(self.linksIn.keys()))].data[1]
+        if not np.isnan(data) and not np.isinf(data) and data < self.settings['threshold']:
+            return data
+        return 0
         
     def Push(self):
         super().Push()

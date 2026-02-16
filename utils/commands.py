@@ -4,6 +4,8 @@ from PySide6.QtWidgets import QGraphicsProxyWidget, QApplication, QGraphicsScene
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtCore import QPoint, QPointF, QRectF, QSizeF
 import asyncio
+import numpy as np
+from copy import deepcopy
 from ..blocks.draggable import Draggable
 from ..blocks.pv import PV
 from ..blocks.corrector import Corrector
@@ -23,11 +25,13 @@ from ..blocks.kernels.linear import LinearKernel
 from ..blocks.kernels.anisotropic import AnisotropicKernel
 from ..blocks.kernels.periodic import PeriodicKernel
 from ..blocks.kernels.rbf import RBFKernel
-from ..blocks.filters.greaterthan import GreaterThan
-from ..blocks.filters.lessthan import LessThan
+from ..blocks.filters.greaterthan import GreaterThan as GreaterThanFilter
+from ..blocks.filters.lessthan import LessThan as LessThanFilter
 from ..blocks.filters.singlecontrol import SingleControl
 from ..blocks.filters.invert import Invert
 from ..blocks.filters.absolute import Absolute
+from ..blocks.constraints.greaterthan import GreaterThan
+from ..blocks.constraints.lessthan import LessThan
 from ..blocks.group import Group
 from ..ui.groupmenu import GroupMenu
 from .multiprocessing import TogglePause, StopActions, runningActions
@@ -57,21 +61,162 @@ blockTypes = {
     'Anisotropic Kernel': AnisotropicKernel,
     'Periodic Kernel': PeriodicKernel,
     'RBF Kernel': RBFKernel,
-    'Greater Than': GreaterThan,
-    'Less Than': LessThan,
+    '> (Constraint)': GreaterThan,
+    '< (Constraint)': LessThan,
+    '> (Filter)': GreaterThanFilter,
+    '< (Filter)': LessThanFilter,
     'Single Control': SingleControl,
     'Invert': Invert,
     'Absolute': Absolute,
 }
 
+maxActionBufferSize = 10 # number of consecutive actions stored
+actionBuffer = [] # a list of lists, e.g. [[Paste, mousePos, blockBuffer], ...]
+actionPointerIdx = 0
+blockBuffer = []
+
+def PrintBuffer(idxInItems):
+    global actionBuffer, actionPointerIdx
+    print('== ACTION BUFFER ==')
+    print('Pointer Idx:', actionPointerIdx)
+    s = ['_' for _ in range(maxActionBufferSize)]
+    for _ in range(len(actionBuffer)):
+        entry = actionBuffer[_][idxInItems]
+        if isinstance(entry, (QPoint, QPointF)):
+            s[_] = f'[{entry.x()}, {entry.y()}]'
+        else:
+            s[_] = entry
+    print(' '.join(s))
+
 def Undo():
-    pass
+    global maxActionBufferSize, actionPointerIdx
+    print('==== UNDO ====')
+    print('Before:')
+    PrintBuffer(1)
+    if actionPointerIdx >= len(actionBuffer) or actionPointerIdx >= maxActionBufferSize:
+        return
+    actionToUndo, *args  = actionBuffer[actionPointerIdx]
+    shared.workspace.assistant.ignoreRequests = True
+    if actionToUndo == Paste:
+        data = args[2]
+        for block in shared.activeEditor.area.selectedBlocks:
+            block.ToggleStyling(active = False)
+        shared.activeEditor.area.selectedItems = data
+        Delete()
+        shared.workspace.assistant.ignoreRequests = False
+        shared.workspace.assistant.PushMessage('Paste was undone.')
+    actionPointerIdx += 1
+    print('After:')
+    PrintBuffer(1)
+    print(f'{len(actionBuffer)} actions in buffer')
+
 def Redo():
-    pass
+    global maxActionBufferSize, actionPointerIdx, blockBuffer, actionBuffer
+    print('==== REDO ====')
+    print('Before:')
+    PrintBuffer(1)
+    if actionPointerIdx == 0:
+        return
+    print('After:')
+    actionPointerIdx -= 1
+    actionToRedo, *args = actionBuffer[actionPointerIdx]
+    actionBuffer.pop(actionPointerIdx)
+    shared.workspace.assistant.ignoreRequests = True
+    if actionToRedo == Paste:
+        global blockBuffer
+        mousePos, offsets, items, blocks = args
+        blockBuffer = blocks
+        Paste(mousePos = mousePos, offsets = offsets, modifyActionBuffer = False)
+    actionBuffer.insert(actionPointerIdx, [Paste, mousePos, offsets, shared.activeEditor.area.selectedItems, blockBuffer])
+    PrintBuffer(1)
+    print(f'{len(actionBuffer)} actions in buffer')
+
 def Copy():
-    pass
-def Paste():
-    pass
+    global blockBuffer
+    blockBuffer = shared.activeEditor.area.selectedBlocks
+    shared.workspace.assistant.PushMessage(f'Copied {len(shared.activeEditor.area.selectedBlocks)} block(s).')
+
+def Paste(mousePos = None, offsets = None, modifyActionBuffer = True):
+    global blockBuffer, actionBuffer, maxActionBufferSize, actionPointerIdx
+    groups = dict()
+    oldToNewIDs = dict()
+    mousePos = GetMousePos() if mousePos is None else mousePos
+    # deselect all existing selected
+    for block in shared.activeEditor.area.selectedBlocks:
+        block.ToggleStyling()
+    # compute centre of mass
+    positions = np.array([block.settings['position'] for block in blockBuffer])
+    if offsets is None:
+        CoM = QPoint(np.mean(positions[:, 0]), np.mean(positions[:, 1]))
+        offsets = {block.ID: QPoint(*block.settings['position']) - CoM for block in blockBuffer}
+    newBlocks, newItems, multipleBlocksSelected = [], [], False
+    shared.workspace.assistant.ignoreRequests = True
+    for block in blockBuffer:
+        if block.groupID is not None:
+            if block.groupID not in groups:
+                groups[block.groupID] = [block.ID]
+            else:
+                groups[block.groupID].append(block.ID)
+        proxy, entity = CreateBlock(
+            blockTypes[block.type],
+            block.name,
+            mousePos + offsets[block.ID],
+            size = block.settings['size'],
+            automatic = block.settings.get('automatic', None),
+            acqFunction = block.settings.get('acqFunction', None),
+            acqHyperparameter = block.settings.get('acqHyperparameter', None),
+            numSamples = block.settings.get('numSamples', None),
+            numSteps = block.settings.get('numSteps', None),
+            mode = block.settings.get('mode', None),
+            dtype = block.settings.get('dtype', None),
+            numberValue = block.settings.get('numberValue', None),
+            numBlocks = block.settings.get('numBlocks', None),
+            magnitudeOnly = block.settings.get('magnitudeOnly', None),
+            threshold = block.settings.get('threshold', None),
+        )
+        entity.settings['components'] = deepcopy(block.settings['components'])
+        if hasattr(entity, 'set'):
+            if 'value' in entity.settings['components']:
+                entity.set.setText(f'{entity.settings['components']['value']['value']:.3f}')
+        oldToNewIDs[block.ID] = entity.ID
+        entity.ToggleStyling()
+        # Keep the buffer the same, but change the selected blocks over to the newly pasted ones.
+        newBlocks.append(entity)
+        newItems.append(proxy)
+    multipleBlocksSelected = True if len(newBlocks) > 1 else False
+    
+    for block in blockBuffer:
+        # linked IDs may not be included in the paste, so remove those links by default.
+        for ID, link in block.linksIn.items():
+            if ID in oldToNewIDs:
+                shared.entities[oldToNewIDs[block.ID]].AddLinkIn(oldToNewIDs[ID], link['socket'])
+        for ID, socket in block.linksOut.items():
+            if ID in oldToNewIDs:
+                shared.entities[oldToNewIDs[block.ID]].AddLinkOut(oldToNewIDs[ID], socket)
+
+    shared.activeEditor.area.selectedBlocks = newBlocks
+    shared.activeEditor.area.selectedItems = newItems
+    shared.activeEditor.area.multipleBlocksSelected = multipleBlocksSelected
+
+    if multipleBlocksSelected:
+        shared.inspector.PushMultiple()
+    else:
+        shared.selectedPV = newBlocks[0]
+        shared.selected = [newBlocks[0].ID]
+        shared.inspector.Push(newBlocks[0])
+
+    if modifyActionBuffer:
+        del actionBuffer[:actionPointerIdx]
+        actionPointerIdx = 0
+        actionBuffer.insert(0, [Paste, mousePos, offsets, newItems, blockBuffer])
+        if len(actionBuffer) > maxActionBufferSize:
+            actionBuffer.pop(-1)
+    
+    shared.workspace.assistant.ignoreRequests = False
+    shared.workspace.assistant.PushMessage(f'Pasted {len(newBlocks)} block(s).')
+    print('==== PASTE ====')
+    PrintBuffer(1)
+
 def Snip(): # cut links
     pass
 
@@ -208,10 +353,16 @@ def CreateRBFKernel(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['RBF Kernel'], 'RBF Kernel', pos)
 
 def CreateGreaterThan(pos: QPoint):
-    proxy, widget = CreateBlock(blockTypes['Greater Than'], 'Greater Than', pos)
+    proxy, widget = CreateBlock(blockTypes['> (Constraint)'], '> (Constraint)', pos)
 
 def CreateLessThan(pos: QPoint):
-    proxy, widget = CreateBlock(blockTypes['Less Than'], 'Less Than', pos)
+    proxy, widget = CreateBlock(blockTypes['< (Constraint)'], '< (Constraint)', pos)
+
+def CreateGreaterThanFilter(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['> (Filter)'], '> (Filter)', pos)
+
+def CreateLessThanFilter(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['< (Filter)'], '< (Filter)', pos)
 
 def CreateSingleControl(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Single Control'], 'Single Control', pos)
@@ -332,8 +483,10 @@ def Delete():
         widget.stopCheckThread.set()
         widget.deleteLater()
     if len(selectedItems) > 1:
-        message = f'Deleted {len(selectedItems)} items.'
+        message = f'Deleted {len(selectedItems)} blocks.'
     shared.activeEditor.area.selectedItems = []
+    shared.activeEditor.area.selectedBlocks = []
+    shared.activeEditor.area.multipleBlocksSelected = False
     shared.workspace.assistant.PushMessage(message)
     shared.inspector.mainWindowTitle.setText('')
     shared.window.inspector.Push()
@@ -381,8 +534,10 @@ commands = {
     'Anisotropic Kernel': dict(shortcut = [], func = CreateAnisotropicKernel, args = [GetMousePos]),
     'Periodic Kernel': dict(shortcut = [], func = CreatePeriodicKernel, args = [GetMousePos]),
     'RBF Kernel': dict(shortcut = [], func = CreateRBFKernel, args = [GetMousePos]),
-    'Greater Than (Filter)': dict(shortcut = [], func = CreateGreaterThan, args = [GetMousePos]),
-    'Less Than (Filter)': dict(shortcut = [], func = CreateLessThan, args = [GetMousePos]),
+    'Greater Than (Constraint)': dict(shortcut = [], func = CreateGreaterThan, args = [GetMousePos]),
+    'Less Than (Constraint)': dict(shortcut = [], func = CreateLessThan, args = [GetMousePos]),
+    'Greater Than (Filter)': dict(shortcut = [], func = CreateGreaterThanFilter, args = [GetMousePos]),
+    'Less Than (Filter)': dict(shortcut = [], func = CreateLessThanFilter, args = [GetMousePos]),
     'Single Control (Filter)': dict(shortcut = [], func = CreateSingleControl, args = [GetMousePos]),
     'Invert (Filter)': dict(shortcut = [], func = CreateInvert, args = [GetMousePos]),
     'Absolute (Filter)': dict(shortcut = [], func = CreateAbsolute, args = [GetMousePos]),

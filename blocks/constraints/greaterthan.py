@@ -1,18 +1,17 @@
 from PySide6.QtWidgets import QLineEdit, QGraphicsProxyWidget
 from PySide6.QtCore import Qt
-import numpy as np
-from .filter import Filter
+from .constraint import Constraint
 from ... import shared
 from ... import style
 
-class GreaterThan(Filter):
+class GreaterThan(Constraint):
     '''Can accept multiple blocks at once, treating each as its own constraint of this type.'''
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(
             parent, 
             proxy,
-            name = kwargs.pop('name', '> (Filter)'),
-            type = kwargs.pop('type', '> (Filter)'),
+            name = kwargs.pop('name', '> (Constraint)'),
+            type = kwargs.pop('type', '> (Constraint)'),
             size = kwargs.pop('size', [250, 100]),
             fontsize = kwargs.pop('fontsize', 12),
             threshold = kwargs.pop('threshold', 0),
@@ -20,10 +19,12 @@ class GreaterThan(Filter):
         )
 
     def Start(self):
-        data = shared.entities[next(iter(self.linksIn.keys()))].data[1]
-        if not np.isnan(data) and not np.isinf(data) and data > self.settings['threshold']:
-            return data
-        return 0
+        result = dict()
+        for ID in self.linksIn:
+            if shared.entities[ID].type == 'Group':
+                continue
+            result[ID] = shared.entities[ID].Start()
+        return result
         
     def Push(self):
         super().Push()

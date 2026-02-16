@@ -8,6 +8,7 @@ from datetime import datetime
 from xopt import Xopt, VOCS, Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
 from xopt.generators.bayesian.models.standard import StandardModelConstructor
+from xopt.generators.bayesian.turbo import SafetyTurboController
 from multiprocessing import Event
 from multiprocessing.shared_memory import SharedMemory
 from threading import Thread, Lock
@@ -20,6 +21,7 @@ from ...utils import cothread
 # PerformAction is invoked when running tasks in offline mode to keep the UI responsive.
 from ...utils.multiprocessing import SetGlobalToggleState, TogglePause, StopAction, CreatePersistentWorker, runningActions
 from ..filters.filter import Filter
+from ..constraints.constraint import Constraint
 from ..number import Number
 from ..pv import PV
 from ..progress import Progress
@@ -55,6 +57,7 @@ class SingleTaskGP(Draggable):
             numParticles = kwargs.pop('numParticles', 10000),
             simPrecision = simPrecision,
             headerColor = "#C1492B",
+            useTuRBO = kwargs.pop('useTuRBO', False),
             **kwargs
         )
         self.timeBetweenPolls = 1000
@@ -130,10 +133,18 @@ class SingleTaskGP(Draggable):
                 }
                 for c in self.fundamentalConstraints
             ],
+            'observers': [
+                {
+                    'index': o.settings['linkedElement'].Index,
+                    'dtype': o.settings['dtype'],
+                }
+                for o in self.observers
+            ],
             'numParticles': self.numParticles,
             'totalSteps': self.settings['numSamples'] + self.settings['numSteps'],
             'numObjectives': self.numFundamentalObjectives,
             'numConstraints': self.numFundamentalConstraints,
+            'numObservers': self.numObservers,
         }
 
     def __setstate__(self, state):
@@ -142,8 +153,10 @@ class SingleTaskGP(Draggable):
         self.decisions:list = state['decisions']
         self.objectives:list = state['objectives']
         self.constraints:list = state['constraints']
+        self.observers:list = state['observers']
         self.numObjectives:int = state['numObjectives']
         self.numConstraints:int = state['numConstraints']
+        self.numObservers:int = state['numObservers']
         self.sharedMemoryCreated = False
         self.numParticles = state['numParticles']
         self.totalSteps = state['totalSteps']
@@ -164,7 +177,7 @@ class SingleTaskGP(Draggable):
         self.widget.layout().setSpacing(20)
         self.AddSocket('decision', 'F', 'Decision', 185, acceptableTypes = [PV])
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
-        self.AddSocket('constraint', 'F', 'Constraint', 185, acceptableTypes = [Filter])
+        self.AddSocket('constraint', 'F', 'Constraint', 185, acceptableTypes = [Constraint])
         self.AddSocket('kernel', 'F', 'Kernel', 185, acceptableTypes = [Kernel, Composition, Filter])
         self.AddSocket('out', 'M')
         self.content = QWidget()
@@ -587,7 +600,6 @@ class SingleTaskGP(Draggable):
             except:
                 self.bestRow = None
             
-
     def SetupAndRunOptimiser(self, evaluateFunction):
         shared.workspace.assistant.PushMessage(f'{self.name} is setting up for the first time, which may take a few seconds.')
         mode = 'MAXIMIZE' if self.settings['mode'].upper() == 'MAXIMISE' else 'MINIMIZE'
@@ -596,6 +608,7 @@ class SingleTaskGP(Draggable):
         self.optimiserConstraints = dict()
         self.constraintsIDToName = dict()
         self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
+        self.observerValues = np.zeros((self.settings['numSamples'] + self.settings['numSteps'], self.numObservers))
         for _, d in enumerate(self.decisions):
             if d.type == 'Group':
                 continue
@@ -634,11 +647,16 @@ class SingleTaskGP(Draggable):
                 vocs = vocs,
                 gp_constructor = constructor,
                 beta = self.settings['acqHyperparameter'],
+                n_monte_carlo_samples = 256,
+                n_candidates = 10,
             )
         else:
             generator = ExpectedImprovementGenerator(
                 vocs = vocs,
                 gp_constructor = constructor,
+                turbo_controller = 'optimize',
+                n_monte_carlo_samples = 256,
+                n_candidates = 10,
             )
         evaluator = Evaluator(function = evaluateFunction)
         self.X = Xopt(
@@ -660,8 +678,26 @@ class SingleTaskGP(Draggable):
         shared.workspace.assistant.PushMessage(f'{self.name} is now running.')
         # random samples
         numSamples = max(self.settings['numSamples'], 1)
-        self.X.random_evaluate(numSamples)
+        # self.X.random_evaluate(numSamples)
+        if self.numObservers > 0:
+            insertIdx = self.numDecisions + self.numFundamentalConstraints + self.numObjectives
+            observerIDToName = {
+                o.ID: f'{o.name} (ID: {o.ID})'
+                for o in self.observers
+            }
         numEvals = 0
+        for it in range(numSamples):
+            self.X.random_evaluate(1)
+            if self.numObservers > 0:
+                dataToSave = self.X.data.copy()
+                for it, o in enumerate(self.observers):
+                    dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+                dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+            else:
+                self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+            self.progressAmount = numEvals / self.maxEvals
+            self.updateProgressSignal.emit(self.progressAmount)
+            numEvals += 1
         while True:
             newNumEvals = self.numEvals
             if newNumEvals > numEvals:
@@ -694,18 +730,30 @@ class SingleTaskGP(Draggable):
                 # self.notAllNaNs = (~np.isnan(self.X.data.iloc[:, self.numDecisions:-3])).any()
                 self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
                 if self.notAllNaNs:
-                    # self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-                    self.X.step()
+                    # self.X.step()
+                    try:
+                        self.X.step()
+                    except: # TuRBO will fail if no solutions in the dataset satisfy all constraints or due to ill-conditioned matrix.
+                        self.X.random_evaluate(1)
                 else:
                     self.X.random_evaluate(1)
-                self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                # Handle observers if they exist.
+                if self.numObservers > 0:
+                    dataToSave = self.X.data.copy()
+                    for it, o in enumerate(self.observers):
+                        dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+                    dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                else:
+                    self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
                 # If there are no valid numbers recorded yet, don't bother training the model.
                 # if (~np.isnan(self.X.data.iloc[:, -3])).any():
                 # self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
                 self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
                 if self.notAllNaNs:
-                    self.X.generator.train_model()
-
+                    try:
+                        self.X.generator.train_model()
+                    except:
+                        pass
                 self.progressAmount = self.numEvals / self.maxEvals
                 self.updateProgressSignal.emit(self.progressAmount)
                 try:
@@ -748,7 +796,15 @@ class SingleTaskGP(Draggable):
                 self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution.', '')
         print('Done with optimiser steps!')
         self.inQueue.put(None)
-        self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+        # Handle observers if they exist.
+        if self.numObservers > 0:
+            dataToSave = self.X.data.copy()
+            for it, o in enumerate(self.observers):
+                dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+            dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+        else:
+            self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+        # self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
 
     def Start(self, changeGlobalToggleState = True, **kwargs):
         if self.ID in runningActions:
@@ -762,6 +818,7 @@ class SingleTaskGP(Draggable):
         self.progressBar.Reset()
         self.decisions = []
         self.constraints = []
+        self.observers = []
         for ID, v in self.linksIn.items():
             if shared.entities[ID].type == 'Group':
                 continue
@@ -783,10 +840,24 @@ class SingleTaskGP(Draggable):
             if isinstance(c, Number):
                 self.fundamentalConstraints.pop(self.fundamentalConstraints.index(c))
         # objectives with immediate connections to this block.
-        self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective']
+        self.objectives = [shared.entities[k] for k, v in self.linksIn.items() if v['socket'] == 'objective' and shared.entities[k].type != 'Group']
+        self.numObjectives = len(self.objectives)
         immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
         if not self.CheckDecisionStatesAgree():
             return
+        # if decision variables are valid, fetch any observers
+        # observers are taken to be any block in the same group that have no ingoing or outgoing sockets.
+        if self.groupID is not None:
+            for ID in shared.entities[self.groupID].settings['IDs']:
+                if ID == self.ID:
+                    continue
+                if not isinstance(shared.entities[ID], PV):
+                    continue
+                numLinksIn = len(shared.entities[ID].linksIn)
+                numLinksOut = len(shared.entities[ID].linksOut)
+                if numLinksIn == 0 and (numLinksOut == 0 or (numLinksOut == 1 and next(iter(shared.entities[ID].linksOut)) == 'free')):
+                    self.observers.append(shared.entities[ID])
+        self.numObservers = len(self.observers)
         self.online = self.decisions[0].online
         self.numParticles = 10000
         self.numEvals = 0
@@ -796,7 +867,7 @@ class SingleTaskGP(Draggable):
         self.progressAmount = 0
 
         precision = np.float32 if self.settings['simPrecision'] == 'fp32' else np.float64
-        emptyArray = np.empty(self.numFundamentalObjectives + self.numFundamentalConstraints, dtype = precision)
+        emptyArray = np.empty(self.numFundamentalObjectives + self.numFundamentalConstraints + self.numObservers, dtype = precision)
         self.inQueue, self.outQueue = Queue(), Queue()
 
         runningActions[self.ID] = [Event(), Event(), Event(), 0.] # pause, stop, error, progress
@@ -820,9 +891,18 @@ class SingleTaskGP(Draggable):
                 o.data[1] = simResult[it]
             for it, c in enumerate(self.fundamentalConstraints):
                 c.data[1] = simResult[it + numFundamentalObjectives]
+            for it, o in enumerate(self.observers):
+                o.data[1] = simResult[it + numFundamentalObjectives + self.numFundamentalConstraints]
+                self.observerValues[self.numEvals, it] = o.data[1]
             result = self.objectives[0].Start()
-            # constraints = {self.constraintsIDToName[c.ID]: c.Start() for c in self.constraints}
             constraints = dict([[self.constraintsIDToName[k], v] for c in self.constraints for k, v in c.Start().items()])
+            print('* constraints looks like:', constraints)
+
+            #### Replace NaNs with large numbers to allow the optimiser to perform inference ####
+            for k, v in constraints.items():
+                if np.isnan(v):
+                    # constraints[k] = np.inf if self.optimiserConstraints[k][0] == 'LESS_THAN' else -np.inf
+                    constraints[k] = 1e5 if self.optimiserConstraints[k][0] == 'LESS_THAN' else -1e5
             with self.lock:
                 self.numEvals += 1
             
@@ -875,7 +955,7 @@ class SingleTaskGP(Draggable):
     def CheckForInterrupt(self, pause, stop):
         # check for interrupts
         while pause.is_set():
-            if stop.wait(timeout = .1):
+            if stop.wait(timeout = .05):
                 self.sharedMemory.close()
                 self.sharedMemory.unlink()
                 return None
@@ -898,23 +978,31 @@ class SingleTaskGP(Draggable):
             self.sharedMemory = SharedMemory(name = sharedMemoryName)
             self.sharedMemoryCreated = True
         data = np.ndarray(shape = shape, dtype = dtype, buffer = self.sharedMemory.buf)
-        result = np.zeros((numRepeats, self.numObjectives + self.numConstraints))
+        result = np.zeros((numRepeats, self.numObjectives + self.numConstraints + self.numObservers))
         for d in parameters:
             idx = int(d.split('Index: ')[1].split(')')[0])
             # convert steerer values to mrad.
             if 'HSTR' in d:
                 self.lattice[idx].KickAngle[0] = parameters[d] * 1e-3
+                self.simulator.lattice[idx].KickAngle[0] = parameters[d] * 1e-3
             elif 'VSTR' in d:
                 self.lattice[idx].KickAngle[1] = parameters[d] * 1e-3
+                self.simulator.lattice[idx].KickAngle[1] = parameters[d] * 1e-3
         for r in range(numRepeats):
             tracking, _ = self.simulator.TrackBeam(self.numParticles)
+            # Important - set columns to NaN if any entries in column are NaN
+            tracking[:, np.isnan(tracking).any(axis = 0)] = np.nan
+            # Compute results
             for it, o in enumerate(self.objectives):
                 result[r, it] = self.computations[o['dtype']](tracking, o['index'])
                 self.CheckForInterrupt(pause, stop)
             for it, c in enumerate(self.constraints):
                 result[r, it + self.numObjectives] = self.computations[c['dtype']](tracking, c['index'])
                 self.CheckForInterrupt(pause, stop)
-        np.copyto(data, np.mean(result, axis = 0))
+            for it, ob in enumerate(self.observers):
+                result[r, it + self.numObjectives + self.numConstraints] = self.computations[ob['dtype']](tracking, ob['index'])
+                self.CheckForInterrupt(pause, stop)
+        np.copyto(data, np.nanmean(result, axis = 0))
         return data
 
     def GetCharge(self, tracking, index):
