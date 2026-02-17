@@ -104,48 +104,68 @@ class SingleTaskGP(Draggable):
         self.ToggleStyling(active = False)
 
     def __getstate__(self):
-        return {
-            'lattice': shared.lattice,
-            'decisions': [
-                {
-                    'name': d.settings['linkedElement'].Name,
-                    'index': d.settings['linkedElement'].Index,
-                    's': d.settings['linkedElement']['s (m)'],
-                    'set': d.settings['components']['value']['value'],
-                }
-                for d in self.decisions
-            ],
-            'objectives': [
-                {
-                    'name': o.settings['linkedElement'].Name,
-                    'index': o.settings['linkedElement'].Index,
-                    's': o.settings['linkedElement']['s (m)'],
-                    'dtype': o.settings['dtype'],
-                }
-                for o in self.fundamentalObjectives
-            ],
-            'constraints': [
-                {
-                    'name': c.settings['linkedElement'].Name,
-                    'index': c.settings['linkedElement'].Index,
-                    's': c.settings['linkedElement']['s (m)'],
-                    'dtype': c.settings['dtype'],
-                }
-                for c in self.fundamentalConstraints
-            ],
-            'observers': [
-                {
-                    'index': o.settings['linkedElement'].Index,
-                    'dtype': o.settings['dtype'],
-                }
-                for o in self.observers
-            ],
-            'numParticles': self.numParticles,
-            'totalSteps': self.settings['numSamples'] + self.settings['numSteps'],
-            'numObjectives': self.numFundamentalObjectives,
-            'numConstraints': self.numFundamentalConstraints,
-            'numObservers': self.numObservers,
-        }
+        if self.online:
+            result = {
+                'decisions': [
+                    d.name
+                    for d in self.decisions
+                ],
+                'objectives': [
+                    o.name
+                    for o in self.objectives
+                ],
+                'constraints': [
+                    c.name
+                    for c in self.constraints
+                ],
+                'observers': [
+                    o.name
+                    for o in self.observers
+                ],
+            }
+        else: 
+            result = {
+                'lattice': shared.lattice,
+                'decisions': [
+                    {
+                        'name': d.settings['linkedElement'].Name,
+                        'index': d.settings['linkedElement'].Index,
+                        's': d.settings['linkedElement']['s (m)'],
+                        'set': d.settings['components']['value']['value'],
+                    }
+                    for d in self.decisions
+                ],
+                'objectives': [
+                    {
+                        'name': o.settings['linkedElement'].Name,
+                        'index': o.settings['linkedElement'].Index,
+                        's': o.settings['linkedElement']['s (m)'],
+                        'dtype': o.settings['dtype'],
+                    }
+                    for o in self.fundamentalObjectives
+                ],
+                'constraints': [
+                    {
+                        'name': c.settings['linkedElement'].Name,
+                        'index': c.settings['linkedElement'].Index,
+                        's': c.settings['linkedElement']['s (m)'],
+                        'dtype': c.settings['dtype'],
+                    }
+                    for c in self.fundamentalConstraints
+                ],
+                'observers': [
+                    {
+                        'index': o.settings['linkedElement'].Index,
+                        'dtype': o.settings['dtype'],
+                    }
+                    for o in self.observers
+                ],
+                'numParticles': self.numParticles,
+            }
+        result['totalSteps'] = self.settings['numSamples'] + self.settings['numSteps'],
+        result['numObjectives'] = self.numFundamentalObjectives,
+        result['numConstraints'] = self.numFundamentalConstraints,
+        result['numObservers'] = self.numObservers,
 
     def __setstate__(self, state):
         self.lattice = state['lattice']
@@ -158,16 +178,17 @@ class SingleTaskGP(Draggable):
         self.numConstraints:int = state['numConstraints']
         self.numObservers:int = state['numObservers']
         self.sharedMemoryCreated = False
-        self.numParticles = state['numParticles']
         self.totalSteps = state['totalSteps']
-        self.computations = {
-            'CHARGE': self.GetCharge,
-            'X': self.GetX,
-            'Y': self.GetY,
-            'XP': self.GetXP,
-            'YP': self.GetYP,
-            'SURVIVAL_RATE': self.GetSurvivalRate,
-        }
+        if 'numParticles' in state:
+            self.numParticles = state['numParticles']
+            self.computations = {
+                'CHARGE': self.GetCharge,
+                'X': self.GetX,
+                'Y': self.GetY,
+                'XP': self.GetXP,
+                'YP': self.GetYP,
+                'SURVIVAL_RATE': self.GetSurvivalRate,
+            }
 
     def Push(self):
         from ..composition.composition import Composition
@@ -877,7 +898,7 @@ class SingleTaskGP(Draggable):
 
         runningActions[self.ID] = [Event(), Event(), Event(), 0.] # pause, stop, error, progress
         if self.online:
-            CreatePersistentWorker(self, emptyArray, self.inQueue, self.outQueue, self.SendMachineInstructions, 0.)
+            CreatePersistentWorker(self, emptyArray, self.inQueue, self.outQueue, self.SendMachineInstructions)
         else:
             worker = Thread(target = CreatePersistentWorker, args = (self, emptyArray, self.inQueue, self.outQueue, self.Simulate), kwargs = {'dtype': precision})
             worker.start()
@@ -943,16 +964,26 @@ class SingleTaskGP(Draggable):
     def Stop(self):
         StopAction(self)
 
-    def SendMachineInstructions(self, pause, stop, error, progress, sharedMemoryName, shape, dtype, parameters, **kwargs):
+    def SendMachineInstructions(self, pause, stop, error, sharedMemoryName, shape, parameters, **kwargs):
         if not self.sharedMemoryCreated:
             self.sharedMemory = SharedMemory(name = sharedMemoryName)
             self.sharedMemoryCreated = True
-        data = np.ndarray(shape, dtype, buffer = self.sharedMemory.buf)
+        data = np.ndarray(shape, buffer = self.sharedMemory.buf)
         print('== Send Machine Instructions ==')
-        for d in parameters:
-            nm = d.split()[:-1]
-            print(f'{nm} is being set to {parameters[d]:.3f}')
-        print('-------')
+        try:
+            for d, value in parameters.items():
+                nm = d.split()[0]
+                print(nm)
+        except:
+            pass
+        result = np.ones(len(parameters))
+        np.copyto(data, np.nanmean(result, axis = 0))
+        return result
+
+        # for d in parameters:
+        #     nm = d.split()[:-1]
+        #     print(f'{nm} is being set to {parameters[d]:.3f}')
+        # print('-------')
 
     def CheckForInterrupt(self, pause, stop):
         # check for interrupts
