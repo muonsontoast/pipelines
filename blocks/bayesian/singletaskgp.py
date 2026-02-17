@@ -896,17 +896,14 @@ class SingleTaskGP(Draggable):
                 self.observerValues[self.numEvals, it] = o.data[1]
             result = self.objectives[0].Start()
             constraints = dict([[self.constraintsIDToName[k], v] for c in self.constraints for k, v in c.Start().items()])
-            print('* constraints looks like:', constraints)
 
             #### Replace NaNs with large numbers to allow the optimiser to perform inference ####
             for k, v in constraints.items():
                 if np.isnan(v):
-                    # constraints[k] = np.inf if self.optimiserConstraints[k][0] == 'LESS_THAN' else -np.inf
                     constraints[k] = 1e5 if self.optimiserConstraints[k][0] == 'LESS_THAN' else -1e5
             with self.lock:
                 self.numEvals += 1
             
-            # return {immediateObjectiveName: self.objectives[0].data[1]}
             return {immediateObjectiveName: result, **constraints}
 
         self.timestamp.setText(self.Timestamp())

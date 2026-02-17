@@ -56,7 +56,7 @@ class Multiply(Composition):
             else:
                 if hasattr(self, 'edit'):
                     self.editSignal.emit('N/A')
-            self.stopCheckThread.wait(timeout = .2)
+            self.stopCheckThread.wait(timeout = .1)
     
     def k(self, X1, X2):
         result = 1
