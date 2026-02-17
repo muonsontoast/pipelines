@@ -19,7 +19,7 @@ from ... import shared
 from ..draggable import Draggable
 from ...utils import cothread
 # PerformAction is invoked when running tasks in offline mode to keep the UI responsive.
-from ...utils.multiprocessing import SetGlobalToggleState, TogglePause, StopAction, CreatePersistentWorker, runningActions
+from ...utils.multiprocessing import SetGlobalToggleState, TogglePause, StopAction, CreatePersistentWorkerProcess, CreatePersistentWorkerThread, runningActions
 from ..filters.filter import Filter
 from ..constraints.constraint import Constraint
 from ..number import Number
@@ -898,9 +898,9 @@ class SingleTaskGP(Draggable):
 
         runningActions[self.ID] = [Event(), Event(), Event(), 0.] # pause, stop, error, progress
         if self.online:
-            CreatePersistentWorker(self, self.inQueue, self.outQueue, self.SendMachineInstructions)
+            CreatePersistentWorkerThread(self, self.inQueue, self.outQueue, self.SendMachineInstructions)
         else:
-            worker = Thread(target = CreatePersistentWorker, args = (self, emptyArray, self.inQueue, self.outQueue, self.Simulate), kwargs = {'dtype': precision})
+            worker = Thread(target = CreatePersistentWorkerProcess, args = (self, emptyArray, self.inQueue, self.outQueue, self.Simulate), kwargs = {'dtype': precision})
             worker.start()
         # SetGlobalToggleState()
         numFundamentalObjectives = len(self.fundamentalObjectives)
