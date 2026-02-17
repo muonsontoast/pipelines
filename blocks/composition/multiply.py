@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import QGraphicsProxyWidget
+from PySide6.QtCore import Signal
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
+from threading import Thread
 import numpy as np
-from ..pv import PV
 from ..kernels.kernel import Kernel
 from .composition import Composition
 from ..draggable import Draggable
@@ -15,6 +16,7 @@ class Multiply(Composition):
         super().__init__(parent, proxy, name = kwargs.pop('name', 'Multiply'), type = 'Multiply', size = kwargs.pop('size', [250, 100]), **kwargs)
         self.hasBeenPushed = False
         self.CreateEmptySharedData(np.empty(2))
+        Thread(target = self.CheckValue, daemon = True).start()
     
     def Push(self):
         super().Push()
@@ -35,24 +37,25 @@ class Multiply(Composition):
         while True:
             if self.stopCheckThread.is_set():
                 break
-            if not isinstance(shared.entities[next(iter(self.linksIn))], (Kernel)):
-                if hasattr(self, 'edit'):
-                    try:
+            if len(self.linksIn) > 0:
+                if not isinstance(shared.entities[next(iter(self.linksIn.keys()))], (Kernel)):
+                    if hasattr(self, 'edit'):
+                        try:
+                            with self.lock:
+                                if self.valueRequest.is_set():
+                                    returnNewValue = True
+                            result = np.prod([shared.entities[ID].Start() for ID in self.linksIn if shared.entities[ID].type != 'Group'])
+                            self.editSignal.emit(f'{result:.3f}') if not np.isinf(result) and not np.isnan(result) else self.editSignal.emit('N/A')
+                            self.data[1] = result
+                        except:
+                            pass
                         with self.lock:
-                            if self.valueRequest.is_set():
-                                returnNewValue = True
-                        result = np.prod([shared.entities[ID].Start() for ID in self.linksIn])
-                        self.edit.setText(f'{result:.3f}') if not np.isinf(result) else self.edit.setText('N/A')
-                        self.data[1] = result
-                    except:
-                        pass
-                    with self.lock:
-                        if returnNewValue:
-                            self.valueReady.set()
-                    returnNewValue = False
+                            if returnNewValue:
+                                self.valueReady.set()
+                        returnNewValue = False
             else:
                 if hasattr(self, 'edit'):
-                    self.edit.setText('N/A')
+                    self.editSignal.emit('N/A')
             self.stopCheckThread.wait(timeout = .2)
     
     def k(self, X1, X2):

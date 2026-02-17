@@ -80,38 +80,6 @@ class Draggable(Entity, QWidget):
         self.main.layout().setContentsMargins(0, 0, 0, 0)
         self.main.layout().setSpacing(0)
         self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # Every draggable has a popup box hidden until 'Alt' is pressed
-        # self.popup = QGraphicsProxyWidget()
-        # self.popup.setZValue(100)
-        # self.popupContainer = QWidget()
-        # self.popupContainer.setStyleSheet(style.WidgetStyle())
-        # self.popupContainer.setFixedWidth(350)
-        # self.popupContainer.setMaximumHeight(450)
-        # self.popupContainer.setLayout(QVBoxLayout())
-        # self.popupContainer.layout().setContentsMargins(0, 0, 0, 0)
-        # self.popupContainer.layout().setSpacing(5)
-        # self.popupHeader = QWidget()
-        # self.popupHeader.setStyleSheet(style.WidgetStyle(color = "#ab4e34", borderRadiusTopLeft = 6, borderRadiusTopRight = 6))
-        # self.popupHeader.setLayout(QHBoxLayout())
-        # self.popupHeader.layout().setContentsMargins(5, 10, 10, 10)
-        # self.popupTitle = QLabel('Input Links')
-        # self.popupTitle.setStyleSheet(style.LabelStyle(fontColor = "#c4c4c4", fontSize = 14))
-        # self.popupHeader.layout().addWidget(self.popupTitle)
-        # self.popupContainer.layout().addWidget(self.popupHeader)
-        # self.popupWidget = QWidget()
-        # self.popupWidget.setLayout(QVBoxLayout())
-        # self.popupWidget.setStyleSheet(style.WidgetStyle(color = '#ab4e34', borderRadiusBottomLeft = 6, borderRadiusBottomRight = 6))
-        # # TODO: Add scroll area showing input blocks and their streams.
-        # self.popupList = QListWidget()
-        # self.popupList.setFocusPolicy(Qt.NoFocus)
-        # self.popupList.setSelectionMode(QListWidget.NoSelection)
-        # self.popupList.setStyleSheet(style.InspectorSectionStyle())
-        # self.popupList.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # self.popupList.setMaximumHeight(350)
-        # self.popupWidget.layout().addWidget(self.popupList)
-        # self.popupContainer.layout().addWidget(self.popupWidget)
-        # self.popup.setWidget(self.popupContainer)
-        # self.popup.hide()
 
         if kwargs.pop('addToShared', True):
             shared.PVs[self.ID] = dict(pv = self, rect = MapDraggableRectToScene(self))
@@ -465,8 +433,18 @@ class Draggable(Entity, QWidget):
     def RemoveLinkIn(self, ID):
         shared.editors[0].scene.removeItem(self.linksIn[ID]['link'])
         self.linksIn.pop(ID)
-        # self.streamTypesIn.pop(ID)
         self.settings['linksIn'].pop(ID)
+        # Check to see if any group links should be removed.
+        if shared.entities[ID].type != 'Group' and shared.entities[ID].groupID is not None:
+            shouldRemoveGroupLink = True
+            for linkID in self.linksIn:
+                if linkID != ID and shared.entities[linkID].groupID == shared.entities[ID].groupID:
+                    shouldRemoveGroupLink = False
+                    break
+            if shouldRemoveGroupLink and self.ID in shared.entities[shared.entities[ID].groupID].linksOut:
+                self.RemoveLinkIn(shared.entities[ID].groupID)
+                shared.entities[shared.entities[ID].groupID].RemoveLinkOut(self.ID)
+            
 
     def AddLinkOut(self, ID, socket):
         '''`socket` this is linked to and the `ID` of its parent.'''

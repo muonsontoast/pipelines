@@ -28,7 +28,7 @@ class Filter(Draggable):
         self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 14)
         self.Push()
     
-    def Push(self):
+    def Push(self, applyStyling = True):
         super().Push()
         self.AddSocket('in', 'F', acceptableTypes = [Draggable])
         self.AddSocket('out', 'M')
@@ -37,7 +37,8 @@ class Filter(Draggable):
         self.widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.layout().setContentsMargins(10, 10, 10, 20)
         self.widget.layout().setSpacing(2)
-        self.BaseStyling()
+        if applyStyling:
+            self.BaseStyling()
 
     def CheckState(self):
         pass

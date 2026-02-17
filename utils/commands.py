@@ -27,7 +27,7 @@ from ..blocks.kernels.periodic import PeriodicKernel
 from ..blocks.kernels.rbf import RBFKernel
 from ..blocks.filters.greaterthan import GreaterThan as GreaterThanFilter
 from ..blocks.filters.lessthan import LessThan as LessThanFilter
-from ..blocks.filters.singlecontrol import SingleControl
+from ..blocks.filters.control import Control
 from ..blocks.filters.invert import Invert
 from ..blocks.filters.absolute import Absolute
 from ..blocks.constraints.greaterthan import GreaterThan
@@ -65,7 +65,7 @@ blockTypes = {
     '< (Constraint)': LessThan,
     '> (Filter)': GreaterThanFilter,
     '< (Filter)': LessThanFilter,
-    'Single Control': SingleControl,
+    'Control': Control,
     'Invert': Invert,
     'Absolute': Absolute,
 }
@@ -90,9 +90,6 @@ def PrintBuffer(idxInItems):
 
 def Undo():
     global maxActionBufferSize, actionPointerIdx
-    print('==== UNDO ====')
-    print('Before:')
-    PrintBuffer(1)
     if actionPointerIdx >= len(actionBuffer) or actionPointerIdx >= maxActionBufferSize:
         return
     actionToUndo, *args  = actionBuffer[actionPointerIdx]
@@ -106,18 +103,11 @@ def Undo():
         shared.workspace.assistant.ignoreRequests = False
         shared.workspace.assistant.PushMessage('Paste was undone.')
     actionPointerIdx += 1
-    print('After:')
-    PrintBuffer(1)
-    print(f'{len(actionBuffer)} actions in buffer')
 
 def Redo():
     global maxActionBufferSize, actionPointerIdx, blockBuffer, actionBuffer
-    print('==== REDO ====')
-    print('Before:')
-    PrintBuffer(1)
     if actionPointerIdx == 0:
         return
-    print('After:')
     actionPointerIdx -= 1
     actionToRedo, *args = actionBuffer[actionPointerIdx]
     actionBuffer.pop(actionPointerIdx)
@@ -128,8 +118,6 @@ def Redo():
         blockBuffer = blocks
         Paste(mousePos = mousePos, offsets = offsets, modifyActionBuffer = False)
     actionBuffer.insert(actionPointerIdx, [Paste, mousePos, offsets, shared.activeEditor.area.selectedItems, blockBuffer])
-    PrintBuffer(1)
-    print(f'{len(actionBuffer)} actions in buffer')
 
 def Copy():
     global blockBuffer
@@ -173,6 +161,7 @@ def Paste(mousePos = None, offsets = None, modifyActionBuffer = True):
             numBlocks = block.settings.get('numBlocks', None),
             magnitudeOnly = block.settings.get('magnitudeOnly', None),
             threshold = block.settings.get('threshold', None),
+            onControl = block.settings.get('onControl', None),
         )
         entity.settings['components'] = deepcopy(block.settings['components'])
         if hasattr(entity, 'set'):
@@ -214,8 +203,6 @@ def Paste(mousePos = None, offsets = None, modifyActionBuffer = True):
     
     shared.workspace.assistant.ignoreRequests = False
     shared.workspace.assistant.PushMessage(f'Pasted {len(newBlocks)} block(s).')
-    print('==== PASTE ====')
-    PrintBuffer(1)
 
 def Snip(): # cut links
     pass
@@ -287,11 +274,6 @@ def CreateBlock(blockType, name: str, pos: QPoint = None, overrideID = None, *ar
     print(f'Added {w.name} with ID: {w.ID}')
     name = w.name
     prefix = 'an' if w.name in ['Orbit Response'] else 'a'
-    # else:
-    #     proxy = blockType(*args, **kwargs)
-    #     print(f'Added {proxy.name} with ID: {proxy.ID}')
-    #     prefix = 'a'
-    #     name = proxy.name
     if pos:
         proxy.setWidget(w)
         proxy.setPos(pos)
@@ -300,9 +282,6 @@ def CreateBlock(blockType, name: str, pos: QPoint = None, overrideID = None, *ar
     rectCenter = proxy.sceneBoundingRect().center()
     shared.workspace.assistant.PushMessage(f'Created {prefix} {name} at ({rectCenter.x():.0f}, {rectCenter.y():.0f})')
     return proxy, w
-    # if pos:
-    #     return proxy, w
-    # return proxy
 
 def CreatePV(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['PV'], 'PV', pos)
@@ -364,8 +343,8 @@ def CreateGreaterThanFilter(pos: QPoint):
 def CreateLessThanFilter(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['< (Filter)'], '< (Filter)', pos)
 
-def CreateSingleControl(pos: QPoint):
-    proxy, widget = CreateBlock(blockTypes['Single Control'], 'Single Control', pos)
+def CreateControl(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Control'], 'Control', pos)
 
 def CreateInvert(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['Invert'], 'Invert', pos)
@@ -462,7 +441,10 @@ def Delete():
         for ID in widget.linksOut:
             if ID == 'free':
                 continue
-            shared.entities[ID].RemoveLinkIn(widget.ID)
+            if isinstance(shared.entities[ID], (Add, Multiply)):
+                shared.entities[ID].RemoveLinkIn(widget.ID, dontCreateBlock = True)
+            else:
+                shared.entities[ID].RemoveLinkIn(widget.ID)
         shared.entities.pop(widget.ID)
         shared.PVs.pop(widget.ID)
         if widget.type == 'PV':
@@ -480,6 +462,10 @@ def Delete():
         if widget.type == 'Group':
             for block in widget.groupBlocks:
                 block.groupID = None
+        elif widget.groupID is not None:
+            shared.entities[widget.groupID].groupItems.remove(item)
+            shared.entities[widget.groupID].groupBlocks.remove(widget)
+            shared.entities[widget.groupID].settings['numBlocks'] -= 1
         widget.stopCheckThread.set()
         widget.deleteLater()
     if len(selectedItems) > 1:
@@ -538,7 +524,7 @@ commands = {
     'Less Than (Constraint)': dict(shortcut = [], func = CreateLessThan, args = [GetMousePos]),
     'Greater Than (Filter)': dict(shortcut = [], func = CreateGreaterThanFilter, args = [GetMousePos]),
     'Less Than (Filter)': dict(shortcut = [], func = CreateLessThanFilter, args = [GetMousePos]),
-    'Single Control (Filter)': dict(shortcut = [], func = CreateSingleControl, args = [GetMousePos]),
+    'Control (Filter)': dict(shortcut = [], func = CreateControl, args = [GetMousePos]),
     'Invert (Filter)': dict(shortcut = [], func = CreateInvert, args = [GetMousePos]),
     'Absolute (Filter)': dict(shortcut = [], func = CreateAbsolute, args = [GetMousePos]),
     'Toggle All Actions': dict(shortcut = ['Space'], func = ToggleAllActions, args = []),

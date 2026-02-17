@@ -3,7 +3,6 @@ import matplotlib.style as mplstyle
 mplstyle.use('fast')
 from threading import Thread
 import numpy as np
-from ..pv import PV
 from ..kernels.kernel import Kernel
 from .composition import Composition
 from ..draggable import Draggable
@@ -38,14 +37,14 @@ class Add(Composition):
             if self.stopCheckThread.is_set():
                 break
             if len(self.linksIn) > 0:
-                if not isinstance(next(iter(self.linksIn)), (Kernel)):
+                if not isinstance(shared.entities[next(iter(self.linksIn.keys()))], (Kernel)):
                     if hasattr(self, 'edit'):
                         try:
                             with self.lock:
                                 if self.valueRequest.is_set():
                                     returnNewValue = True
-                            result = np.sum([shared.entities[ID].Start() for ID in self.linksIn])
-                            self.edit.setText(f'{result:.3f}') if not (np.isinf(result) or np.isnan(result)) else self.edit.setText('N/A')
+                            result = np.sum([shared.entities[ID].Start() for ID in self.linksIn if shared.entities[ID].type != 'Group'])
+                            self.editSignal.emit(f'{result:.3f}') if not np.isinf(result) and not np.isnan(result) else self.editSignal.emit('N/A')
                             self.data[1] = result
                         except:
                             pass
@@ -55,7 +54,7 @@ class Add(Composition):
                         returnNewValue = False
             else:
                 if hasattr(self, 'edit'):
-                    self.edit.setText('N/A')
+                    self.editSignal.emit('N/A')
             self.stopCheckThread.wait(timeout = .2)
     
     def k(self, X1, X2):

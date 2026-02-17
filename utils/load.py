@@ -116,6 +116,7 @@ def Load(path):
                             IDs = v.get('IDs', None),
                             magnitudeOnly = v.get('magnitudeOnly', None),
                             threshold = v.get('threshold', None),
+                            onControl = v.get('onControl', None),
                         )
                         if 'alignment' in v:
                             entity.settings['alignment'] = v['alignment']

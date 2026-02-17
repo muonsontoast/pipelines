@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QGraphicsProxyWidget, QLineEdit, QVBoxLayout, QSizePolicy
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from threading import Thread, Event, Lock
 from ..draggable import Draggable
 from ..pv import PV
@@ -11,13 +11,16 @@ from ... import style
 from ... import shared
 
 class Composition(Draggable):
+    editSignal = Signal(str)
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         super().__init__(
             proxy, name = kwargs.pop('name', 'Composition'), type = kwargs.pop('type', 'Composition'),
             size = kwargs.pop('size', [300, 300]), headerColor = '#A4243B', **kwargs
             )
+        self.editSignal.connect(self.editChange)
         self.parent = parent
         self.fundamental = False
+        self.groupLinkExists = False
         self.checkDone = Event()
         self.lock = Lock()
         self.blockType = 'Add'
@@ -28,6 +31,9 @@ class Composition(Draggable):
         self.widget.layout().setSpacing(5)
         self.Push()
 
+    def editChange(self, s):
+        self.edit.setText(s)
+
     def Push(self):
         super().Push()
         self.main.layout().addWidget(self.widget)
@@ -35,14 +41,13 @@ class Composition(Draggable):
         self.ToggleStyling(active = False)
 
     def AddLinkIn(self, ID, socket, ignoreForFirstTime = False, **kwargs):
+        if shared.entities[ID].type == 'Group':
+            self.groupLinkExists = True
+            return super().AddLinkIn(ID, socket, **kwargs)
         newFundamentalType = self.GetType(ID)
         for linkID in self.linksIn:
             existingFundamentalType = self.GetType(linkID)
             if linkID != ID:
-                # if existingFundamentalType in [Kernel] and newFundamentalType in [Filter, Composition]:
-                #     break
-                # elif newFundamentalType in [Kernel] and existingFundamentalType in [Filter, Composition]:
-                #     break
                 if newFundamentalType in [existingFundamentalType, Filter, Composition]:
                     break
                 elif newFundamentalType in [PV, Number] and existingFundamentalType in [PV, Number]:
@@ -52,11 +57,10 @@ class Composition(Draggable):
         successfulConnection = super().AddLinkIn(ID, socket)
 
         # Modify the widget based on the input type - only if this is the first of its kind.
-        if successfulConnection: # and not ignoreForFirstTime:
+        if successfulConnection:
             shared.entities[ID].AddLinkOut(self.ID, socket)
             numLinksIn = len(self.linksIn)
-            # 1. Kernel
-            if numLinksIn == 1:
+            if numLinksIn == 1 or (numLinksIn == 2 and self.groupLinkExists):
                 deleteAndRedraw = False
                 if not ignoreForFirstTime:
                     deleteAndRedraw = True
@@ -66,10 +70,17 @@ class Composition(Draggable):
                         proxy, newAdd = commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = self.settings['size'])
                     # Attach links on existing block to the new block.
                     for linkID, link in self.linksIn.items():
+                        if shared.entities[linkID].type == 'Group':
+                            continue
                         newAdd.AddLinkIn(linkID, link['socket'], ignoreForFirstTime = True)
-                    for linkID, link in self.linksOut.items():
-                        newAdd.AddLinkOut(linkID, link['socket'])
-                        shared.entities[linkID].AddLinkIn(newAdd.ID, link['socket'])
+                    for linkID, socket in self.linksOut.items():
+                        newAdd.AddLinkOut(linkID, socket)
+                        shared.entities[linkID].AddLinkIn(newAdd.ID, socket)
+                    # assign the group if one is already assigned to the old composition
+                    if self.groupID is not None:
+                        newAdd.groupID = self.groupID
+                        shared.entities[self.groupID].groupItems.append(newAdd.proxy)
+                        shared.entities[self.groupID].groupBlocks.append(newAdd)
                 else:
                     if isinstance(shared.entities[ID], (PV, Number, Composition, Filter)):
                         # add a line edit element
@@ -81,11 +92,13 @@ class Composition(Draggable):
                         self.edit.setReadOnly(True)
                         self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
                         self.timerRunning = True
-                        self.checkThread = Thread(target = self.CheckValue, daemon = True)
-                        self.checkThread.start()
+                        # self.checkThread = Thread(target = self.CheckValue, daemon = True)
+                        # self.checkThread.start()
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
-                    print(f'{self.name} ID is: {self.ID}')
+                    if self.groupID is not None:
+                        shared.entities[self.groupID].groupItems.remove(self.proxy)
+                        shared.entities[self.groupID].groupBlocks.remove(self)
                     commands.Delete()
                 else:
                     if newFundamentalType == Kernel:
@@ -97,17 +110,24 @@ class Composition(Draggable):
         self.hasBeenPushed = True
         return successfulConnection
     
-    def RemoveLinkIn(self, ID):
+    def RemoveLinkIn(self, ID, dontCreateBlock = False):
         super().RemoveLinkIn(ID)
+        groupLinkExists = False
+        for ID in self.linksIn:
+            if shared.entities[ID].groupID is not None:
+                groupLinkExists = True
+                break
+        self.groupLinkExists = groupLinkExists
         if len(self.linksIn) > 0:
             if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
                 self.kernel.UpdateFigure()
         else:
             if 'hyperparameters' in self.settings:
                 self.settings.pop('hyperparameters')
-            commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [250, 100])
-            shared.activeEditor.area.selectedItems = [self.proxy,]
-            commands.Delete()
+            if not dontCreateBlock:
+                commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [250, 100])
+                shared.activeEditor.area.selectedItems = [self.proxy,]
+                commands.Delete()
 
     def ChangeEdit(self):
         try:
