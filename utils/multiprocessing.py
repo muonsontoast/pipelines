@@ -4,9 +4,8 @@ import sys
 # from threading import Event
 import multiprocessing as mp
 from multiprocessing import Process, Event
-# from threading import Thread
+from threading import Thread
 mp.set_start_method('spawn', force = True) # force linux machines to call __getstate__ and __setstate__ methods attached to actions.
-import time
 from .. import shared
 
 # Dict of running actions -- key is the parent entity ID, value is list where idx 0 is pause event and index 1 is stop event.
@@ -51,7 +50,7 @@ def StopActions():
     for ID in IDs:
         runningActions[ID][1].set()
 
-def PersistentWorker(pause, stop, error, sharedMemoryName, shape, action, pipe, **kwargs):
+def PersistentWorkerProcess(pause, stop, error, sharedMemoryName, shape, action, pipe, **kwargs):
     while True:
         params = pipe.recv()
         if params is None:
@@ -61,12 +60,24 @@ def PersistentWorker(pause, stop, error, sharedMemoryName, shape, action, pipe, 
     pipe.close()
     sys.exit(0)
 
-def CreatePersistentWorker(entity, emptyArray, inQueue, outQueue, action, **kwargs):
+def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, **kwargs):
+    while not stop.is_set():
+        params = inQueue.get(timeout = .2)
+        if params is None:
+            break
+        result = action(pause, stop, error, params, **kwargs)
+        outQueue.put(result)
+    inQueue.join()
+
+def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
+    Thread(target = PersistentWorkerThread, args = (*runningActions[entity.ID][:-1], action, inQueue, outQueue), kwargs = kwargs).start()
+
+def CreatePersistentWorkerProcess(entity, emptyArray, inQueue, outQueue, action, **kwargs):
     '''`signals` should be a dict of QtCore Signals.'''
     ctx = mp.get_context('spawn')
     outPipe, inPipe = ctx.Pipe()
     entity.CreateEmptySharedData(emptyArray)
-    Process(target = PersistentWorker, args = (*runningActions[entity.ID][:-1], entity.dataSharedMemory.name, emptyArray.shape, action, inPipe), kwargs = kwargs).start()
+    Process(target = PersistentWorkerProcess, args = (*runningActions[entity.ID][:-1], entity.dataSharedMemory.name, emptyArray.shape, action, inPipe), kwargs = kwargs).start()
     while True:
         params = inQueue.get()
         outPipe.send(params)
