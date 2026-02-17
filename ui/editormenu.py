@@ -115,7 +115,9 @@ class EditorMenu(Draggable):
 
     def RunCommandFromSearch(self):
         text = self.shortcuts.model().index(self.currentShortcutIndex, 0).data()
-        commandName = text.split(' [')[0]
+        try:
+            commandName = text.split(' [')[0]
+        except: return
         args = []
         for arg in commands.commands[commandName]['args']:
             if arg == commands.GetMousePos:

@@ -20,11 +20,12 @@ plt.rcParams['font.size'] = 14
 class Kernel(Draggable):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         '''Accepts `name` and `type` overrides for entity.'''
+        self.drawHyperparameters = kwargs.pop('drawHyperparameters', True)
         super().__init__(
             proxy,
             name = kwargs.pop('name', 'Kernel'),
             type = kwargs.pop('type', 'Kernel'),
-            size = kwargs.pop('size', [300, 275]),
+            size = kwargs.pop('size', [315, 275]),
             fontsize = kwargs.pop('fontsize', 12),
             headerColor = '#3e3e3e',
             # kernel-specific hyperparameters
@@ -44,6 +45,7 @@ class Kernel(Draggable):
         self.parent = parent
         self.fundamental = False
         self.updateFigure = False
+        self.subWidgets = []
         self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', borderRadius = 12, marginRight = 0, fontSize = 16)
         self.widgetSelectedStyle = style.WidgetStyle(color = "#484848", borderRadius = 12, marginRight = 0, fontSize = 16)
         # force a PV's scalar output to be shared at instantiation so modifications are seen by all connected blocks
@@ -58,7 +60,7 @@ class Kernel(Draggable):
         if self.__class__ != Kernel: # only Push immediately if not a base class instance.
             self.Push()
 
-        Thread(target = self.CheckForFigureUpdate, daemon = True).start()
+        # Thread(target = self.CheckForFigureUpdate, daemon = True).start()
 
     def k(self, X1, X2):
         '''To be overriden by all subclasses inheriting from this base class.'''
@@ -81,45 +83,102 @@ class Kernel(Draggable):
                 entity.widget.setStyleSheet(style.WidgetStyle(color = "#1157A1", fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16))
             shared.workspace.assistant.PushMessage(f'Removed {entity.name} as a dimension of {self.name}')
 
+    def ChangeSmoothness(self, pressedBtn):
+        if pressedBtn.text() == '1/2':
+            shouldUpdateFigure = not self.settings['hyperparameters']['smoothness']['value'] == 1/2
+            self.settings['hyperparameters']['smoothness']['value'] = 1/2
+            self.smoothnessEdit.setText('1/2')
+            shared.workspace.assistant.PushMessage(f'Changed smoothness hyperparameter of {self.name} to 1/2.')
+        elif pressedBtn.text() == '3/2':
+            shouldUpdateFigure = not self.settings['hyperparameters']['smoothness']['value'] == 3/2
+            self.settings['hyperparameters']['smoothness']['value'] = 3/2
+            self.smoothnessEdit.setText('3/2')
+            shared.workspace.assistant.PushMessage(f'Changed smoothness hyperparameter of {self.name} to 3/2.')
+        else:
+            shouldUpdateFigure = not self.settings['hyperparameters']['smoothness']['value'] == 5/2
+            self.settings['hyperparameters']['smoothness']['value'] = 5/2
+            self.smoothnessEdit.setText('5/2')
+            shared.workspace.assistant.PushMessage(f'Changed smoothness hyperparameter of {self.name} to 5/2.')
+        for nu, btn in self.btns.items():
+            if self.settings['hyperparameters']['smoothness']['value'] == nu:
+                btn.setStyleSheet(style.PushButtonStyle(fontColor = '#c4c4c4', color = '#1e1e1e', borderColor = "#EB9423"))
+            else:
+                btn.setStyleSheet(style.PushButtonStyle(fontColor = '#c4c4c4', color = '#1e1e1e'))
+        if shouldUpdateFigure:
+            self.TriggerFigureUpdate()
+
     def ShowMenu(self, context):
         if shared.kernelMenu is not None:
             if shared.kernelMenu != self.kernelMenu or self.kernelMenu.currentHyperparameter != context.correspondingHyperparameter:
                 shared.kernelMenu.Hide()
                 shared.kernelMenu.draggable.kernelMenuIsOpen = False
-                shared.kernelContext.setText('+')
+                shared.kernelContext.setText('+') if shared.kernelContext.changeButtonText else None
         localPos = context.mapTo(self.proxy.widget(), QPointF(40, -20))
         finalPos = self.proxy.scenePos() + localPos
+        self.kernelMenu.deleteLater()
+        shared.app.processEvents()
+        if context.correspondingHyperparameter == 'smoothness':
+            self.kernelMenu = KernelMenu(self, size = [250, 80])
+        else:
+            self.kernelMenu = KernelMenu(self, size = [250, 250])
+        self.kernelMenu.draggable = self
         self.kernelMenu.currentHyperparameter = context.correspondingHyperparameter
         self.kernelMenu.Show(finalPos)
         shared.kernelMenu = self.kernelMenu
         shared.kernelContext = context
-        context.setText('-')
+        context.setText('-') if context.changeButtonText else None
         self.kernelMenuIsOpen = True
-        # show all the values for this hyperparameter
-        iters = 1 if type(self.settings['hyperparameters'][context.correspondingHyperparameter]['value']) in [int, float] else self.settings['hyperparameters'][context.correspondingHyperparameter]['value'].shape[0]
-        iterable = self.settings['hyperparameters'][context.correspondingHyperparameter]['value']
-        iterable = np.array([iterable]) if type(iterable) in [int, float] else iterable
-        for idx in range(iters):
+        if context.correspondingHyperparameter == 'smoothness':
             widget = QWidget()
+            widget.draggable = self
             widget.setFixedHeight(40)
             widget.setLayout(QHBoxLayout())
-            widget.setContentsMargins(0, 0, 0, 0)
-            label = QLabel(f'Dim {idx}')
-            widget.layout().addWidget(label, alignment = Qt.AlignLeft)
-            edit = QLineEdit(f'{iterable[idx]:2f}')
-            edit.setAlignment(Qt.AlignCenter)
-            edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-            edit.setStyleSheet(style.LineEditStyle(fontColor = '#c4c4c4', color = '#2e2e2e'))
-            widget.layout().addWidget(edit)
-            copy = QPushButton('CP')
-            copy.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 12))
-            copy.setFixedSize(20, 20)
-            widget.layout().addWidget(copy, alignment = Qt.AlignVCenter)
-            delete = QPushButton('Del')
-            delete.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 12))
-            delete.setFixedSize(20, 20)
-            widget.layout().addWidget(delete, alignment = Qt.AlignVCenter)
-            self.kernelMenu.body.layout().insertWidget(idx, widget)
+            widget.layout().setContentsMargins(0, 0, 0, 0)
+            widget.layout().setSpacing(5)
+            label = QLabel(f'Smoothness')
+            widget.layout().addWidget(label, alignment = Qt.AlignLeft | Qt.AlignVCenter)
+            self.btns = dict()
+            self.btns[1/2] = QPushButton(f'1/2')
+            self.btns[3/2] = QPushButton(f'3/2')
+            self.btns[5/2] = QPushButton(f'5/2')
+            for nu, btn in self.btns.items():
+                btn.setFixedHeight(35)
+                btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+                if self.settings['hyperparameters']['smoothness']['value'] == nu:
+                    btn.setStyleSheet(style.PushButtonStyle(fontColor = '#c4c4c4', color = '#1e1e1e', borderColor = "#EB9423"))
+                else:
+                    btn.setStyleSheet(style.PushButtonStyle(fontColor = '#c4c4c4', color = '#1e1e1e'))
+                btn.pressed.connect(lambda btn = btn: self.ChangeSmoothness(btn))
+                btn.draggable = self
+                widget.layout().addWidget(btn)
+            self.kernelMenu.body.layout().addWidget(widget, alignment = Qt.AlignTop)
+
+        else:
+            # show all the values for this hyperparameter
+            iters = 1 if type(self.settings['hyperparameters'][context.correspondingHyperparameter]['value']) in [int, float] else self.settings['hyperparameters'][context.correspondingHyperparameter]['value'].shape[0]
+            iterable = self.settings['hyperparameters'][context.correspondingHyperparameter]['value']
+            iterable = np.array([iterable]) if type(iterable) in [int, float] else iterable
+            for idx in range(iters):
+                widget = QWidget()
+                widget.setFixedHeight(40)
+                widget.setLayout(QHBoxLayout())
+                widget.setContentsMargins(0, 0, 0, 0)
+                label = QLabel(f'Dim {idx}')
+                widget.layout().addWidget(label, alignment = Qt.AlignLeft)
+                edit = QLineEdit(f'{iterable[idx]:2f}')
+                edit.setAlignment(Qt.AlignCenter)
+                edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+                edit.setStyleSheet(style.LineEditStyle(fontColor = '#c4c4c4', color = '#2e2e2e'))
+                widget.layout().addWidget(edit)
+                copy = QPushButton('CP')
+                copy.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 12))
+                copy.setFixedSize(20, 20)
+                widget.layout().addWidget(copy, alignment = Qt.AlignVCenter)
+                delete = QPushButton('Del')
+                delete.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 12))
+                delete.setFixedSize(20, 20)
+                widget.layout().addWidget(delete, alignment = Qt.AlignVCenter)
+                self.kernelMenu.body.layout().insertWidget(idx, widget)
 
     def CloseMenu(self, context):
         if shared.kernelMenu == self.kernelMenu:
@@ -127,7 +186,7 @@ class Kernel(Draggable):
             self.kernelMenu.currentHyperparameter = None
             shared.kernelMenu = None
             shared.kernelContext = None
-        context.setText('+')
+        context.setText('+') if context.changeButtonText else None
         self.kernelMenuIsOpen = False
 
     def ToggleMenu(self, context):
@@ -159,7 +218,8 @@ class Kernel(Draggable):
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.widget.layout().addWidget(self.canvas, 1, 0, 1, 3)
         self.AddSocket('out', 'M')
-        self.DrawHyperparameterControls()
+        if self.drawHyperparameters:
+            self.DrawHyperparameterControls()
         self.kernelMenu = KernelMenu(self)
         setattr(self.kernelMenu, 'draggable', self)
         self.kernelMenu.canDrag = False
@@ -194,20 +254,20 @@ class Kernel(Draggable):
         self.canvas.draw()
 
     def UpdateFigure(self):
-        self.updateFigure = True
-
-    def CheckForFigureUpdate(self):
-        while True:
-            if self.updateFigure:
-                self.ClearFigure()
-                self.DrawAndRefresh()
-                self.updateFigure = False
-            if self.stopCheckThread.wait(timeout = .1):
-                break
+        self.ClearFigure()
+        self.DrawAndRefresh()
 
     def DrawHyperparameterControls(self):
         rowIdx = 3
         for k, v in self.settings['hyperparameters'].items():
+            if k == 'scale':
+                widgetIdx = 2
+            elif k == 'lengthscale':
+                widgetIdx = 3
+            elif k == 'smoothness': 
+                widgetIdx = 4
+            elif k == 'period':
+                widgetIdx = 4
             numEdits = 0
             numEditName = f'{k}NumEdits'
             setattr(self, numEditName, 0)
@@ -225,7 +285,7 @@ class Kernel(Draggable):
             labelHousing = QWidget()
             labelHousing.setLayout(QHBoxLayout())
             labelHousing.layout().setContentsMargins(5, 5, 5, 5)
-            labelText = f'{k.capitalize()} (Dim 1)' if k.lower() != 'scale' else f'{k.capitalize()}'
+            labelText = f'{k.capitalize()}'
             label = QLabel(labelText, alignment = Qt.AlignVCenter)
             label.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', padding = 0, fontSize = 12))
             labelHousing.layout().addWidget(label, alignment = Qt.AlignLeft)
@@ -244,18 +304,38 @@ class Kernel(Draggable):
             setattr(self, numEditName, numEdits)
             edit.setFixedSize(60, 30)
             edit.setAlignment(Qt.AlignCenter)
-            edit.returnPressed.connect(lambda name = widgetName, e = edit: self.ChangeEditValue(name, e))
-            if v['type'] == 'vec':
-                context = QPushButton('+')
-                setattr(context, 'draggable', self)
-                setattr(context, 'correspondingHyperparameter', k)
-                context.setFixedSize(35, 30)
-                context.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 16))
-                context.clicked.connect(lambda pressed, c = context: self.ToggleMenu(c))
-                rightInnerHousing.layout().addWidget(context, alignment = Qt.AlignRight)
+            if k == 'smoothness':
+                if v['value'] == 1/2:
+                    s = '1/2'
+                elif v['value'] == 3/2:
+                    s = '3/2'
+                else:
+                    s = '5/2'
+                edit.setText(s)
+                edit.setReadOnly(True)
+                option = QPushButton('\u21C4')
+                setattr(option, 'draggable', self)
+                setattr(option, 'correspondingHyperparameter', k)
+                setattr(option, 'changeButtonText', False)
+                option.setFixedSize(35, 30)
+                option.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 16))
+                option.clicked.connect(lambda pressed, c = option: self.ToggleMenu(c))
+                rightInnerHousing.layout().addWidget(option, alignment = Qt.AlignRight)
+            else:
+                edit.returnPressed.connect(lambda name = widgetName, e = edit: self.ChangeEditValue(name, e))
+                if v['type'] == 'vec':
+                    context = QPushButton('+')
+                    setattr(context, 'draggable', self)
+                    setattr(context, 'correspondingHyperparameter', k)
+                    setattr(context, 'changeButtonText', True)
+                    context.setFixedSize(35, 30)
+                    context.setStyleSheet(style.PushButtonBorderlessStyle(color = '#2e2e2e', fontColor = '#c4c4c4', fontSize = 16))
+                    context.clicked.connect(lambda pressed, c = context: self.ToggleMenu(c))
+                    rightInnerHousing.layout().addWidget(context, alignment = Qt.AlignRight)
             housing.layout().addWidget(rightInnerHousing, alignment = Qt.AlignRight)
             widget.layout().addWidget(housing, alignment = Qt.AlignVCenter)
-            self.main.layout().addWidget(widget)
+            # self.main.layout().addWidget(widget)
+            self.main.layout().insertWidget(widgetIdx, widget)
             rowIdx += 1
 
     def AddEdit(self, hyperparameterName):
@@ -277,6 +357,13 @@ class Kernel(Draggable):
         edit.setAlignment(Qt.AlignCenter)
         edit.returnPressed.connect(lambda name = f'{hyperparameterName}Housing', e = edit: self.ChangeEditValue(name, e))
 
+    def TriggerFigureUpdate(self):
+        self.UpdateFigure()
+        # trigger updates in any downstream blocks attached to this that display visual information.
+        for ID in self.linksOut:
+            if callable(getattr(shared.entities[ID], 'UpdateFigure', None)):
+                shared.entities[ID].UpdateFigure()
+
     def ChangeEditValue(self, name, edit):
         val = edit.text()
         try:
@@ -294,11 +381,7 @@ class Kernel(Draggable):
         newEdit.returnPressed.connect(lambda name = name, e = newEdit: self.ChangeEditValue(name, e))
         widget.layout().insertWidget(editIdx, newEdit, alignment = Qt.AlignRight)
         self.settings['hyperparameters'][name.split('Widget')[0]]['value'] = float(edit.text())
-        self.UpdateFigure()
-        # trigger updates in any downstream blocks attached to this that display visual information.
-        for ID in self.linksOut:
-            if callable(getattr(shared.entities[ID], 'UpdateFigure', None)):
-                shared.entities[ID].UpdateFigure()
+        self.TriggerFigureUpdate()
 
     def mouseReleaseEvent(self, event):
         # Store temporary values since Draggable overwrites them in its mouseReleaseEvent override.

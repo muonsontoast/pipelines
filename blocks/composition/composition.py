@@ -92,8 +92,6 @@ class Composition(Draggable):
                         self.edit.setReadOnly(True)
                         self.widget.layout().addWidget(self.edit, alignment = Qt.AlignCenter)
                         self.timerRunning = True
-                        # self.checkThread = Thread(target = self.CheckValue, daemon = True)
-                        # self.checkThread.start()
                 if deleteAndRedraw:
                     shared.activeEditor.area.selectedItems = [self.proxy,]
                     if self.groupID is not None:
@@ -110,7 +108,7 @@ class Composition(Draggable):
         self.hasBeenPushed = True
         return successfulConnection
     
-    def RemoveLinkIn(self, ID, dontCreateBlock = False):
+    def RemoveLinkIn(self, ID):
         super().RemoveLinkIn(ID)
         groupLinkExists = False
         for ID in self.linksIn:
@@ -120,14 +118,15 @@ class Composition(Draggable):
         self.groupLinkExists = groupLinkExists
         if len(self.linksIn) > 0:
             if isinstance(shared.entities[next(iter(self.linksIn))], Kernel):
-                self.kernel.UpdateFigure()
+                # self.kernel.UpdateFigure()
+                self.UpdateFigure()
         else:
             if 'hyperparameters' in self.settings:
                 self.settings.pop('hyperparameters')
-            if not dontCreateBlock:
-                commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [250, 100])
-                shared.activeEditor.area.selectedItems = [self.proxy,]
-                commands.Delete()
+            commands.CreateBlock(self.__class__, self.name, self.proxy.pos(), size = [250, 100])
+            shared.activeEditor.area.selectedItems = [self.proxy,]
+            self.stopCheckThread.set()
+            commands.Delete()
 
     def ChangeEdit(self):
         try:
@@ -153,10 +152,11 @@ class Composition(Draggable):
             for nm, val in shared.entities[ID].settings['hyperparameters'].items():
                 hyperparameters[f'{nm} ({shared.entities[ID].name})'] = val
         self.settings['hyperparameters'] = hyperparameters
-        self.kernel = Kernel(self, self.proxy, hyperparameters = hyperparameters)
+        self.kernel = Kernel(self, self.proxy, hyperparameters = hyperparameters, drawHyperparameters = False)
+        self.kernel.settings['hyperparameters'] = hyperparameters
         shared.entities.pop(self.kernel.ID) # remove the kernel from the entity variable to stop it being saved erroneously.
-        self.kernel.Push()
         self.kernel.k = self.k
+        self.kernel.Push()
         self.widget.layout().addWidget(self.kernel.canvas)
         self.ToggleStyling(active = False)
 

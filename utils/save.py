@@ -84,6 +84,6 @@ def FormatHyperparameters(hyperparameters: dict):
         if type(v['value']) == np.ndarray:
             v['value'] = v['value'].tolist()
         elif type(v['value']) in [int, float]:
-            v['value'] = [v['value']]
+            v['value'] = v['value']
         newHyperparams[k] = v
     return newHyperparams

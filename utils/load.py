@@ -117,6 +117,7 @@ def Load(path):
                             magnitudeOnly = v.get('magnitudeOnly', None),
                             threshold = v.get('threshold', None),
                             onControl = v.get('onControl', None),
+                            hyperparameters = v.get('hyperparameters', None),
                         )
                         if 'alignment' in v:
                             entity.settings['alignment'] = v['alignment']
@@ -137,10 +138,10 @@ def Load(path):
                             entity.settings['components'] = v['components']
                             if hasattr(entity, 'set'):
                                 entity.set.setText(f'{v['components']['value']['value']:.3f}')
-                        if 'hyperparameters' in v:
-                            for h in v['hyperparameters']:
-                                v['hyperparameters'][h]['value'] = np.array(v['hyperparameters'][h]['value'])
-                            entity.settings['hyperparameters'] = v['hyperparameters']
+                        # if 'hyperparameters' in v:
+                        #     for h in v['hyperparameters']:
+                        #         v['hyperparameters'][h]['value'] = np.array(v['hyperparameters'][h]['value'])
+                        #     entity.settings['hyperparameters'] = v['hyperparameters']
                 # process groups after populating the scene
                 for ID, v in groups.items():
                     proxy, entity = CreateBlock(

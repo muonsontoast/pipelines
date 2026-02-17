@@ -12,12 +12,7 @@ class PeriodicKernel(Kernel):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         '''Accepts `name` and `type` overrides for entity.'''
         additionalHeight = 105
-        sigma = kwargs.pop('sigma', [1])
-        sigma = np.array(sigma)
-        period = kwargs.pop('period', [1])
-        period = np.array([period])
-        lengthscale = kwargs.pop('lengthscale', [1])
-        lengthscale = np.array(lengthscale)
+        hyperparameters = kwargs.pop('hyperparameters', None)
         super().__init__(
             parent,
             proxy,
@@ -26,20 +21,20 @@ class PeriodicKernel(Kernel):
             size = kwargs.pop('size', [300, 310 + additionalHeight]),
             fontsize = kwargs.pop('fontsize', 12),
             # kernel-specific hyperparameters
-            hyperparameters = {
+            hyperparameters = hyperparameters if hyperparameters is not None else {
                 'scale': {
                     'description': 'magnitude of the kernel around the point',
-                    'value': sigma,
+                    'value': 1,
                     'type': 'float',
                 },
                 'period': {
                     'description': 'periodicity affects frequency of oscillations',
-                    'value': period,
+                    'value': np.array([1]),
                     'type': 'vec',
                 },
                 'lengthscale': {
                     'description': 'lengthscale affects how rapidly correlation decays with distance',
-                    'value': lengthscale,
+                    'value': np.array([1]),
                     'type': 'vec',
                 },
             },
@@ -51,11 +46,8 @@ class PeriodicKernel(Kernel):
         Returns inner product between each pair of vectors.'''
         X1 = np.array(X1)
         X2 = np.array(X2)
-        # self.settings['hyperparameters']['scale']['value'] = 1. if np.isnan(self.settings['hyperparameters']['scale']['value']) else self.settings['hyperparameters']['scale']['value']
         sigma = self.settings['hyperparameters']['scale']['value']
-        # self.settings['hyperparameters']['period']['value'] = np.ones(X1.shape[1]) if np.isnan(self.settings['hyperparameters']['period']['value']) else self.settings['hyperparameters']['period']['value']
         period = self.settings['hyperparameters']['period']['value']
-        # self.settings['hyperparameters']['lengthscale']['value'] = np.ones(X1.shape[1]) if np.isnan(self.settings['hyperparameters']['lengthscale']['value']) else self.settings['hyperparameters']['lengthscale']['value']
         lengthscale = self.settings['hyperparameters']['lengthscale']['value']
         X, Y = np.meshgrid(X1, X2)
         norm = np.abs(X - Y)

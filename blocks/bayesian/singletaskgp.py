@@ -524,9 +524,10 @@ class SingleTaskGP(Draggable):
     
     def GetKernelStructure(self, ID):
         '''Will need to be extended in the future.'''
-        from gpytorch.kernels import RBFKernel as _RBFKernel, PeriodicKernel as _PeriodicKernel, ScaleKernel
+        from gpytorch.kernels import RBFKernel as _RBFKernel, PeriodicKernel as _PeriodicKernel, MaternKernel as _MaternKernel, ScaleKernel
         from ..kernels.rbf import RBFKernel
         from ..kernels.periodic import PeriodicKernel
+        from ..kernels.matern import MaternKernel
         from ..composition.add import Add
         entity = shared.entities[ID]
         if len(entity.linksIn) > 0:
@@ -544,6 +545,10 @@ class SingleTaskGP(Draggable):
             if entity.settings['automatic']:
                 return ScaleKernel(_PeriodicKernel())
             return ScaleKernel(_PeriodicKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
+        elif isinstance(entity, MaternKernel):
+            if entity.settings['automatic']:
+                return ScaleKernel(_MaternKernel())
+            return ScaleKernel(_MaternKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
 
     def GetFundamentalIDs(self, ID, fundamentalIDs = set([]), socketNameFilter = None):
         entity = shared.entities[ID]

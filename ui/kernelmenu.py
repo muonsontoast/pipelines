@@ -63,12 +63,11 @@ class KernelMenu(Draggable):
         self.header.layout().addWidget(self.title, alignment = Qt.AlignLeft)
         self.main.layout().addWidget(self.header)
         self.body = QWidget()
-        setattr(self.body, 'draggable', self)
+        self.body.draggable = self
         self.body.setObjectName('kernelMenu')
         self.body.setLayout(QVBoxLayout())
         self.body.layout().setContentsMargins(5, 0, 5, 0)
         self.body.layout().setSpacing(5)
-        self.body.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.main.layout().addWidget(self.body)
         self.layout().addWidget(self.main)
         self.proxy.setWidget(self)

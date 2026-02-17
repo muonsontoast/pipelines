@@ -25,6 +25,7 @@ from ..blocks.kernels.linear import LinearKernel
 from ..blocks.kernels.anisotropic import AnisotropicKernel
 from ..blocks.kernels.periodic import PeriodicKernel
 from ..blocks.kernels.rbf import RBFKernel
+from ..blocks.kernels.matern import MaternKernel
 from ..blocks.filters.greaterthan import GreaterThan as GreaterThanFilter
 from ..blocks.filters.lessthan import LessThan as LessThanFilter
 from ..blocks.filters.control import Control
@@ -61,6 +62,7 @@ blockTypes = {
     'Anisotropic Kernel': AnisotropicKernel,
     'Periodic Kernel': PeriodicKernel,
     'RBF Kernel': RBFKernel,
+    'Matern Kernel': MaternKernel,
     '> (Constraint)': GreaterThan,
     '< (Constraint)': LessThan,
     '> (Filter)': GreaterThanFilter,
@@ -331,6 +333,9 @@ def CreatePeriodicKernel(pos: QPoint):
 def CreateRBFKernel(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['RBF Kernel'], 'RBF Kernel', pos)
 
+def CreateMaternKernel(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Matern Kernel'], 'Matérn Kernel', pos)
+
 def CreateGreaterThan(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['> (Constraint)'], '> (Constraint)', pos)
 
@@ -441,10 +446,10 @@ def Delete():
         for ID in widget.linksOut:
             if ID == 'free':
                 continue
-            if isinstance(shared.entities[ID], (Add, Multiply)):
-                shared.entities[ID].RemoveLinkIn(widget.ID, dontCreateBlock = True)
-            else:
-                shared.entities[ID].RemoveLinkIn(widget.ID)
+            # if isinstance(shared.entities[ID], (Add, Multiply)):
+            #     shared.entities[ID].RemoveLinkIn(widget.ID)
+            # else:
+            shared.entities[ID].RemoveLinkIn(widget.ID)
         shared.entities.pop(widget.ID)
         shared.PVs.pop(widget.ID)
         if widget.type == 'PV':
@@ -482,9 +487,6 @@ def SaveSettings():
     Save()
 
 def Quit():
-    # if autosave:
-    #     Save()
-    #     shared.window.quitShortcutPressed = True
     shared.window.close()
 
 def ShowMenu(pos: QPoint):
@@ -519,7 +521,8 @@ commands = {
     'Linear Kernel': dict(shortcut = [], func = CreateLinearKernel, args = [GetMousePos]),
     'Anisotropic Kernel': dict(shortcut = [], func = CreateAnisotropicKernel, args = [GetMousePos]),
     'Periodic Kernel': dict(shortcut = [], func = CreatePeriodicKernel, args = [GetMousePos]),
-    'RBF Kernel': dict(shortcut = [], func = CreateRBFKernel, args = [GetMousePos]),
+    'Radial Basis Function (RBF) Kernel': dict(shortcut = [], func = CreateRBFKernel, args = [GetMousePos]),
+    'Matérn Kernel': dict(shortcut = [], func = CreateMaternKernel, args = [GetMousePos]),
     'Greater Than (Constraint)': dict(shortcut = [], func = CreateGreaterThan, args = [GetMousePos]),
     'Less Than (Constraint)': dict(shortcut = [], func = CreateLessThan, args = [GetMousePos]),
     'Greater Than (Filter)': dict(shortcut = [], func = CreateGreaterThanFilter, args = [GetMousePos]),

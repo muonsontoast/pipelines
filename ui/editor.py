@@ -249,6 +249,7 @@ class Editor(Entity, QGraphicsView):
                 draggable = getattr(proxyChildUnderCursor, 'draggable', None)
                 if shared.kernelMenu is not None:
                     if draggable is None:
+                        print('CLOSING THE KERNEL MENU')
                         shared.kernelMenu.draggable.kernelMenuIsOpen = False
                         shared.kernelMenu.Hide()
                         shared.kernelMenu = None
@@ -285,7 +286,9 @@ class Editor(Entity, QGraphicsView):
                     else:
                         for _item in self.area.selectedItems:
                             if _item != item:
-                                _item.widget().ToggleStyling(active = False)
+                                try:
+                                    _item.widget().ToggleStyling(active = False)
+                                except: pass
                         self.commonComponents = set(block.settings['components'].keys())
                         self.area.selectedItems = [item]
                         self.area.selectedBlocks = [item.widget()]
@@ -315,7 +318,9 @@ class Editor(Entity, QGraphicsView):
                 if shared.kernelMenu is not None:
                     shared.kernelMenu.draggable.CloseMenu(shared.kernelContext)
                 for item in self.area.selectedItems:
-                    item.widget().ToggleStyling(active = False)
+                    try:
+                        item.widget().ToggleStyling(active = False)
+                    except: pass
                 if shared.editorSelectMode:
                     shared.editorSelectMode = False
                     shared.activeEditor.setStyleSheet(style.WidgetStyle(color = "#1a1a1a"))

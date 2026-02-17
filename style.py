@@ -296,6 +296,8 @@ def LineEditStyle(**kwargs):
     '''Accepts kwargs which should be set to #ABCDEF color strings.\n
     `color`, `borderColor`, `borderRadius`, `hoverColor`, `paddingLeft`, `paddingRight`, `paddingBottom`, `paddingTop`, `bold`, `fontColor`, `fontSize`, `fontFamily`'''
     bold = 'font-weight: bold;' if kwargs.get('bold', False) else ''
+    borderColor = kwargs.get('borderColor', None)
+    border = f'border: 2px solid {borderColor};' if borderColor is not None else ''
     return f'''
     QLineEdit {{
         background-color: {kwargs.get('color', buttonColor)};
@@ -309,6 +311,7 @@ def LineEditStyle(**kwargs):
         padding-bottom: {kwargs.get('paddingBottom', 0)}px;
         padding-top: {kwargs.get('paddingTop', 0)}px;
         border-radius: {kwargs.get('borderRadius', 3)};
+        {border}
     }}'''
 
 def TabStyle(**kwargs):

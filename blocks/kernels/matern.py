@@ -8,16 +8,16 @@ from .kernel import Kernel
 plt.rcParams['text.usetex'] = True
 plt.rcParams['font.size'] = 14
 
-class RBFKernel(Kernel):
+class MaternKernel(Kernel):
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         '''Accepts `name` and `type` overrides for entity.'''
-        additionalHeight = 64
+        additionalHeight = 104
         hyperparameters = kwargs.pop('hyperparameters', None)
         super().__init__(
             parent,
             proxy,
-            name = kwargs.pop('name', 'RBF Kernel'),
-            type = kwargs.pop('type', 'RBF Kernel'),
+            name = kwargs.pop('name', 'Matérn Kernel'),
+            type = kwargs.pop('type', 'Matern Kernel'),
             size = kwargs.pop('size', [300, 310 + additionalHeight]),
             fontsize = kwargs.pop('fontsize', 12),
             # kernel-specific hyperparameters
@@ -32,6 +32,11 @@ class RBFKernel(Kernel):
                     'value': np.array([1]),
                     'type': 'vec',
                 },
+                'smoothness': {
+                    'description': 'controls smoothness at kernel centre',
+                    'value': 1/2,
+                    'type': 'float',
+                },
             },
             **kwargs
         )
@@ -42,8 +47,16 @@ class RBFKernel(Kernel):
         X1 = np.array(X1)
         X2 = np.array(X2)
         sigma = self.settings['hyperparameters']['scale']['value']
-        self.settings['hyperparameters']['lengthscale']['value'] = np.ones(X1.shape[1]) if np.isnan(self.settings['hyperparameters']['lengthscale']['value']) else self.settings['hyperparameters']['lengthscale']['value']
         lengthscale = self.settings['hyperparameters']['lengthscale']['value']
         X, Y = np.meshgrid(X1, X2)
         norm = np.abs(X - Y)
-        return sigma ** 2 * np.exp(-2 * (norm / lengthscale) ** 2)
+        nu = self.settings['hyperparameters']['smoothness']['value']
+        if nu == 1/2:
+            return sigma ** 2 * np.exp(-norm / lengthscale)
+        elif nu == 3/2:
+            frac = np.sqrt(3) * norm / lengthscale
+            return sigma ** 2 * (1 + frac) * np.exp(-frac)
+        elif nu == 5/2:
+            frac = np.sqrt(5) * norm / lengthscale
+            return sigma ** 2 * (1 + frac + 1/3 * frac ** 2) * np.exp(-frac)
+            
