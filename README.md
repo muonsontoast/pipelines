@@ -51,3 +51,6 @@ Select the decision PV and change its name to match a real corrector PV in the m
 After the block has finished running, a dataset will appear in the */datadump* folder timestamped with the time when it was first launched, which should match what is shown by the block. 
 
 Congratulations on making it this far and I hope I have managed to demonstrate the utility of the tool for the control room. There are many more features to discover and I encourage you to do so. Here are some more things that are worth looking into: kernel composition, PV composition, and optimiser constraints.
+
+<img width="2548" height="1066" alt="Screenshot 2026-02-17 090947" src="https://github.com/user-attachments/assets/22b5b8e8-b5fb-4c2f-9b7b-1843bc3a0423" />
+
