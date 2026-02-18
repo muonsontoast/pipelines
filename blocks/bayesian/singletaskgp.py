@@ -888,9 +888,9 @@ class SingleTaskGP(Draggable):
             runningActions[self.ID] = [ThreadingEvent(), ThreadingEvent(), ThreadingEvent(), 0.] # pause, stop, error, progress
         else:
             runningActions[self.ID] = [Event(), Event(), Event(), 0.] # pause, stop, error, progress
-        # FOR TESTNG #
-        self.online = True
-        ##############
+        # # FOR TESTNG #
+        # self.online = True
+        # ##############
         if self.online:
             Thread(target = CreatePersistentWorkerThread, args = (self, self.inQueue, self.outQueue, self.SendMachineInstructions)).start()
         else:
