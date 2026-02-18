@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QHBoxLayout, QSizePolicy, QLineEdit, QGraphicsProxyWidget, QSpacerItem
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 import numpy as np
 import aioca
 import asyncio
@@ -14,6 +14,15 @@ from .socket import Socket
 from .. import style
 
 class PV(Draggable):
+    setTextSignal = Signal(str)
+    getTextSignal = Signal(str)
+    minimumTextSignal = Signal(str)
+    minimumReadOnlySignal = Signal(bool)
+    maximumTextSignal = Signal(str)
+    maximumReadOnlySignal = Signal(bool)
+    defaultReadOnlySignal = Signal(bool)
+    headerTextSignal = Signal(str)
+
     def __init__(self, parent, proxy: QGraphicsProxyWidget, **kwargs):
         '''Accepts `name` and `type` overrides for entity.'''
         super().__init__(
@@ -28,6 +37,14 @@ class PV(Draggable):
             magnitudeOnly = kwargs.pop('magnitudeOnly', False),
             **kwargs
         )
+        self.setTextSignal.connect(self.ChangeSetText)
+        self.getTextSignal.connect(self.ChangeGetText)
+        self.minimumTextSignal.connect(self.ChangeMinimumText)
+        self.minimumReadOnlySignal.connect(self.ChangeMinimumReadOnly)
+        self.maximumTextSignal.connect(self.ChangeMaximumText)
+        self.maximumReadOnlySignal.connect(self.ChangeMaximumReadOnly)
+        self.defaultReadOnlySignal.connect(self.ChangeDefaultReadOnly)
+        self.headerTextSignal.connect(self.ChangeHeaderText)
         self.parent = parent
         self.indicator = None
         self.widgetStyle = style.WidgetStyle(color = '#2e2e2e', fontColor = '#c4c4c4', borderRadius = 12, marginRight = 0, fontSize = 16)
@@ -58,6 +75,33 @@ class PV(Draggable):
 
         self.checkThread = Thread(target = self.FetchAndReadValue)
         self.checkThread.start()
+
+    def ChangeGetText(self, s):
+        self.get.setText(s)
+
+    def ChangeSetText(self, s):
+        self.set.setText(s)
+
+    def ChangeMinimumText(self, s):
+        shared.inspector.expandables['value'].widget.minimum.setText(s)
+
+    def ChangeMinimumReadOnly(self, state):
+        shared.inspector.expandables['value'].widget.minimum.setReadOnly(state)
+
+    def ChangeMaximumText(self, s):
+        shared.inspector.expandables['value'].widget.maximum.setText(s)
+
+    def ChangeMaximumReadOnly(self, state):
+        shared.inspector.expandables['value'].widget.maximum.setReadOnly(state)
+
+    def ChangeDefaultReadOnly(self, state):
+        shared.inspector.expandables['value'].widget.default.setReadOnly(state)
+
+    def ChangeHeaderText(self, s = ''):
+        if s == '':
+            shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0])
+        else:
+            shared.inspector.expandables['value'].header.setText(s)
 
     def Push(self):
         self.clickable = ClickableWidget(self)
@@ -121,9 +165,12 @@ class PV(Draggable):
         if not makeReadOnly:
             # Make fields editable if there are no strict PV limits.
             if self.active:
-                shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
-                shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
-                shared.inspector.expandables['value'].widget.default.setReadOnly(False)
+                # shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
+                self.minimumReadOnlySignal.emit(False)
+                # shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
+                self.maximumReadOnlySignal.emit(False)
+                # shared.inspector.expandables['value'].widget.default.setReadOnly(False)
+                self.defaultReadOnlySignal.emit(False)
         else:
             try:
                 mn = loop.run_until_complete(
@@ -134,13 +181,20 @@ class PV(Draggable):
                 )
                 if mx > mn:
                     if self.active:
-                        shared.inspector.expandables['value'].widget.minimum.setText(f'{mn}')
-                        shared.inspector.expandables['value'].widget.SetMinimum()
-                        shared.inspector.expandables['value'].widget.minimum.setReadOnly(True)
-                        shared.inspector.expandables['value'].widget.maximum.setText(f'{mx}')
-                        shared.inspector.expandables['value'].widget.SetMaximum()
-                        shared.inspector.expandables['value'].widget.maximum.setReadOnly(True)
-                        shared.inspector.expandables['value'].widget.Reset()
+                        # shared.inspector.expandables['value'].widget.minimum.setText(f'{mn}')
+                        self.minimumTextSignal.emit(f'{mn}')
+                        # shared.inspector.expandables['value'].widget.SetMinimum()
+                        shared.inspector.expandables['value'].widget.setMinimumSignal.emit()
+                        # shared.inspector.expandables['value'].widget.minimum.setReadOnly(True)
+                        self.minimumReadOnlySignal.emit(True)
+                        # shared.inspector.expandables['value'].widget.maximum.setText(f'{mx}')
+                        self.maximumTextSignal.emit(f'{mn}')
+                        # shared.inspector.expandables['value'].widget.SetMaximum()
+                        shared.inspector.expandables['value'].widget.setMaximumSignal.emit()
+                        # shared.inspector.expandables['value'].widget.maximum.setReadOnly(True)
+                        self.maximumReadOnlySignal.emit(True)
+                        # shared.inspector.expandables['value'].widget.Reset()
+                        shared.inspector.expandables['value'].widget.resetSignal.emit()
                     else:
                         self.settings['components']['value']['min'] = float(mn)
                         self.settings['components']['value']['max'] = float(mx)
@@ -148,8 +202,10 @@ class PV(Draggable):
             except:
                 # Make fields editable if there are no strict PV limits.
                 if self.active:
-                    shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
-                    shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
+                    # shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
+                    # shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
+                    self.minimumReadOnlySignal.emit(False)
+                    self.maximumReadOnlySignal.emit(False)
 
     def Start(self):
         '''Unlike more complex blocks, a PV just returns its current value, indicating the end of a graph.'''
@@ -206,13 +262,16 @@ class PV(Draggable):
                             if self.stopCheckThread.is_set():
                                 break
                             s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
-                            self.get.setText(s)
-                            self.set.setText(s)
+                            # self.get.setText(s)
+                            # self.set.setText(s)
+                            self.getTextSignal.emit(s)
+                            self.setTextSignal.emit(s)
                             if 'STR' in PVName:
                                 self.settings['components']['value']['units'] = 'Amps'
                                 if self.active:
                                     shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + '(Amps)'
-                                    shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
+                                    self.headerTextSignal.emit(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
+                                    # shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
                             try:
                                 loop.run_until_complete(
                                     self.UpdateInspectorLimits(PVName)
@@ -233,33 +292,41 @@ class PV(Draggable):
                                 if self.stopCheckThread.is_set():
                                     break
                                 # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
-                                self.get.setText(s)
-                                self.set.setText(s)
+                                # self.get.setText(s)
+                                # self.set.setText(s)
+                                self.getTextSignal.emit(s)
+                                self.setTextSignal.emit(s)
                             else:
                                 if self.stopCheckThread.is_set():
                                     break
                                 # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
-                                self.get.setText(s)
-                                self.set.setText(s)
+                                # self.get.setText(s)
+                                # self.set.setText(s)
+                                self.getTextSignal.emit(s)
+                                self.setTextSignal.emit(s)
                         else:
                             if self.stopCheckThread.is_set():
                                 break
                             # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
-                            self.get.setText(s)
-                            self.set.setText(s)
+                            # self.get.setText(s)
+                            # self.set.setText(s)
+                            self.getTextSignal.emit(s)
+                            self.setTextSignal.emit(s)
                     except: pass
                 else:
                     with self.lock:
                         if self.stopCheckThread.is_set():
                             break
-                        self.get.setText('N/A')
+                        # self.get.setText('N/A')
+                        self.getTextSignal.emit('N/A')
 
                 if self.active:
                     try:
                         shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
                         if self.stopCheckThread.is_set():
                                 break
-                        shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
+                        # shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
+                        self.headerTextSignal.emit('')
                         loop.run_until_complete(
                             self.UpdateInspectorLimits(PVName, makeReadOnly = False)
                         )
@@ -272,7 +339,6 @@ class PV(Draggable):
             self.checkStateOfDownstreamBlocks = False
             self.stopCheckThread.wait(timeout = .2)
         self.checkThreadIsClosed.set()
-        loop.close()
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
         '''`event` should be a mouseReleaseEvent if it needs to be called.'''

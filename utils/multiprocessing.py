@@ -2,8 +2,10 @@ import gc # garbage collection
 import sys
 # from multiprocessing import Queue, Process, Event, Value
 # from threading import Event
+import aioca
+import asyncio
 import multiprocessing as mp
-from multiprocessing import Process, Event
+from multiprocessing import Process
 from threading import Thread
 mp.set_start_method('spawn', force = True) # force linux machines to call __getstate__ and __setstate__ methods attached to actions.
 from .. import shared
@@ -60,18 +62,6 @@ def PersistentWorkerProcess(pause, stop, error, sharedMemoryName, shape, action,
     pipe.close()
     sys.exit(0)
 
-def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, **kwargs):
-    while not stop.is_set():
-        params = inQueue.get(timeout = .2)
-        if params is None:
-            break
-        result = action(pause, stop, error, params, **kwargs)
-        outQueue.put(result)
-    inQueue.join()
-
-def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
-    Thread(target = PersistentWorkerThread, args = (*runningActions[entity.ID][:-1], action, inQueue, outQueue), kwargs = kwargs).start()
-
 def CreatePersistentWorkerProcess(entity, emptyArray, inQueue, outQueue, action, **kwargs):
     '''`signals` should be a dict of QtCore Signals.'''
     ctx = mp.get_context('spawn')
@@ -88,3 +78,44 @@ def CreatePersistentWorkerProcess(entity, emptyArray, inQueue, outQueue, action,
         runningActions[entity.ID][-1] += 1
     outPipe.close()
     runningActions.pop(entity.ID)
+
+def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, loop, **kwargs):   
+    while True:
+        try:
+            params = inQueue.get(timeout = .2)
+            inQueue.task_done()
+            if params is None:
+                outQueue.put(None)
+                break
+        except: continue
+        result = action(pause, stop, error, loop, params, **kwargs)
+        outQueue.put(result)
+        # outQueue.put(None)
+        break
+
+def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    # Start LINAC
+    # try:
+    #     loop.run_until_complete(
+    #         aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
+    #     )
+    # except Exception as e:
+    #     print(e)
+    #     entity.updateAssistantSignal.emit(f'{entity.name} was unable to start the LINAC.', 'Error')
+    #     runningActions.pop(entity.ID)
+    #     return
+    worker = Thread(target = PersistentWorkerThread, args = (*runningActions[entity.ID][:-1], action, inQueue, outQueue, loop), kwargs = kwargs)
+    worker.start()
+    worker.join()
+    # Stop LINAC
+    try:
+        loop.run_until_complete(
+            aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
+        )
+    except Exception as e:
+        print(e)
+        entity.updateAssistantSignal.emit(f'{entity.name} was unable to stop the LINAC. User should manually disable it now.', 'Warning')
+    runningActions.pop(entity.ID)
+    loop.close()

@@ -27,8 +27,10 @@ def Save():
                 entitySettings['positionInSceneCoords'] = [entity.positionInSceneCoords.x(), entity.positionInSceneCoords.y()]
             settings[entity.ID] = entitySettings
             # tell check threads to stop
-            if entity.sharingData:
+            # if entity.sharingData:
+            if hasattr(entity, 'stopCheckThread'):
                 entity.stopCheckThread.set()
+            if entity.sharingData:
                 try:
                     if hasattr(entity, 'inQueue') and entity.inQueue is not None:
                         entity.inQueue.close()

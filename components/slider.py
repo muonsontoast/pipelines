@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import (
     QWidget, QLineEdit, QSlider, QLabel, QPushButton,
-    QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QCheckBox,
+    QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 import numpy as np
 from .component import Component
 from .. import shared
@@ -21,6 +21,9 @@ class SliderBar(QSlider):
 
 # class SliderComponent(QWidget):
 class SliderComponent(Component):
+    setMinimumSignal = Signal()
+    setMaximumSignal = Signal()
+    resetSignal = Signal()
     def __init__(self, pv, component, sliderSteps = 1000000, floatdp = 3, expandable = None, **kwargs):
         '''Leave `sliderSteps` at 1e6 for smooth sliding, or restrict to a low number for discrete applications.\n
         `floatdp` is the decimal precision of the line edit elements.\n
@@ -29,6 +32,9 @@ class SliderComponent(Component):
         `sliderRowSpacing` (int) controls width of SpacerItem between the slider and slider value.\n
         `paddingLeft` and `paddingBottom` (int) are padding for text inside line edit elements.'''
         super().__init__(pv, component, expandable, **kwargs)
+        self.setMinimumSignal.connect(self.SetMinimum)
+        self.setMaximumSignal.connect(self.SetMaximum)
+        self.resetSignal.connect(self.Reset)
         self.eps = 9e-4
         self.hideRange = kwargs.get('hideRange', False)
         self.sliderOffset = kwargs.get('sliderOffset', 0)
