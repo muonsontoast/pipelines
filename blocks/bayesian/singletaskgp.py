@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, Signal
 import numpy as np
 import operator
 from functools import reduce
+import asyncio
 import aioca
 import time
 from datetime import datetime
@@ -983,8 +984,10 @@ class SingleTaskGP(Draggable):
             for d, target in parameters.items():
                 nm = d.split()[0] # strip the index attached to this PV name in the inDict
                 try:
-                    if target < loop.run_until_complete(aioca.caget(nm + ':I')):
-                        loop.run_until_complete(
+                    # if target < loop.run_until_complete(aioca.caget(nm + ':I')):
+                    if target < asyncio.run(aioca.caget(nm + ':I')):
+                        # loop.run_until_complete(
+                        asyncio.run(
                             aioca.caput(nm + ':SETI', target - .2)
                         )
                 except:
@@ -993,7 +996,8 @@ class SingleTaskGP(Draggable):
                     return None
             if self.CheckForInterrupt(pause, stop, timeout = 2):
                 return 1
-            loop.run_until_complete(
+            # loop.run_until_complete(
+            asyncio.run(
                 aioca.caput(nm + ':SETI', target)
             )
             self.CheckForInterrupt(pause, stop, timeout = 1)

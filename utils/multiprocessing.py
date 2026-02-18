@@ -79,7 +79,8 @@ def CreatePersistentWorkerProcess(entity, emptyArray, inQueue, outQueue, action,
     outPipe.close()
     runningActions.pop(entity.ID)
 
-def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, loop, **kwargs):   
+# def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, loop, **kwargs):
+def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, **kwargs):
     while True:
         try:
             params = inQueue.get(timeout = .2)
@@ -88,18 +89,19 @@ def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, loop, 
                 outQueue.put(None)
                 break
         except: continue
-        result = action(pause, stop, error, loop, params, **kwargs)
+        # result = action(pause, stop, error, loop, params, **kwargs)
+        result = action(pause, stop, error, params, **kwargs)
         outQueue.put(result)
         # outQueue.put(None)
         break
 
 def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
-    aioca.ca.use_initial_context()
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
     # Start LINAC
     try:
-        loop.run_until_complete(
+        # loop.run_until_complete(
+        asyncio.run(
             aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
         )
     except Exception as e:
@@ -107,16 +109,18 @@ def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
         entity.updateAssistantSignal.emit(f'{entity.name} was unable to start the LINAC.', 'Error')
         runningActions.pop(entity.ID)
         return
-    worker = Thread(target = PersistentWorkerThread, args = (*runningActions[entity.ID][:-1], action, inQueue, outQueue, loop), kwargs = kwargs)
+    # worker = Thread(target = PersistentWorkerThread, args = (*runningActions[entity.ID][:-1], action, inQueue, outQueue, loop), kwargs = kwargs)
+    worker = Thread(target = PersistentWorkerThread, args = (*runningActions[entity.ID][:-1], action, inQueue, outQueue), kwargs = kwargs)
     worker.start()
     worker.join()
     # Stop LINAC
     try:
-        loop.run_until_complete(
+        # loop.run_until_complete(
+        asyncio.run(
             aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
         )
     except Exception as e:
         print(e)
         entity.updateAssistantSignal.emit(f'{entity.name} was unable to stop the LINAC. User should manually disable it now.', 'Warning')
     runningActions.pop(entity.ID)
-    loop.close()
+    # loop.close()
