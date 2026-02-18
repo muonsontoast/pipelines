@@ -221,24 +221,18 @@ class PV(Draggable):
             if self.stopCheckThread.is_set():
                 break
             try:
-                print('A')
                 PVName = self.name
                 try:
-                    print('B')
                     loop.run_until_complete(
                         aioca.caget(self.name, timeout = timeout)
                     )
-                    print('C')
                     if self.stopCheckThread.wait(timeout = .25):
                         loop.close()
                         break
-                    print('D')
                     self.data[1] = loop.run_until_complete(
                         aioca.caget(self.name, timeout = timeout)
                     )
-                    print('E')
                 except:
-                    print('F')
                     PVName = self.name.split(':')[0]
                     loop.run_until_complete(
                         aioca.caget(PVName + ':I', timeout = timeout)
@@ -257,12 +251,9 @@ class PV(Draggable):
                 if self.stopCheckThread.is_set():
                     break
                 try:
-                    print('AA')
                     self.settings['components']['value']['default'] = self.data[1]
-                    print('AAA')
                     if PVName != lastMatch:
                         try:
-                            print('G')
                             self.PVMatch = True
                             self.settings['components']['value']['units'] = ''
                             shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
@@ -270,14 +261,9 @@ class PV(Draggable):
                             self.online = True
                             if self.stopCheckThread.is_set():
                                 break
-                            print('H')
                             s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
-                            print('s looks like:', s)
-                            # self.get.setText(s)
-                            # self.set.setText(s)
                             self.getTextSignal.emit(s)
                             self.setTextSignal.emit(s)
-                            print('I')
                             if 'STR' in PVName:
                                 self.settings['components']['value']['units'] = 'Amps'
                                 if self.active:
@@ -291,14 +277,12 @@ class PV(Draggable):
                             except: pass
                             lastMatch = PVName
                         except Exception as e:
-                            print('Y')
                             print(e)
                     else:
                         s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
                         self.getTextSignal.emit(s)
                         self.setTextSignal.emit(s)
                 except Exception as e:
-                    print('Z')
                     print(e)
             except:
                 self.PVMatch = False
