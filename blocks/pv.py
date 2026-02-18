@@ -290,7 +290,8 @@ class PV(Draggable):
                             lastMatch = PVName
                         except: pass
                         continue
-                except: pass
+                except Exception as e:
+                    print(e)
             except:
                 self.PVMatch = False
                 self.online = False
