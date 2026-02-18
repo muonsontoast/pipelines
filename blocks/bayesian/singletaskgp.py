@@ -990,11 +990,13 @@ class SingleTaskGP(Draggable):
                 try:
                     print('D')
                     # if target < loop.run_until_complete(aioca.caget(nm + ':I')):
+                    print('>>', asyncio.run(aioca.caget(nm + ':I')))
                     if target < asyncio.run(aioca.caget(nm + ':I')):
                         # loop.run_until_complete(
                         asyncio.run(
                             aioca.caput(nm + ':SETI', target - .2)
                         )
+                    print('DD')
                 except:
                     print('E')
                     stop.set()
