@@ -260,6 +260,7 @@ class PV(Draggable):
                     self.settings['components']['value']['default'] = self.data[1]
                     if PVName != lastMatch:
                         try:
+                            print('G')
                             self.PVMatch = True
                             self.settings['components']['value']['units'] = ''
                             shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
@@ -267,11 +268,14 @@ class PV(Draggable):
                             self.online = True
                             if self.stopCheckThread.is_set():
                                 break
+                            print('H')
                             s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
+                            print('s looks like:', s)
                             # self.get.setText(s)
                             # self.set.setText(s)
                             self.getTextSignal.emit(s)
                             self.setTextSignal.emit(s)
+                            print('I')
                             if 'STR' in PVName:
                                 self.settings['components']['value']['units'] = 'Amps'
                                 if self.active:
