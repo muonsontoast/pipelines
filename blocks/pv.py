@@ -271,7 +271,8 @@ class PV(Draggable):
                                     self.headerTextSignal.emit(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
                                     # shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
                             try:
-                                loop.run_until_complete(
+                                # loop.run_until_complete(
+                                asyncio.run(
                                     self.UpdateInspectorLimits(PVName)
                                 )
                             except: pass
@@ -330,7 +331,8 @@ class PV(Draggable):
                                 break
                         # shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
                         self.headerTextSignal.emit('')
-                        loop.run_until_complete(
+                        # loop.run_until_complete(
+                        asyncio.run(
                             self.UpdateInspectorLimits(PVName, makeReadOnly = False)
                         )
                     except: pass
