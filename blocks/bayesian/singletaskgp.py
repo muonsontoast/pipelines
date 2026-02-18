@@ -934,6 +934,8 @@ class SingleTaskGP(Draggable):
                     result[r] = self.objectives[0].Start()
                     constraints.append(dict([[self.constraintsIDToName[k], v] for c in self.constraints for k, v in c.Start().items()]))
                     # PVs in-app update their values at 5Hz, so poll less frequently than this to guarantee a new value appears if is due to do so.
+                    print('>>', self.ID)
+                    print(runningActions)
                     if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .25):
                         break
                 # average over repeat observations
