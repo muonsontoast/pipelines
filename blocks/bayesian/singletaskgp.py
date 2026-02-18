@@ -992,9 +992,11 @@ class SingleTaskGP(Draggable):
             if self.CheckForInterrupt(pause, stop, timeout = 2):
                 return 1
             # loop.run_until_complete(
-            asyncio.run(
-                aioca.caput(nm + ':SETI', target)
-            )
+            for d, target in parameters.items():
+                nm = d.split()[0]
+                asyncio.run(
+                    aioca.caput(nm + ':SETI', target)
+                )
             self.CheckForInterrupt(pause, stop, timeout = 1)
         except :
             pass
