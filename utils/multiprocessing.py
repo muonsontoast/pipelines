@@ -92,8 +92,6 @@ def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, **kwar
         # result = action(pause, stop, error, loop, params, **kwargs)
         result = action(pause, stop, error, params, **kwargs)
         outQueue.put(result)
-        # outQueue.put(None)
-        break
 
 def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
     # loop = asyncio.new_event_loop()
