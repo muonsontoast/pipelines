@@ -682,140 +682,140 @@ class SingleTaskGP(Draggable):
             timestamp = self.Timestamp(includeDate = True, stripColons = True)
             self.updateAssistantSignal.emit(f'{self.name} is now running.', '')
             self.X.random_evaluate(1) # run once to initialise shared memory array
-        #     self.initialised = True
-        #     self.X.data.drop(0, inplace = True)
-        #     self.numEvals = 0
-        #     # random samples
-        #     numSamples = max(self.settings['numSamples'], 1)
-        #     if self.numObservers > 0:
-        #         insertIdx = self.numDecisions + self.numFundamentalConstraints + self.numObjectives
-        #         observerIDToName = {
-        #             o.ID: f'{o.name} (ID: {o.ID})'
-        #             for o in self.observers
-        #         }
-        #     numEvals = 0
-        #     for it in range(numSamples):
-        #         self.X.random_evaluate(1)
-        #         if self.numObservers > 0:
-        #             dataToSave = self.X.data.copy()
-        #             for it, o in enumerate(self.observers):
-        #                 dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
-        #             dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-        #         else:
-        #             self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-        #         self.progressAmount = numEvals / self.maxEvals
-        #         self.updateProgressSignal.emit(self.progressAmount)
-        #         numEvals += 1
-        #     while True:
-        #         newNumEvals = self.numEvals
-        #         if newNumEvals > numEvals:
-        #             numEvals = newNumEvals
-        #             self.progressAmount = numEvals / self.maxEvals
-        #             self.updateProgressSignal.emit(self.progressAmount)
-        #             self.GetBestRow()
-        #             if self.bestRow is not None:
-        #                 with self.lock:
-        #                     if self.lastValues.shape[0] > self.runningAverageWindow:
-        #                         self.lastValues = np.delete(self.lastValues, 0)
-        #                     self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
-        #                 try:
-        #                     self.bestValue = self.bestRow.iloc[self.numDecisions]
-        #                     self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
-        #                     self.updateAverageSignal.emit(np.nanmean(self.lastValues))
-        #                     self.updateBestSignal.emit(self.bestValue)
-        #                 except:
-        #                     pass
-        #         if numEvals == numSamples:
-        #             break
-        #         if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .1):
-        #             self.inQueue.put(None)
-        #             self.inQueue.join()
-        #             self.outQueue.join()
-        #             return
-        #     if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1]):
-        #         self.inQueue.put(None)
-        #         self.inQueue.join()
-        #         self.outQueue.join()
-        #         return
-        #     self.updateAssistantSignal.emit(f'{self.name} has taken initial random samples.', '')
-        #     print('** Done with random samples!')
-        #     # optimiser steps
-        #     if self.settings['numSteps'] > 0:
-        #         for it in range(self.settings['numSteps']):
-        #             print(f'step {it + 1}/{self.settings['numSteps']}')
-        #             self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
-        #             if self.notAllNaNs:
-        #                 try:
-        #                     self.X.step()
-        #                 except: # TuRBO will fail if no solutions in the dataset satisfy all constraints or due to ill-conditioned matrix.
-        #                     self.X.random_evaluate(1)
-        #             else:
-        #                 self.X.random_evaluate(1)
-        #             # Handle observers if they exist.
-        #             if self.numObservers > 0:
-        #                 dataToSave = self.X.data.copy()
-        #                 for it, o in enumerate(self.observers):
-        #                     dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
-        #                 dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-        #             else:
-        #                 self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-        #             # If there are no valid numbers recorded yet, don't bother training the model.
-        #             self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
-        #             if self.notAllNaNs:
-        #                 try:
-        #                     self.X.generator.train_model()
-        #                 except:
-        #                     pass
-        #             self.progressAmount = self.numEvals / self.maxEvals
-        #             print('PROGRESS AMOUNT:', f'{self.progressAmount * 1e2:.1f}%')
-        #             self.updateProgressSignal.emit(self.progressAmount)
-        #             try:
-        #                 # idx = np.nanargmax(self.X.data.iloc[:, -3]) if self.settings['mode'].upper() == 'MAXIMISE' else np.nanargmin(self.X.data.iloc[:, -3])
-        #                 # self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.X.data.iloc[idx, :self.numDecisions]]))
-        #                 self.GetBestRow()
-        #                 if self.bestRow is not None:
-        #                     self.bestValue = self.bestRow.iloc[self.numDecisions]
-        #                     with self.lock:
-        #                         if self.lastValues.shape[0] > self.runningAverageWindow:
-        #                             self.lastValues = np.delete(self.lastValues, 0)
-        #                         self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
-        #                     #     if self.settings['mode'].upper() == 'MAXIMISE':
-        #                     #         with self.lock:
-        #                     #             if self.bestValue is None or (not np.isnan(result) and self.bestValue < result):
-        #                     #                 self.bestValue = result
-        #                     #     elif self.settings['mode'].upper() == 'MINIMISE':
-        #                     #         with self.lock:
-        #                     #             if self.bestValue is None or (not np.isnan(result) and self.bestValue > result):
-        #                     #                 self.bestValue = result
-        #                     self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
-        #                     self.updateAverageSignal.emit(np.nanmean(self.lastValues))
-        #                     self.updateBestSignal.emit(self.bestValue)
-        #             except Exception as e:
-        #                 print(e)
-        #             if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .1):
-        #                 self.inQueue.put(None)
-        #                 self.inQueue.join()
-        #                 self.outQueue.join()
-        #                 return
-        #     if self.bestRow is None:
-        #         if self.numConstraints > 0:
-        #             self.updateAssistantSignal.emit(f'{self.name} has finished, but it failed to find a candidate satisfying the constraints.', 'Warning')
-        #         else:
-        #             self.updateAssistantSignal.emit(f'{self.name} has finished, but it only recorded NaNs.', 'Warning')
-        #     else:
-        #         if self.numConstraints > 0:
-        #             self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution satisfying the constraints.', '')    
-        #         else:
-        #             self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution.', '')
-        #     print('Done with optimiser steps!')
-        #     # Handle observers if they exist.
-        #     if self.numObservers > 0:
-        #         dataToSave = self.X.data.copy()
-        #         for it, o in enumerate(self.observers):
-        #             dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
-        #         dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-        #     else:
-        #         self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+            self.initialised = True
+            self.X.data.drop(0, inplace = True)
+            self.numEvals = 0
+            # random samples
+            numSamples = max(self.settings['numSamples'], 1)
+            if self.numObservers > 0:
+                insertIdx = self.numDecisions + self.numFundamentalConstraints + self.numObjectives
+                observerIDToName = {
+                    o.ID: f'{o.name} (ID: {o.ID})'
+                    for o in self.observers
+                }
+            numEvals = 0
+            for it in range(numSamples):
+                self.X.random_evaluate(1)
+                if self.numObservers > 0:
+                    dataToSave = self.X.data.copy()
+                    for it, o in enumerate(self.observers):
+                        dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+                    dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                else:
+                    self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                self.progressAmount = numEvals / self.maxEvals
+                self.updateProgressSignal.emit(self.progressAmount)
+                numEvals += 1
+            while True:
+                newNumEvals = self.numEvals
+                if newNumEvals > numEvals:
+                    numEvals = newNumEvals
+                    self.progressAmount = numEvals / self.maxEvals
+                    self.updateProgressSignal.emit(self.progressAmount)
+                    self.GetBestRow()
+                    if self.bestRow is not None:
+                        with self.lock:
+                            if self.lastValues.shape[0] > self.runningAverageWindow:
+                                self.lastValues = np.delete(self.lastValues, 0)
+                            self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
+                        try:
+                            self.bestValue = self.bestRow.iloc[self.numDecisions]
+                            self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
+                            self.updateAverageSignal.emit(np.nanmean(self.lastValues))
+                            self.updateBestSignal.emit(self.bestValue)
+                        except:
+                            pass
+                if numEvals == numSamples:
+                    break
+                if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .1):
+                    self.inQueue.put(None)
+                    self.inQueue.join()
+                    self.outQueue.join()
+                    return
+            if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1]):
+                self.inQueue.put(None)
+                self.inQueue.join()
+                self.outQueue.join()
+                return
+            self.updateAssistantSignal.emit(f'{self.name} has taken initial random samples.', '')
+            print('** Done with random samples!')
+            # optimiser steps
+            if self.settings['numSteps'] > 0:
+                for it in range(self.settings['numSteps']):
+                    print(f'step {it + 1}/{self.settings['numSteps']}')
+                    self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
+                    if self.notAllNaNs:
+                        try:
+                            self.X.step()
+                        except: # TuRBO will fail if no solutions in the dataset satisfy all constraints or due to ill-conditioned matrix.
+                            self.X.random_evaluate(1)
+                    else:
+                        self.X.random_evaluate(1)
+                    # Handle observers if they exist.
+                    if self.numObservers > 0:
+                        dataToSave = self.X.data.copy()
+                        for it, o in enumerate(self.observers):
+                            dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+                        dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                    else:
+                        self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                    # If there are no valid numbers recorded yet, don't bother training the model.
+                    self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
+                    if self.notAllNaNs:
+                        try:
+                            self.X.generator.train_model()
+                        except:
+                            pass
+                    self.progressAmount = self.numEvals / self.maxEvals
+                    print('PROGRESS AMOUNT:', f'{self.progressAmount * 1e2:.1f}%')
+                    self.updateProgressSignal.emit(self.progressAmount)
+                    try:
+                        # idx = np.nanargmax(self.X.data.iloc[:, -3]) if self.settings['mode'].upper() == 'MAXIMISE' else np.nanargmin(self.X.data.iloc[:, -3])
+                        # self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.X.data.iloc[idx, :self.numDecisions]]))
+                        self.GetBestRow()
+                        if self.bestRow is not None:
+                            self.bestValue = self.bestRow.iloc[self.numDecisions]
+                            with self.lock:
+                                if self.lastValues.shape[0] > self.runningAverageWindow:
+                                    self.lastValues = np.delete(self.lastValues, 0)
+                                self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
+                            #     if self.settings['mode'].upper() == 'MAXIMISE':
+                            #         with self.lock:
+                            #             if self.bestValue is None or (not np.isnan(result) and self.bestValue < result):
+                            #                 self.bestValue = result
+                            #     elif self.settings['mode'].upper() == 'MINIMISE':
+                            #         with self.lock:
+                            #             if self.bestValue is None or (not np.isnan(result) and self.bestValue > result):
+                            #                 self.bestValue = result
+                            self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
+                            self.updateAverageSignal.emit(np.nanmean(self.lastValues))
+                            self.updateBestSignal.emit(self.bestValue)
+                    except Exception as e:
+                        print(e)
+                    if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .1):
+                        self.inQueue.put(None)
+                        self.inQueue.join()
+                        self.outQueue.join()
+                        return
+            if self.bestRow is None:
+                if self.numConstraints > 0:
+                    self.updateAssistantSignal.emit(f'{self.name} has finished, but it failed to find a candidate satisfying the constraints.', 'Warning')
+                else:
+                    self.updateAssistantSignal.emit(f'{self.name} has finished, but it only recorded NaNs.', 'Warning')
+            else:
+                if self.numConstraints > 0:
+                    self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution satisfying the constraints.', '')    
+                else:
+                    self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution.', '')
+            print('Done with optimiser steps!')
+            # Handle observers if they exist.
+            if self.numObservers > 0:
+                dataToSave = self.X.data.copy()
+                for it, o in enumerate(self.observers):
+                    dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+                dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+            else:
+                self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
         except:
             pass
         self.inQueue.put(None)
