@@ -977,7 +977,8 @@ class SingleTaskGP(Draggable):
     def Stop(self):
         StopAction(self)
 
-    def SendMachineInstructions(self, pause, stop, error, loop, parameters, **kwargs):
+    # def SendMachineInstructions(self, pause, stop, error, loop, parameters, **kwargs):
+    def SendMachineInstructions(self, pause, stop, error, parameters, **kwargs):
         '''Results do not need to be sent back to the optimiser from here during online optimisation.'''
         print('== Send Machine Instructions ==')
         try:
