@@ -982,9 +982,13 @@ class SingleTaskGP(Draggable):
         '''Results do not need to be sent back to the optimiser from here during online optimisation.'''
         print('== Send Machine Instructions ==')
         try:
+            print('A')
             for d, target in parameters.items():
+                print('B')
                 nm = d.split()[0] # strip the index attached to this PV name in the inDict
+                print('c')
                 try:
+                    print('D')
                     # if target < loop.run_until_complete(aioca.caget(nm + ':I')):
                     if target < asyncio.run(aioca.caget(nm + ':I')):
                         # loop.run_until_complete(
@@ -992,6 +996,7 @@ class SingleTaskGP(Draggable):
                             aioca.caput(nm + ':SETI', target - .2)
                         )
                 except:
+                    print('E')
                     stop.set()
                     self.updateAssistantSignal.emit(f'{self.name} was unable to communicate with {nm}.', 'Warning')
                     return None
@@ -1004,6 +1009,7 @@ class SingleTaskGP(Draggable):
             self.CheckForInterrupt(pause, stop, timeout = 1)
         except :
             pass
+        print('EXITING!')
         return 1
 
     def CheckForInterrupt(self, pause, stop, timeout = 0):

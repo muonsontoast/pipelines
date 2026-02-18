@@ -99,16 +99,22 @@ def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
     # loop = asyncio.new_event_loop()
     # asyncio.set_event_loop(loop)
     # Start LINAC
+    print('STARTING LINAC')
     try:
+        print('1')
         # loop.run_until_complete(
         asyncio.run(
             aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
         )
+        print('2')
     except Exception as e:
+        print('3')
         print(e)
         entity.updateAssistantSignal.emit(f'{entity.name} was unable to start the LINAC.', 'Error')
         runningActions.pop(entity.ID)
+        print('4')
         return
+    print('5')
     # worker = Thread(target = PersistentWorkerThread, args = (*runningActions[entity.ID][:-1], action, inQueue, outQueue, loop), kwargs = kwargs)
     worker = Thread(target = PersistentWorkerThread, args = (*runningActions[entity.ID][:-1], action, inQueue, outQueue), kwargs = kwargs)
     worker.start()
