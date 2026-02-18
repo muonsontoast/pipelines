@@ -123,5 +123,6 @@ def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
     except Exception as e:
         print(e)
         entity.updateAssistantSignal.emit(f'{entity.name} was unable to stop the LINAC. User should manually disable it now.', 'Warning')
+    print('POPPING >...... . ..  .. . ')
     runningActions.pop(entity.ID)
     # loop.close()
