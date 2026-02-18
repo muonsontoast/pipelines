@@ -952,7 +952,7 @@ class SingleTaskGP(Draggable):
         self.numEvals = 0
         self.stopCheckThread.clear()
         Thread(target = self.SetupAndRunOptimiser, args = (Evaluate,), daemon = True).start()
-        Thread(target = self.UpdateMetrics, args = (self.updateRunTimeSignal,), daemon = True).start()
+        # Thread(target = self.UpdateMetrics, args = (self.updateRunTimeSignal,), daemon = True).start()
 
     def Pause(self, changeGlobalToggleState = True):
         with self.lock:
