@@ -221,18 +221,24 @@ class PV(Draggable):
             if self.stopCheckThread.is_set():
                 break
             try:
+                print('A')
                 PVName = self.name
                 try:
+                    print('B')
                     loop.run_until_complete(
                         aioca.caget(self.name, timeout = timeout)
                     )
+                    print('C')
                     if self.stopCheckThread.wait(timeout = .25):
                         loop.close()
                         break
+                    print('D')
                     self.data[1] = loop.run_until_complete(
                         aioca.caget(self.name, timeout = timeout)
                     )
+                    print('E')
                 except:
+                    print('F')
                     PVName = self.name.split(':')[0]
                     loop.run_until_complete(
                         aioca.caget(PVName + ':I', timeout = timeout)
