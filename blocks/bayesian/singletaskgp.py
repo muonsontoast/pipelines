@@ -927,9 +927,10 @@ class SingleTaskGP(Draggable):
                 result = self.objectives[0].Start()
                 constraints = dict([[self.constraintsIDToName[k], v] for c in self.constraints for k, v in c.Start().items()])
             else:
-                result = np.zeros(self.settings['numRepeats'])
+                numRepeats = 5 if 'numRepeats' not in self.settings else self.settings['numRepeats']
+                result = np.zeros(numRepeats)
                 constraints = []
-                for r in range(self.settings['numRepeats']):
+                for r in range(numRepeats):
                     result[r] = self.objectives[0].Start()
                     constraints.append(dict([[self.constraintsIDToName[k], v] for c in self.constraints for k, v in c.Start().items()]))
                     # PVs in-app update their values at 5Hz, so poll less frequently than this to guarantee a new value appears if is due to do so.
@@ -939,7 +940,7 @@ class SingleTaskGP(Draggable):
                 result = np.nanmean(result)
                 # average constraints across repeats
                 newConstraints = {
-                    k: sum(constraintDict[k] for constraintDict in constraints) / self.settings['numRepeats']
+                    k: sum(constraintDict[k] for constraintDict in constraints) / numRepeats
                     for k in constraints[0]
                 }
                 constraints = newConstraints
