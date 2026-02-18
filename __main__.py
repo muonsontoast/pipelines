@@ -227,7 +227,6 @@ class MainWindow(Entity, QMainWindow):
         self.resourceMonitor.GPUSignal.connect(self.GPUUseage.setText)
         self.resourceMonitor.RAMSignal.connect(self.RAMUseage.setText)
         self.resourceMonitor.diskSignal.connect(self.diskUseage.setText)
-        #### FOR TESTING ####
         Thread(target = self.resourceMonitor.FetchResourceValues).start()
         self.page.layout().addWidget(quickSettings, 1, 7, 1, 2)
         self.page.layout().addWidget(self.latticeGlobal, 1, 1, 1, 6)

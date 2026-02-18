@@ -161,41 +161,28 @@ class PV(Draggable):
 
     def UpdateInspectorLimits(self, PVName, timeout = 1, makeReadOnly = True):
         '''Attempts to update limits inside the inspector, if they are defined for the PV.'''
-        # loop = asyncio.get_running_loop()
         if not makeReadOnly:
             # Make fields editable if there are no strict PV limits.
             if self.active:
-                # shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
                 self.minimumReadOnlySignal.emit(False)
-                # shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
                 self.maximumReadOnlySignal.emit(False)
-                # shared.inspector.expandables['value'].widget.default.setReadOnly(False)
                 self.defaultReadOnlySignal.emit(False)
         else:
             try:
-                # mn = loop.run_until_complete(
                 mn = asyncio.run(
                     aioca.caget(PVName + ':IMIN', timeout = timeout)
                 )
-                # mx = loop.run_until_complete(
                 mx = asyncio.run(
                     aioca.caget(PVName + ':IMAX', timeout = timeout)
                 )
                 if mx > mn:
                     if self.active:
-                        # shared.inspector.expandables['value'].widget.minimum.setText(f'{mn}')
                         self.minimumTextSignal.emit(f'{mn}')
-                        # shared.inspector.expandables['value'].widget.SetMinimum()
                         shared.inspector.expandables['value'].widget.setMinimumSignal.emit()
-                        # shared.inspector.expandables['value'].widget.minimum.setReadOnly(True)
                         self.minimumReadOnlySignal.emit(True)
-                        # shared.inspector.expandables['value'].widget.maximum.setText(f'{mx}')
                         self.maximumTextSignal.emit(f'{mn}')
-                        # shared.inspector.expandables['value'].widget.SetMaximum()
                         shared.inspector.expandables['value'].widget.setMaximumSignal.emit()
-                        # shared.inspector.expandables['value'].widget.maximum.setReadOnly(True)
                         self.maximumReadOnlySignal.emit(True)
-                        # shared.inspector.expandables['value'].widget.Reset()
                         shared.inspector.expandables['value'].widget.resetSignal.emit()
                     else:
                         self.settings['components']['value']['min'] = float(mn)
@@ -204,8 +191,6 @@ class PV(Draggable):
             except:
                 # Make fields editable if there are no strict PV limits.
                 if self.active:
-                    # shared.inspector.expandables['value'].widget.minimum.setReadOnly(False)
-                    # shared.inspector.expandables['value'].widget.maximum.setReadOnly(False)
                     self.minimumReadOnlySignal.emit(False)
                     self.maximumReadOnlySignal.emit(False)
 
@@ -271,9 +256,7 @@ class PV(Draggable):
                                 if self.active:
                                     shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + '(Amps)'
                                     self.headerTextSignal.emit(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
-                                    # shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
                             try:
-                                # loop.run_until_complete(
                                 asyncio.run(
                                     self.UpdateInspectorLimits(PVName)
                                 )
@@ -323,7 +306,6 @@ class PV(Draggable):
                     with self.lock:
                         if self.stopCheckThread.is_set():
                             break
-                        # self.get.setText('N/A')
                         self.getTextSignal.emit('N/A')
 
                 if self.active:
@@ -331,9 +313,7 @@ class PV(Draggable):
                         shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
                         if self.stopCheckThread.is_set():
                                 break
-                        # shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text.split()[0])
                         self.headerTextSignal.emit('')
-                        # loop.run_until_complete(
                         asyncio.run(
                             self.UpdateInspectorLimits(PVName, makeReadOnly = False)
                         )
