@@ -257,7 +257,9 @@ class PV(Draggable):
                 if self.stopCheckThread.is_set():
                     break
                 try:
+                    print('AA')
                     self.settings['components']['value']['default'] = self.data[1]
+                    print('AAA')
                     if PVName != lastMatch:
                         try:
                             print('G')
@@ -291,6 +293,10 @@ class PV(Draggable):
                         except Exception as e:
                             print('Y')
                             print(e)
+                    else:
+                        s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
+                        self.getTextSignal.emit(s)
+                        self.setTextSignal.emit(s)
                 except Exception as e:
                     print('Z')
                     print(e)
