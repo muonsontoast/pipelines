@@ -288,9 +288,11 @@ class PV(Draggable):
                                 )
                             except: pass
                             lastMatch = PVName
-                        except: pass
-                        continue
+                        except Exception as e:
+                            print('Y')
+                            print(e)
                 except Exception as e:
+                    print('Z')
                     print(e)
             except:
                 self.PVMatch = False
