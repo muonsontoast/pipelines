@@ -682,7 +682,11 @@ class SingleTaskGP(Draggable):
             self.notAllNaNs = False
             timestamp = self.Timestamp(includeDate = True, stripColons = True)
             self.updateAssistantSignal.emit(f'{self.name} is now running.', '')
-            self.X.random_evaluate(1) # run once to initialise shared memory array
+            try:
+                self.X.random_evaluate(1) # run once to initialise shared memory array
+            except Exception as e:
+                print(e)
+
             print('A')
             self.initialised = True
             self.X.data.drop(0, inplace = True)
