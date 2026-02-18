@@ -161,7 +161,7 @@ class PV(Draggable):
 
     def UpdateInspectorLimits(self, PVName, timeout = 1, makeReadOnly = True):
         '''Attempts to update limits inside the inspector, if they are defined for the PV.'''
-        loop = asyncio.get_running_loop()
+        # loop = asyncio.get_running_loop()
         if not makeReadOnly:
             # Make fields editable if there are no strict PV limits.
             if self.active:
@@ -173,10 +173,12 @@ class PV(Draggable):
                 self.defaultReadOnlySignal.emit(False)
         else:
             try:
-                mn = loop.run_until_complete(
+                # mn = loop.run_until_complete(
+                mn = asyncio.run(
                     aioca.caget(PVName + ':IMIN', timeout = timeout)
                 )
-                mx = loop.run_until_complete(
+                # mx = loop.run_until_complete(
+                mx = asyncio.run(
                     aioca.caget(PVName + ':IMAX', timeout = timeout)
                 )
                 if mx > mn:
@@ -223,29 +225,29 @@ class PV(Draggable):
             try:
                 PVName = self.name
                 try:
-                    loop.run_until_complete(
+                    asyncio.run(
                         aioca.caget(self.name, timeout = timeout)
                     )
                     if self.stopCheckThread.wait(timeout = .25):
                         loop.close()
                         break
-                    self.data[1] = loop.run_until_complete(
+                    self.data[1] = asyncio.run(
                         aioca.caget(self.name, timeout = timeout)
                     )
                 except:
                     PVName = self.name.split(':')[0]
-                    loop.run_until_complete(
+                    asyncio.run(
                         aioca.caget(PVName + ':I', timeout = timeout)
                     )
                     if self.stopCheckThread.wait(timeout = .25):
                         loop.close()
                         break
                     # set value
-                    self.data[0] = loop.run_until_complete(
+                    self.data[0] = asyncio.run(
                         aioca.caget(PVName + ':SETI', timeout = timeout)
                     )
                     # read value
-                    self.data[1] = loop.run_until_complete(
+                    self.data[1] = asyncio.run(
                         aioca.caget(PVName + ':I', timeout = timeout)
                     )
                 if self.stopCheckThread.is_set():
