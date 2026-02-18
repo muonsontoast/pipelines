@@ -161,6 +161,7 @@ class PV(Draggable):
 
     def UpdateInspectorLimits(self, PVName, timeout = 1, makeReadOnly = True):
         '''Attempts to update limits inside the inspector, if they are defined for the PV.'''
+        aioca.ca.use_initial_context()
         loop = asyncio.get_running_loop()
         if not makeReadOnly:
             # Make fields editable if there are no strict PV limits.

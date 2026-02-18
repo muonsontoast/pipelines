@@ -94,6 +94,7 @@ def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, loop, 
         break
 
 def CreatePersistentWorkerThread(entity, inQueue, outQueue, action, **kwargs):
+    aioca.ca.use_initial_context()
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     # Start LINAC
