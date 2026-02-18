@@ -683,6 +683,7 @@ class SingleTaskGP(Draggable):
             timestamp = self.Timestamp(includeDate = True, stripColons = True)
             self.updateAssistantSignal.emit(f'{self.name} is now running.', '')
             self.X.random_evaluate(1) # run once to initialise shared memory array
+            print('A')
             self.initialised = True
             self.X.data.drop(0, inplace = True)
             self.numEvals = 0
@@ -694,6 +695,7 @@ class SingleTaskGP(Draggable):
                     o.ID: f'{o.name} (ID: {o.ID})'
                     for o in self.observers
                 }
+            print('B')
             numEvals = 0
             for it in range(numSamples):
                 self.X.random_evaluate(1)
@@ -707,6 +709,7 @@ class SingleTaskGP(Draggable):
                 self.progressAmount = numEvals / self.maxEvals
                 self.updateProgressSignal.emit(self.progressAmount)
                 numEvals += 1
+            print('C')
             while True:
                 newNumEvals = self.numEvals
                 if newNumEvals > numEvals:
@@ -738,6 +741,7 @@ class SingleTaskGP(Draggable):
                 self.inQueue.join()
                 self.outQueue.join()
                 return
+            print('D')
             self.updateAssistantSignal.emit(f'{self.name} has taken initial random samples.', '')
             print('** Done with random samples!')
             # optimiser steps
@@ -768,7 +772,6 @@ class SingleTaskGP(Draggable):
                         except:
                             pass
                     self.progressAmount = self.numEvals / self.maxEvals
-                    print('PROGRESS AMOUNT:', f'{self.progressAmount * 1e2:.1f}%')
                     self.updateProgressSignal.emit(self.progressAmount)
                     try:
                         # idx = np.nanargmax(self.X.data.iloc[:, -3]) if self.settings['mode'].upper() == 'MAXIMISE' else np.nanargmin(self.X.data.iloc[:, -3])
@@ -953,7 +956,7 @@ class SingleTaskGP(Draggable):
         self.numEvals = 0
         self.stopCheckThread.clear()
         Thread(target = self.SetupAndRunOptimiser, args = (Evaluate,), daemon = True).start()
-        # Thread(target = self.UpdateMetrics, args = (self.updateRunTimeSignal,), daemon = True).start()
+        Thread(target = self.UpdateMetrics, args = (self.updateRunTimeSignal,), daemon = True).start()
 
     def Pause(self, changeGlobalToggleState = True):
         with self.lock:
@@ -982,23 +985,16 @@ class SingleTaskGP(Draggable):
         '''Results do not need to be sent back to the optimiser from here during online optimisation.'''
         print('== Send Machine Instructions ==')
         try:
-            print('A')
             for d, target in parameters.items():
-                print('B')
                 nm = d.split()[0] # strip the index attached to this PV name in the inDict
-                print('c')
                 try:
-                    print('D')
                     # if target < loop.run_until_complete(aioca.caget(nm + ':I')):
-                    print('>>', asyncio.run(aioca.caget(nm + ':I')))
                     if target < asyncio.run(aioca.caget(nm + ':I')):
                         # loop.run_until_complete(
                         asyncio.run(
                             aioca.caput(nm + ':SETI', target - .2)
                         )
-                    print('DD')
                 except:
-                    print('E')
                     stop.set()
                     self.updateAssistantSignal.emit(f'{self.name} was unable to communicate with {nm}.', 'Warning')
                     return None
@@ -1011,7 +1007,6 @@ class SingleTaskGP(Draggable):
             self.CheckForInterrupt(pause, stop, timeout = 1)
         except :
             pass
-        print('EXITING!')
         return 1
 
     def CheckForInterrupt(self, pause, stop, timeout = 0):
