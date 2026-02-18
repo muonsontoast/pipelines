@@ -687,7 +687,6 @@ class SingleTaskGP(Draggable):
             except Exception as e:
                 print(e)
 
-            print('A')
             self.initialised = True
             self.X.data.drop(0, inplace = True)
             self.numEvals = 0
@@ -699,7 +698,6 @@ class SingleTaskGP(Draggable):
                     o.ID: f'{o.name} (ID: {o.ID})'
                     for o in self.observers
                 }
-            print('B')
             numEvals = 0
             for it in range(numSamples):
                 self.X.random_evaluate(1)
@@ -713,7 +711,6 @@ class SingleTaskGP(Draggable):
                 self.progressAmount = numEvals / self.maxEvals
                 self.updateProgressSignal.emit(self.progressAmount)
                 numEvals += 1
-            print('C')
             while True:
                 newNumEvals = self.numEvals
                 if newNumEvals > numEvals:
@@ -745,7 +742,6 @@ class SingleTaskGP(Draggable):
                 self.inQueue.join()
                 self.outQueue.join()
                 return
-            print('D')
             self.updateAssistantSignal.emit(f'{self.name} has taken initial random samples.', '')
             print('** Done with random samples!')
             # optimiser steps
@@ -778,8 +774,6 @@ class SingleTaskGP(Draggable):
                     self.progressAmount = self.numEvals / self.maxEvals
                     self.updateProgressSignal.emit(self.progressAmount)
                     try:
-                        # idx = np.nanargmax(self.X.data.iloc[:, -3]) if self.settings['mode'].upper() == 'MAXIMISE' else np.nanargmin(self.X.data.iloc[:, -3])
-                        # self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.X.data.iloc[idx, :self.numDecisions]]))
                         self.GetBestRow()
                         if self.bestRow is not None:
                             self.bestValue = self.bestRow.iloc[self.numDecisions]
@@ -787,14 +781,6 @@ class SingleTaskGP(Draggable):
                                 if self.lastValues.shape[0] > self.runningAverageWindow:
                                     self.lastValues = np.delete(self.lastValues, 0)
                                 self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
-                            #     if self.settings['mode'].upper() == 'MAXIMISE':
-                            #         with self.lock:
-                            #             if self.bestValue is None or (not np.isnan(result) and self.bestValue < result):
-                            #                 self.bestValue = result
-                            #     elif self.settings['mode'].upper() == 'MINIMISE':
-                            #         with self.lock:
-                            #             if self.bestValue is None or (not np.isnan(result) and self.bestValue > result):
-                            #                 self.bestValue = result
                             self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
                             self.updateAverageSignal.emit(np.nanmean(self.lastValues))
                             self.updateBestSignal.emit(self.bestValue)
@@ -934,8 +920,6 @@ class SingleTaskGP(Draggable):
                     result[r] = self.objectives[0].Start()
                     constraints.append(dict([[self.constraintsIDToName[k], v] for c in self.constraints for k, v in c.Start().items()]))
                     # PVs in-app update their values at 5Hz, so poll less frequently than this to guarantee a new value appears if is due to do so.
-                    print('>>', self.ID)
-                    print(runningActions)
                     if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .25):
                         break
                 # average over repeat observations
