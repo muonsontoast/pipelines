@@ -37,6 +37,7 @@ class SingleTaskGP(Draggable):
     updateAverageSignal = Signal(float)
     updateBestSignal = Signal(float)
     updateCandidateSignal = Signal(str)
+    updateTuRBOSignal = Signal(str)
     updateAssistantSignal = Signal(str, str)
 
     def __init__(self, parent, proxy, **kwargs):
@@ -48,19 +49,16 @@ class SingleTaskGP(Draggable):
             simPrecision = 'fp64'
 
         super().__init__(
-            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 615]), 
-            # components = {
-            #     'value': dict(name = 'Value', value = 0, min = 0, max = 100, default = 0, units = '', valueType = float, type = slider.SliderComponent),
-            # },
+            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 645]), 
             acqFunction = kwargs.pop('acqFunction', 'UCB'),
             acqHyperparameter = kwargs.pop('acqHyperparameter', 2),
             numSamples = kwargs.pop('numSamples', 5),
             numSteps = kwargs.pop('numSteps', 20),
             mode = kwargs.pop('mode', 'MAXIMISE'),
+            turbo = kwargs.pop('turbo', 'DISABLED'),
             numParticles = kwargs.pop('numParticles', 10000),
             simPrecision = simPrecision,
             headerColor = "#C1492B",
-            useTuRBO = kwargs.pop('useTuRBO', False),
             **kwargs
         )
         self.timeBetweenPolls = 1000
@@ -77,6 +75,7 @@ class SingleTaskGP(Draggable):
         self.updateBestSignal.connect(self.UpdateBestLabel)
         self.updateCandidateSignal.connect(self.UpdateCandidateLabel)
         self.updateAssistantSignal.connect(self.UpdateAssistant)
+        self.updateTuRBOSignal.connect(self.UpdateTuRBO)
 
         self.streams = {
             'raw': lambda: {
@@ -191,7 +190,7 @@ class SingleTaskGP(Draggable):
         self.widget.layout().addWidget(self.content)
         # settings section
         settings = QWidget()
-        settings.setFixedHeight(200)
+        settings.setFixedHeight(230)
         settings.setLayout(QVBoxLayout())
         settings.layout().setContentsMargins(0, 5, 5, 0)
         settingsLabel = QLabel('<b>SETTINGS</b>')
@@ -210,14 +209,14 @@ class SingleTaskGP(Draggable):
         acquisitionSelect.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         acquisitionSelect.setStyleSheet(style.ComboStyle(color = '#1e1e1e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 12))
         acquisitionSelect.view().parentWidget().setStyleSheet('color: transparent;')
-        funcs = {
+        acquisitionFuncs = {
             '   UCB': self.SelectUCB,
             '   EI': self.SelectEI,
         }
-        acquisitionSelect.addItems(funcs.keys())
+        acquisitionSelect.addItems(acquisitionFuncs.keys())
         idx = 0 if self.settings['acqFunction'] == 'UCB' else 1
         acquisitionSelect.setCurrentIndex(idx)
-        acquisitionSelect.currentTextChanged.connect(lambda: funcs[acquisitionSelect.currentText()]())
+        acquisitionSelect.currentTextChanged.connect(lambda: acquisitionFuncs[acquisitionSelect.currentText()]())
         acquisition.layout().addWidget(acquisitionSelect)
         settings.layout().addWidget(acquisition)
         # exploration parameter
@@ -240,6 +239,35 @@ class SingleTaskGP(Draggable):
         self.explorationEdit.returnPressed.connect(self.ChangeAcqHyperparameter)
         self.exploration.layout().addWidget(self.explorationEdit)
         settings.layout().addWidget(self.exploration)
+        # turbo
+        turbo = QWidget()
+        turbo.setFixedHeight(30)
+        turbo.setLayout(QHBoxLayout())
+        turbo.layout().setContentsMargins(5, 0, 0, 0)
+        turboLabel = QLabel('TuRBO')
+        turboLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        turboLabel.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        turbo.layout().addWidget(turboLabel)
+        turboSelect = QComboBox()
+        turboSelect.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        turboSelect.setStyleSheet(style.ComboStyle(color = '#1e1e1e', fontColor = '#c4c4c4', borderRadius = 6, fontSize = 12))
+        turboSelect.view().parentWidget().setStyleSheet('color: transparent')
+        turboFuncs = {
+            '   DISABLED': self.DisableTuRBO,
+            '   OPTIMISE': self.SelectTuRBOOptimise,
+            '   SAFETY': self.SelectTuRBOSafety,
+        }
+        turboSelect.addItems(turboFuncs.keys())
+        if self.settings['turbo'] == 'DISABLED':
+            idx = 0
+        elif self.settings['turbo'] == 'OPTIMISE':
+            idx = 1
+        else:
+            idx = 2
+        turboSelect.setCurrentIndex(idx)
+        turboSelect.currentTextChanged.connect(lambda: turboFuncs[turboSelect.currentText()]())
+        turbo.layout().addWidget(turboSelect)
+        settings.layout().addWidget(turbo)
         # random samples
         self.samples = QWidget()
         self.samples.setFixedHeight(30)
@@ -405,6 +433,9 @@ class SingleTaskGP(Draggable):
 
     def UpdateCandidateLabel(self, candidate):
         self.candidateEdit.setText(candidate)
+
+    def UpdateTuRBO(self, mode):
+        shared.workspace.assistant.PushMessage(f'TuRBO mode on {self.name} was set to {mode}.')
     
     def UpdateAssistant(self, message, messageType = ''):
         if messageType == '':
@@ -509,6 +540,30 @@ class SingleTaskGP(Draggable):
         self.explorationEdit.setReadOnly(True)
         self.updateAssistantSignal.emit(f'Successfully changed the acquisition function of {self.name} to EI (Expected Improvement).', '')
 
+    def DisableTuRBO(self):
+        if self.settings['turbo'] != 'DISABLED':
+            self.updateTuRBOSignal.emit('DISABLED')
+        self.settings['turbo'] = 'DISABLED'
+
+    def SelectTuRBOOptimise(self):
+        if self.settings['turbo'] != 'OPTIMISE':
+            self.updateTuRBOSignal.emit('OPTIMISE')
+        self.settings['turbo'] = 'OPTIMISE'
+    
+    def SelectTuRBOSafety(self):
+        # Safety mode is only valid if at least one constraint is specified.
+        valid = False
+        for ID, link in self.linksIn.items():
+            if link['socket'] == 'constraint':
+                valid = True
+                break
+        if not valid:
+            self.updateAssistantSignal.emit(f'SAFETY is not a valid mode of {self.name} because it has no constraints.', 'Warning')
+            return
+        if self.settings['turbo'] != 'SAFETY':
+            self.updateTuRBOSignal.emit('SAFETY')
+        self.settings['turbo'] = 'SAFETY'
+
     def ConstructKernel(self):
         '''Traces the kernel structure up the pipeline and returns an Xopt compatible composition.'''
         # fetch the block attached to the kernel socket
@@ -577,13 +632,14 @@ class SingleTaskGP(Draggable):
     
     def GetBestRow(self):
         if not self.notAllNaNs:
+            self.bestRowIdx = None
             self.bestRow = None
             return
         if self.numConstraints > 0:
             try:
                 cond = []
                 for c in self.constraints:
-                    if c.type == 'Less Than':
+                    if c.type == '< (Constraint)':
                         for ID in c.linksIn:
                             if shared.entities[ID].type == 'Group':
                                 continue
@@ -595,10 +651,13 @@ class SingleTaskGP(Draggable):
                             cond.append(self.X.data[self.constraintsIDToName[ID]] > c.settings['threshold'])
                 mask = np.logical_and.reduce(cond)
                 if self.settings['mode'].upper() == 'MAXIMISE':
-                    self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmax()]
+                    self.bestRowIdx = self.X.data[mask][self.immediateObjectiveName].idxmax()
+                    # self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmax()]
                 else:
-                    self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmin()]
-            except Exception as e:
+                    self.bestRowIdx = self.X.data[mask][self.immediateObjectiveName].idxmin()
+                    # self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmin()]
+                self.bestRow = self.X.data.loc[self.bestRowIdx]
+            except:
                 self.bestRow = None
         else:
             try:
@@ -608,6 +667,20 @@ class SingleTaskGP(Draggable):
                     self.bestRow = self.X.data.loc[self.X.data[self.immediateObjectiveName].idxmin()]
             except:
                 self.bestRow = None
+
+    def UpdateBestMetrics(self):
+        if self.bestRow is not None:
+            with self.lock:
+                if self.lastValues.shape[0] > self.runningAverageWindow:
+                    self.lastValues = np.delete(self.lastValues, 0)
+                self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
+            try:
+                self.bestValue = self.bestRow.iloc[self.numDecisions]
+                self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
+                self.updateAverageSignal.emit(np.nanmean(self.lastValues))
+                self.updateBestSignal.emit(self.bestValue)
+            except:
+                pass
             
     def SetupAndRunOptimiser(self, evaluateFunction):
         try:
@@ -634,7 +707,7 @@ class SingleTaskGP(Draggable):
                     if shared.entities[ID].type == 'Group':
                         continue
                     nm = f'{shared.entities[ID].name} (ID: {ID})'
-                    if c.type == 'Less Than':
+                    if c.type == '< (Constraint)':
                         self.optimiserConstraints[nm] = ['LESS_THAN', c.settings['threshold']]
                     else:
                         self.optimiserConstraints[nm] = ['GREATER_THAN', c.settings['threshold']]
@@ -652,21 +725,29 @@ class SingleTaskGP(Draggable):
                     self.immediateObjectiveName: kernel,
                 },
             )
+            generatorKwargs = dict(
+                vocs = vocs,
+                gp_constructor = constructor,
+                n_monte_carlo_samples = 256,
+                n_candidates = 10,
+            )
+            # TuRBO
+            if self.settings['turbo'] == 'OPTIMISE':
+                generatorKwargs['turbo_controller'] = 'optimize'
+            elif self.settings['turbo'] == 'SAFETY':
+                if len(self.constraints) > 0:
+                    generatorKwargs['turbo_controller'] = 'safety'
+                else:
+                    generatorKwargs['turbo_controller'] = 'optimize'
+                    self.updateAssistantSignal.emit(f'TuRBO mode of {self.name} is falling back to OPTIMISE because there are no constraints.', 'Warning')
             if self.settings['acqFunction'] == 'UCB':
-                generator = UpperConfidenceBoundGenerator(
-                    vocs = vocs,
-                    gp_constructor = constructor,
-                    beta = self.settings['acqHyperparameter'],
-                    n_monte_carlo_samples = 256,
-                    n_candidates = 10,
-                )
+                generatorKwargs['beta'] = self.settings['acqHyperparameter']
+                generator = UpperConfidenceBoundGenerator(**generatorKwargs)
             else:
-                generator = ExpectedImprovementGenerator(
-                    vocs = vocs,
-                    gp_constructor = constructor,
-                    turbo_controller = 'optimize',
-                    n_monte_carlo_samples = 256,
-                    n_candidates = 10,
+                generator = ExpectedImprovementGenerator(**generatorKwargs)
+            if self.settings['turbo'] != 'DISABLED':
+                generator.turbo_controller.length = (
+                    .05 # 5% of the range.
                 )
             evaluator = Evaluator(function = evaluateFunction)
             self.X = Xopt(
@@ -701,6 +782,7 @@ class SingleTaskGP(Draggable):
             numEvals = 0
             for it in range(numSamples):
                 self.X.random_evaluate(1)
+                self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
                 if self.numObservers > 0:
                     dataToSave = self.X.data.copy()
                     for it, o in enumerate(self.observers):
@@ -708,47 +790,27 @@ class SingleTaskGP(Draggable):
                     dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
                 else:
                     self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-                self.progressAmount = numEvals / self.maxEvals
+                self.progressAmount = (numEvals + 1) / self.maxEvals
                 self.updateProgressSignal.emit(self.progressAmount)
                 numEvals += 1
-            while True:
-                newNumEvals = self.numEvals
-                if newNumEvals > numEvals:
-                    numEvals = newNumEvals
-                    self.progressAmount = numEvals / self.maxEvals
-                    self.updateProgressSignal.emit(self.progressAmount)
-                    self.GetBestRow()
-                    if self.bestRow is not None:
-                        with self.lock:
-                            if self.lastValues.shape[0] > self.runningAverageWindow:
-                                self.lastValues = np.delete(self.lastValues, 0)
-                            self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
-                        try:
-                            self.bestValue = self.bestRow.iloc[self.numDecisions]
-                            self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
-                            self.updateAverageSignal.emit(np.nanmean(self.lastValues))
-                            self.updateBestSignal.emit(self.bestValue)
-                        except:
-                            pass
-                if numEvals == numSamples:
-                    break
-                if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .1):
+                self.GetBestRow()
+                self.UpdateBestMetrics()
+                if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1]):
                     self.inQueue.put(None)
                     self.inQueue.join()
                     self.outQueue.join()
                     return
-            if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1]):
-                self.inQueue.put(None)
-                self.inQueue.join()
-                self.outQueue.join()
-                return
+            
+            # train the model on the LH samples and centre the trust region if TuRBO is being used.
+            if self.notAllNaNs:
+                self.X.generator.train_model()
+
             self.updateAssistantSignal.emit(f'{self.name} has taken initial random samples.', '')
-            print('** Done with random samples!')
             # optimiser steps
             if self.settings['numSteps'] > 0:
                 for it in range(self.settings['numSteps']):
                     print(f'step {it + 1}/{self.settings['numSteps']}')
-                    self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
+                    self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
                     if self.notAllNaNs:
                         try:
                             self.X.step()
@@ -764,13 +826,7 @@ class SingleTaskGP(Draggable):
                         dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
                     else:
                         self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-                    # If there are no valid numbers recorded yet, don't bother training the model.
-                    self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-3].notna().all(axis = 1).any()
-                    if self.notAllNaNs:
-                        try:
-                            self.X.generator.train_model()
-                        except:
-                            pass
+                    self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
                     self.progressAmount = self.numEvals / self.maxEvals
                     self.updateProgressSignal.emit(self.progressAmount)
                     try:
@@ -810,8 +866,8 @@ class SingleTaskGP(Draggable):
                 dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
             else:
                 self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-        except:
-            pass
+        except Exception as e:
+            print(e)
         self.inQueue.put(None)
 
     def Start(self, changeGlobalToggleState = True, **kwargs):
@@ -932,9 +988,9 @@ class SingleTaskGP(Draggable):
                 constraints = newConstraints
 
             #### Replace NaNs with large numbers to allow the optimiser to perform inference ####
-            for k, v in constraints.items():
-                if np.isnan(v):
-                    constraints[k] = 1e5 if self.optimiserConstraints[k][0] == 'LESS_THAN' else -1e5
+            # for k, v in constraints.items():
+            #     if np.isnan(v):
+            #         constraints[k] = 1e5 if self.optimiserConstraints[k][0] == 'LESS_THAN' else -1e5
             with self.lock:
                 self.numEvals += 1
             return {immediateObjectiveName: result, **constraints}
@@ -974,7 +1030,6 @@ class SingleTaskGP(Draggable):
     # def SendMachineInstructions(self, pause, stop, error, loop, parameters, **kwargs):
     def SendMachineInstructions(self, pause, stop, error, parameters, **kwargs):
         '''Results do not need to be sent back to the optimiser from here during online optimisation.'''
-        print('== Send Machine Instructions ==')
         try:
             for d, target in parameters.items():
                 nm = d.split()[0] # strip the index attached to this PV name in the inDict

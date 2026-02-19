@@ -2,16 +2,19 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QListWidget, QListWidgetItem, QSpacerItem, QSizePolicy
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, Signal
 from . import style
 from . import shared
 
 class Expandable(QWidget):
+    updateHeaderTextSignal = Signal(str, str)
+
     def __init__(self, listWidget, item, name, pv, componentKey):
         '''`list` the ListWidget containing the expandable widget.\n
         `item` is the ListWidgetItem this expandable is attached to.\n
         Accepts a list of kwarg widgets to display in the expandable content region.'''
         super().__init__()
+        self.updateHeaderTextSignal.connect(self.UpdateHeaderText)
         self.list = listWidget
         self.parent = item
         self.setLayout(QVBoxLayout())
@@ -48,6 +51,11 @@ class Expandable(QWidget):
         self.parent.setSizeHint(QSize(self.width, self.headerHeight + 10))
         self.widget = self.pv.settings['components'][self.componentKey]['type'](self.pv, self.componentKey, expandable = self) # Instantiate the widget
         self.UpdateColors()
+
+    def UpdateHeaderText(self, s, units = ''):
+        units = f' ({units})' if units != '' else ''
+        self.name = f'{s}{units}'
+        self.header.setText(f'{self.header.text().split()[0]}    {self.name}')
 
     def UpdateColors(self):
         if shared.lightModeOn:

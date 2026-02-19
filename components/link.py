@@ -201,11 +201,11 @@ class LinkComponent(Component):
                     block.settings['components']['value']['min'] = block.settings['components']['value']['value']
                 elif block.settings['components']['value']['value'] > block.settings['components']['value']['max']:
                     block.settings['components']['value']['max'] = block.settings['components']['value']['value']
-            if block.name.split()[0] in self.defaultNames or ('(Index: ' in block.name and block.name.split(' (Index: ')[0] in self.defaultNames):
-                newName = self.linkedElement.Name + f' (Index: {self.linkedElement.Index})'
-                block.settings['name'] = newName
-                block.name = newName
-                block.title.setText(newName)
+            # if block.name == '' or block.name.split()[0] in self.defaultNames or ('(Index: ' in block.name and block.name.split(' (Index: ')[0] in self.defaultNames):
+            newName = self.linkedElement.Name + f' (Index: {self.linkedElement.Index})'
+            block.settings['name'] = newName
+            block.name = newName
+            block.title.setText(newName)
             # Handle data subtypes
             # Since this component is only relevant for simulation, allow access to full beam information at every element.
             if self.linkedElement.Name == 'BPM':

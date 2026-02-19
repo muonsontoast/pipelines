@@ -110,6 +110,7 @@ def Load(path):
                             numSamples = v.get('numSamples', None),
                             numSteps = v.get('numSteps', None),
                             mode = v.get('mode', None),
+                            turbo = v.get('turbo', None),
                             dtype = v.get('dtype', None),
                             numberValue = v.get('numberValue', None),
                             numBlocks = v.get('numBlocks', None),

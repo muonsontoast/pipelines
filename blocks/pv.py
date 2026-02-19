@@ -98,9 +98,7 @@ class PV(Draggable):
         shared.inspector.expandables['value'].widget.default.setReadOnly(state)
 
     def ChangeHeaderText(self, s = ''):
-        if s == '':
-            shared.inspector.expandables['value'].header.setText(shared.inspector.expandables['value'].header.text().split()[0])
-        else:
+        if s != '':
             shared.inspector.expandables['value'].header.setText(s)
 
     def Push(self):
@@ -170,10 +168,10 @@ class PV(Draggable):
         else:
             try:
                 mn = asyncio.run(
-                    aioca.caget(PVName + ':IMIN', timeout = timeout)
+                    aioca.caget(PVName + ':IMIN')
                 )
                 mx = asyncio.run(
-                    aioca.caget(PVName + ':IMAX', timeout = timeout)
+                    aioca.caget(PVName + ':IMAX')
                 )
                 if mx > mn:
                     if self.active:
@@ -198,12 +196,10 @@ class PV(Draggable):
         '''Unlike more complex blocks, a PV just returns its current value, indicating the end of a graph.'''
         return self.data[1] if not self.settings['magnitudeOnly'] else abs(self.data[1])
     
-    def FetchAndReadValue(self, timeout = 1):
+    def FetchAndReadValue(self, timeout = .5):
         '''Asynchronously fetch and update current value, without blocking the UI thread.'''
         lastMatch = ''
         # create event loop used solely by this thread to await aioca command responses.
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         while True:
             if self.stopCheckThread.is_set():
                 break
@@ -211,29 +207,27 @@ class PV(Draggable):
                 PVName = self.name
                 try:
                     asyncio.run(
-                        aioca.caget(self.name, timeout = timeout)
+                        aioca.caget(self.name, timeout = .01)
                     )
                     if self.stopCheckThread.wait(timeout = .25):
-                        loop.close()
                         break
                     self.data[1] = asyncio.run(
-                        aioca.caget(self.name, timeout = timeout)
+                        aioca.caget(self.name, timeout = .01)
                     )
                 except:
                     PVName = self.name.split(':')[0]
                     asyncio.run(
-                        aioca.caget(PVName + ':I', timeout = timeout)
+                        aioca.caget(PVName + ':I', timeout = .01)
                     )
                     if self.stopCheckThread.wait(timeout = .25):
-                        loop.close()
                         break
                     # set value
                     self.data[0] = asyncio.run(
-                        aioca.caget(PVName + ':SETI', timeout = timeout)
+                        aioca.caget(PVName + ':SETI', timeout = .01)
                     )
                     # read value
                     self.data[1] = asyncio.run(
-                        aioca.caget(PVName + ':I', timeout = timeout)
+                        aioca.caget(PVName + ':I', timeout = .01)
                     )
                 if self.stopCheckThread.is_set():
                     break
@@ -243,7 +237,7 @@ class PV(Draggable):
                         try:
                             self.PVMatch = True
                             self.settings['components']['value']['units'] = ''
-                            shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.')
+                            shared.workspace.assistant.PushMessage(f'{PVName} is a valid PV and is now linked.') # need to move this to Signal system
                             self.checkStateOfDownstreamBlocks = True
                             self.online = True
                             if self.stopCheckThread.is_set():
@@ -251,15 +245,9 @@ class PV(Draggable):
                             s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
                             self.getTextSignal.emit(s)
                             self.setTextSignal.emit(s)
-                            if 'STR' in PVName:
-                                self.settings['components']['value']['units'] = 'Amps'
-                                if self.active:
-                                    shared.inspector.expandables['value'].name = self.settings['components']['value']['name'] + '(Amps)'
-                                    self.headerTextSignal.emit(shared.inspector.expandables['value'].header.text().split()[0] + '    (Amps)')
+                            self.UpdateUnits(PVName)
                             try:
-                                asyncio.run(
-                                    self.UpdateInspectorLimits(PVName)
-                                )
+                                self.UpdateInspectorLimits(PVName)
                             except: pass
                             lastMatch = PVName
                         except Exception as e:
@@ -280,25 +268,16 @@ class PV(Draggable):
                             if self.online:
                                 if self.stopCheckThread.is_set():
                                     break
-                                # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
-                                # self.get.setText(s)
-                                # self.set.setText(s)
                                 self.getTextSignal.emit(s)
                                 self.setTextSignal.emit(s)
                             else:
                                 if self.stopCheckThread.is_set():
                                     break
-                                # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
-                                # self.get.setText(s)
-                                # self.set.setText(s)
                                 self.getTextSignal.emit(s)
                                 self.setTextSignal.emit(s)
                         else:
                             if self.stopCheckThread.is_set():
                                 break
-                            # s = f'{self.data[1]:.3f}' if not np.isnan(self.data[1]) else 'N/A'
-                            # self.get.setText(s)
-                            # self.set.setText(s)
                             self.getTextSignal.emit(s)
                             self.setTextSignal.emit(s)
                     except: pass
@@ -310,13 +289,12 @@ class PV(Draggable):
 
                 if self.active:
                     try:
-                        shared.inspector.expandables['value'].name = self.settings['components']['value']['name']
+                        if lastMatch != PVName:
+                            self.UpdateUnits(PVName)
+                            shared.inspector.expandables['value'].updateHeaderTextSignal.emit(self.settings['components']['value']['name'], self.settings['components']['value']['units'])
+                            self.UpdateInspectorLimits(PVName, makeReadOnly = False)
                         if self.stopCheckThread.is_set():
                                 break
-                        self.headerTextSignal.emit('')
-                        asyncio.run(
-                            self.UpdateInspectorLimits(PVName, makeReadOnly = False)
-                        )
                     except: pass
             lastMatch = PVName
             if self.checkStateOfDownstreamBlocks:
@@ -324,8 +302,20 @@ class PV(Draggable):
                     if type(ID) == int:
                         shared.entities[ID].CheckState()
             self.checkStateOfDownstreamBlocks = False
-            self.stopCheckThread.wait(timeout = .2)
+            if self.stopCheckThread.wait(timeout = timeout):
+                break
         self.checkThreadIsClosed.set()
+
+    def UpdateUnits(self, name):
+        if 'STR' in name:
+            self.settings['components']['value']['name'] = 'Kick'
+            if self.online:
+                self.settings['components']['value']['units'] = 'Amps'
+            else:
+                self.settings['components']['value']['units'] = 'mrad'
+        else:
+            self.settings['components']['value']['name'] = 'Value'
+            self.settings['components']['value']['units'] = ''
 
     def UpdateLinkedElement(self, slider = None, func = None, event = None, override = None):
         '''`event` should be a mouseReleaseEvent if it needs to be called.'''
