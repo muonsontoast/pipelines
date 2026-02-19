@@ -6,6 +6,7 @@ from functools import reduce
 import asyncio
 import aioca
 import time
+import warnings
 from datetime import datetime
 from xopt import Xopt, VOCS, Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
@@ -30,6 +31,7 @@ from ..pv import PV
 from ..progress import Progress
 from ... import style
 from ... import shared
+warnings.filterwarnings('ignore')
 
 class SingleTaskGP(Draggable):
     updateProgressSignal = Signal(float)
@@ -606,7 +608,7 @@ class SingleTaskGP(Draggable):
             return ScaleKernel(_PeriodicKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
         elif isinstance(entity, MaternKernel):
             if entity.settings['automatic']:
-                return ScaleKernel(_MaternKernel())
+                return ScaleKernel(_MaternKernel(nu = entity.settings['hyperparameters']['smoothness']['value']))
             return ScaleKernel(_MaternKernel(active_dims = sorted([self.activeDims[linkedPVID] for linkedPVID in entity.settings['linkedPVs']])))
 
     def GetFundamentalIDs(self, ID, fundamentalIDs = set([]), socketNameFilter = None):
@@ -652,10 +654,8 @@ class SingleTaskGP(Draggable):
                 mask = np.logical_and.reduce(cond)
                 if self.settings['mode'].upper() == 'MAXIMISE':
                     self.bestRowIdx = self.X.data[mask][self.immediateObjectiveName].idxmax()
-                    # self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmax()]
                 else:
                     self.bestRowIdx = self.X.data[mask][self.immediateObjectiveName].idxmin()
-                    # self.bestRow = self.X.data.loc[self.X.data[mask][self.immediateObjectiveName].idxmin()]
                 self.bestRow = self.X.data.loc[self.bestRowIdx]
             except:
                 self.bestRow = None
