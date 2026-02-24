@@ -813,8 +813,11 @@ class SingleTaskGP(Draggable):
                 HSTRs = [.4178, -.4341, 3.27, .71, 3.5, -1.06]
                 VSTRs = [3.8198, -4.18, -.28, .46, 1.1, 2.18]
                 QUADs = [2.3857, -1.8666, -2.4557, 2.1872, 2.2825, 2.5736, -1.9105, 1.5804]
+                # first two BPM trajectories are too large, constrain them.
+                BPMy = [-6, -2.5]
+                BPMx = [3, -1]
                 best = 3.63
-                self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs[-2:], best, 0, False]], columns = self.X.data.columns))
+                self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs[-2:], best, *BPMy, 0, False]], columns = self.X.data.columns))
             ####################
             
             # train the model on the LH samples and centre the trust region if TuRBO is being used.
