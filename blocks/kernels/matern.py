@@ -34,7 +34,7 @@ class MaternKernel(Kernel):
                 },
                 'smoothness': {
                     'description': 'controls smoothness at kernel centre',
-                    'value': 1/2,
+                    'value': 3/2,
                     'type': 'float',
                 },
             },

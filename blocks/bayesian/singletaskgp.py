@@ -7,11 +7,11 @@ import asyncio
 import aioca
 import time
 import warnings
+import pandas as pd
 from datetime import datetime
 from xopt import Xopt, VOCS, Evaluator
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator, ExpectedImprovementGenerator
 from xopt.generators.bayesian.models.standard import StandardModelConstructor
-from xopt.generators.bayesian.turbo import SafetyTurboController
 from multiprocessing import Event
 from threading import Event as ThreadingEvent
 from multiprocessing.shared_memory import SharedMemory
@@ -51,16 +51,16 @@ class SingleTaskGP(Draggable):
             simPrecision = 'fp64'
 
         super().__init__(
-            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 645]), 
+            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 665]), 
             acqFunction = kwargs.pop('acqFunction', 'UCB'),
             acqHyperparameter = kwargs.pop('acqHyperparameter', 2),
             numSamples = kwargs.pop('numSamples', 5),
             numSteps = kwargs.pop('numSteps', 20),
             mode = kwargs.pop('mode', 'MAXIMISE'),
             turbo = kwargs.pop('turbo', 'DISABLED'),
-            numParticles = kwargs.pop('numParticles', 10000),
+            numParticles = kwargs.pop('numParticles', 5000),
             simPrecision = simPrecision,
-            headerColor = "#C1492B",
+            headerColor = "#a4243b",
             **kwargs
         )
         self.timeBetweenPolls = 1000
@@ -184,6 +184,7 @@ class SingleTaskGP(Draggable):
         self.AddSocket('objective', 'F', 'Objective', 185, acceptableTypes = [PV, Composition, Filter])
         self.AddSocket('constraint', 'F', 'Constraint', 185, acceptableTypes = [Constraint])
         self.AddSocket('kernel', 'F', 'Kernel', 185, acceptableTypes = [Kernel, Composition, Filter])
+        self.AddSocket('prior', 'F', 'Prior', 185, acceptableTypes = [Draggable])
         self.AddSocket('out', 'M')
         self.content = QWidget()
         self.content.setLayout(QVBoxLayout())
@@ -192,7 +193,7 @@ class SingleTaskGP(Draggable):
         self.widget.layout().addWidget(self.content)
         # settings section
         settings = QWidget()
-        settings.setFixedHeight(230)
+        settings.setFixedHeight(235)
         settings.setLayout(QVBoxLayout())
         settings.layout().setContentsMargins(0, 5, 5, 0)
         settingsLabel = QLabel('<b>SETTINGS</b>')
@@ -203,7 +204,7 @@ class SingleTaskGP(Draggable):
         acquisition.setFixedHeight(30)
         acquisition.setLayout(QHBoxLayout())
         acquisition.layout().setContentsMargins(5, 0, 0, 0)
-        acquisitionLabel = QLabel('Acquisition Function')
+        acquisitionLabel = QLabel('Generator')
         acquisitionLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
         acquisitionLabel.setAlignment(Qt.AlignLeft)
         acquisition.layout().addWidget(acquisitionLabel, alignment = Qt.AlignLeft | Qt.AlignVCenter)
@@ -214,6 +215,7 @@ class SingleTaskGP(Draggable):
         acquisitionFuncs = {
             '   UCB': self.SelectUCB,
             '   EI': self.SelectEI,
+            # '   Explore': self.SelectBayesianExploration,
         }
         acquisitionSelect.addItems(acquisitionFuncs.keys())
         idx = 0 if self.settings['acqFunction'] == 'UCB' else 1
@@ -542,6 +544,11 @@ class SingleTaskGP(Draggable):
         self.explorationEdit.setReadOnly(True)
         self.updateAssistantSignal.emit(f'Successfully changed the acquisition function of {self.name} to EI (Expected Improvement).', '')
 
+    def SelectBayesianExploration(self):
+        self.settings['acqFunction'] = 'BayesianExploration'
+        self.explorationEdit.setText('N/A')
+        self.explorationEdit.setReadOnly(True)
+
     def DisableTuRBO(self):
         if self.settings['turbo'] != 'DISABLED':
             self.updateTuRBOSignal.emit('DISABLED')
@@ -800,10 +807,16 @@ class SingleTaskGP(Draggable):
                     self.inQueue.join()
                     self.outQueue.join()
                     return
+                
+            # For testing - add the known good solution ...
+            # if self.settings['turbo'] != 'DEFAULT':
+            #     self.X.add_data(pd.DataFrame([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, False]], columns = self.X.data.columns))
+            ####################
             
             # train the model on the LH samples and centre the trust region if TuRBO is being used.
             if self.notAllNaNs:
                 self.X.generator.train_model()
+                self.X.generator.turbo_controller.update_state(self.X.generator)
 
             self.updateAssistantSignal.emit(f'{self.name} has taken initial random samples.', '')
             # optimiser steps
@@ -811,13 +824,14 @@ class SingleTaskGP(Draggable):
                 for it in range(self.settings['numSteps']):
                     print(f'step {it + 1}/{self.settings['numSteps']}')
                     self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
-                    if self.notAllNaNs:
-                        try:
-                            self.X.step()
-                        except: # TuRBO will fail if no solutions in the dataset satisfy all constraints or due to ill-conditioned matrix.
-                            self.X.random_evaluate(1)
-                    else:
+                    # if self.notAllNaNs:
+                    try:
+                        self.X.step()
+                    except Exception as e: # TuRBO will fail if no solutions in the dataset satisfy all constraints or due to ill-conditioned matrix.
+                        print(e)
                         self.X.random_evaluate(1)
+                    # else:
+                    #     self.X.random_evaluate(1)
                     # Handle observers if they exist.
                     if self.numObservers > 0:
                         dataToSave = self.X.data.copy()
@@ -923,7 +937,7 @@ class SingleTaskGP(Draggable):
                     self.observers.append(shared.entities[ID])
         self.numObservers = len(self.observers)
         self.online = self.decisions[0].online
-        self.numParticles = 10000
+        self.numParticles = 5000
         self.numEvals = 0
         self.maxEvals = self.settings['numSamples'] + self.settings['numSteps']
         self.t0 = time.time()

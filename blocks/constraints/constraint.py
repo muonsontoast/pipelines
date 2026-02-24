@@ -13,7 +13,7 @@ class Constraint(Draggable):
             size = kwargs.pop('size', [300, 150]),
             threshold = kwargs.pop('threshold', 0),
             fontsize = kwargs.pop('fontsize', 12),
-            headerColor = "#793E88",
+            headerColor = "#6d597a",
             **kwargs,
         )
         self.parent = parent
