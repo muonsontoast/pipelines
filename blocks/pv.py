@@ -209,21 +209,21 @@ class PV(Draggable):
                 try:
                     print('B')
                     asyncio.run_coroutine_threadsafe(
-                        aioca.caget(self.name, timeout = .01)
+                        aioca.caget(self.name, timeout = .1)
                     )
                     print('C')
                     if self.stopCheckThread.wait(timeout = .25):
                         break
                     print('D')
                     self.data[1] = asyncio.run_coroutine_threadsafe(
-                        aioca.caget(self.name, timeout = .01)
+                        aioca.caget(self.name, timeout = .1)
                     )
                     print('E')
                 except:
                     print('F')
                     PVName = self.name.split(':')[0]
                     asyncio.run_coroutine_threadsafe(
-                        aioca.caget(PVName + ':I', timeout = .01)
+                        aioca.caget(PVName + ':I', timeout = .1)
                     )
                     print('G')
                     if self.stopCheckThread.wait(timeout = .25):
@@ -231,12 +231,12 @@ class PV(Draggable):
                     print('G1')
                     # set value
                     self.data[0] = asyncio.run_coroutine_threadsafe(
-                        aioca.caget(PVName + ':SETI', timeout = .01)
+                        aioca.caget(PVName + ':SETI', timeout = .1)
                     )
                     print('H')
                     # read value
                     self.data[1] = asyncio.run_coroutine_threadsafe(
-                        aioca.caget(PVName + ':I', timeout = .01)
+                        aioca.caget(PVName + ':I', timeout = .1)
                     )
                 if self.stopCheckThread.is_set():
                     break
