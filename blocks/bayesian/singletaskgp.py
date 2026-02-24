@@ -1051,16 +1051,13 @@ class SingleTaskGP(Draggable):
     def Stop(self):
         StopAction(self)
 
-    # def SendMachineInstructions(self, pause, stop, error, loop, parameters, **kwargs):
     def SendMachineInstructions(self, pause, stop, error, parameters, **kwargs):
         '''Results do not need to be sent back to the optimiser from here during online optimisation.'''
         try:
             for d, target in parameters.items():
                 nm = d.split()[0] # strip the index attached to this PV name in the inDict
                 try:
-                    # if target < loop.run_until_complete(aioca.caget(nm + ':I')):
                     if target < asyncio.run(aioca.caget(nm + ':I')):
-                        # loop.run_until_complete(
                         asyncio.run(
                             aioca.caput(nm + ':SETI', target - .2)
                         )
@@ -1070,7 +1067,6 @@ class SingleTaskGP(Draggable):
                     return None
             if self.CheckForInterrupt(pause, stop, timeout = 2):
                 return 1
-            # loop.run_until_complete(
             for d, target in parameters.items():
                 nm = d.split()[0]
                 asyncio.run(
@@ -1084,6 +1080,7 @@ class SingleTaskGP(Draggable):
     def CheckForInterrupt(self, pause, stop, timeout = 0):
         '''Returns True if stop is triggered otherwise False'''
         t0 = time.time()
+        LINACPaused = False
         while True:
             if stop.wait(timeout = .1):
                 if hasattr(self, 'dataSharedMemory'):
@@ -1097,7 +1094,20 @@ class SingleTaskGP(Draggable):
                             self.sharedMemory.close()
                             self.sharedMemory.unlink()
                         return True
+                    if self.online and not LINACPaused:
+                        LINACPaused = True
+                        try:
+                            asyncio.run(
+                                aioca.caput('LI-TI-MTGEN-01:STOP', 1, throw = True),
+                            )
+                        except: # wasn't able to stop the LINAC
+                            return True
                 break
+        if LINACPaused:
+            asyncio.run(
+                aioca.caput('LI-TI-MTGEN-01:START', 1, throw = True),
+            )
+            stop.wait(timeout = 1) # wait 1 second for things to settle.
         return False
 
     def Simulate(self, pause, stop, error, sharedMemoryName, shape, parameters, **kwargs):
