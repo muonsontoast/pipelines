@@ -812,8 +812,9 @@ class SingleTaskGP(Draggable):
             if self.settings['turbo'] != 'DEFAULT':
                 HSTRs = [.4178, -.4341, 3.27, .71, 3.5, -1.06]
                 VSTRs = [3.8198, -4.18, -.28, .46, 1.1, 2.18]
+                QUADs = [2.3857, -1.8666]
                 best = 3.63
-                self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), best, 0, False]], columns = self.X.data.columns))
+                self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs, best, 0, False]], columns = self.X.data.columns))
             ####################
             
             # train the model on the LH samples and centre the trust region if TuRBO is being used.
