@@ -205,39 +205,29 @@ class PV(Draggable):
                 break
             try:
                 PVName = self.name
-                print('A')
                 try:
-                    print('B')
-                    print('self.name is:', self.name)
                     asyncio.run(
-                        aioca.caget(self.name, timeout = 2)
+                        aioca.caget(self.name, timeout = .2)
                     )
-                    print('C')
                     if self.stopCheckThread.wait(timeout = .25):
                         break
-                    print('D')
                     self.data[1] = asyncio.run(
-                        aioca.caget(self.name, timeout = 2)
+                        aioca.caget(self.name, timeout = .2)
                     )
-                    print('E')
                 except:
-                    print('F')
                     PVName = self.name.split(':')[0]
                     asyncio.run(
-                        aioca.caget(PVName + ':I', timeout = 2)
+                        aioca.caget(PVName + ':I', timeout = .2)
                     )
-                    print('G')
                     if self.stopCheckThread.wait(timeout = .25):
                         break
-                    print('G1')
                     # set value
                     self.data[0] = asyncio.run(
-                        aioca.caget(PVName + ':SETI', timeout = 2)
+                        aioca.caget(PVName + ':SETI', timeout = .2)
                     )
-                    print('H')
                     # read value
                     self.data[1] = asyncio.run(
-                        aioca.caget(PVName + ':I', timeout = 1)
+                        aioca.caget(PVName + ':I', timeout = .2)
                     )
                 if self.stopCheckThread.is_set():
                     break
