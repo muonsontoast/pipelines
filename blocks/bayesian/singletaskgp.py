@@ -787,27 +787,27 @@ class SingleTaskGP(Draggable):
                     for o in self.observers
                 }
             #### JUST FOR NOW ...
-            # numEvals = 0
-            # for it in range(numSamples):
-            #     self.X.random_evaluate(1)
-            #     self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
-            #     if self.numObservers > 0:
-            #         dataToSave = self.X.data.copy()
-            #         for it, o in enumerate(self.observers):
-            #             dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
-            #         dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-            #     else:
-            #         self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-            #     self.progressAmount = (numEvals + 1) / self.maxEvals
-            #     self.updateProgressSignal.emit(self.progressAmount)
-            #     numEvals += 1
-            #     self.GetBestRow()
-            #     self.UpdateBestMetrics()
-            #     if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1]):
-            #         self.inQueue.put(None)
-            #         self.inQueue.join()
-            #         self.outQueue.join()
-            #         return
+            numEvals = 0
+            for it in range(numSamples):
+                self.X.random_evaluate(1)
+                self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
+                if self.numObservers > 0:
+                    dataToSave = self.X.data.copy()
+                    for it, o in enumerate(self.observers):
+                        dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+                    dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                else:
+                    self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                self.progressAmount = (numEvals + 1) / self.maxEvals
+                self.updateProgressSignal.emit(self.progressAmount)
+                numEvals += 1
+                self.GetBestRow()
+                self.UpdateBestMetrics()
+                if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1]):
+                    self.inQueue.put(None)
+                    self.inQueue.join()
+                    self.outQueue.join()
+                    return
                 
             # For testing - add the known good solution ...
             if self.settings['turbo'] != 'DEFAULT':
@@ -816,11 +816,11 @@ class SingleTaskGP(Draggable):
                 QUADs = [2.3857, -1.8666, -2.4557, 2.1872, 2.2825, 2.5736, -1.9105, 1.5804]
                 # first two BPM trajectories are too large, constrain them.
                 # BPMy = [-6, -2.5]
-                BPMy = [6, 2.5]
+                BPMy = [6, 2.5, 1.5]
                 BPMx = [3, -1]
                 best = 3.63
-                self.X.data = pd.read_csv(Path(shared.cwd) / 'datadump' / '2026-02-24__17-25-23.csv')
-                # self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs[-4:], best, *BPMy, 0, False]], columns = self.X.data.columns))
+                # self.X.data = pd.read_csv(Path(shared.cwd) / 'datadump' / '2026-02-24__17-25-23.csv')
+                self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs[-4:], best, *BPMy, 0, False]], columns = self.X.data.columns))
             ####################
             
             # train the model on the LH samples and centre the trust region if TuRBO is being used.
