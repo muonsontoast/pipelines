@@ -7,6 +7,7 @@ import asyncio
 import numpy as np
 from copy import deepcopy
 from ..blocks.draggable import Draggable
+from ..blocks.profiler import Profiler
 from ..blocks.pv import PV
 from ..blocks.corrector import Corrector
 from ..blocks.bcm import BCM
@@ -43,6 +44,7 @@ editor = None
 autosave = True
 
 blockTypes = {
+    'Profiler': Profiler,
     'PV': PV,
     'Corrector': Corrector,
     'BCM': BCM,
@@ -285,6 +287,9 @@ def CreateBlock(blockType, name: str, pos: QPoint = None, overrideID = None, *ar
     shared.workspace.assistant.PushMessage(f'Created {prefix} {name} at ({rectCenter.x():.0f}, {rectCenter.y():.0f})')
     return proxy, w
 
+def CreateProfiler(pos: QPoint):
+    proxy, widget = CreateBlock(blockTypes['Profiler'], 'Profiler', pos)
+
 def CreatePV(pos: QPoint):
     proxy, widget = CreateBlock(blockTypes['PV'], 'PV', pos)
 
@@ -506,6 +511,7 @@ commands = {
     # 'Area Select': dict(shortcut = ['Shift+LMB'], func = lambda: None, args = []),
     'Group': dict(shortcut = ['Ctrl+G'], func = CreateGroup, args = []),
     # 'Snip': dict(shortcut = ['Ctrl+S'], func = Snip, args = []),
+    'Profiler': dict(shortcut = [], func = CreateProfiler, args = [GetMousePos]),
     'PV (Process Variable)': dict(shortcut = ['Shift+P'], func = CreatePV, args = [GetMousePos]),
     'Corrector': dict(shortcut = ['Shift+C'], func = CreateCorrector, args = [GetMousePos]),
     'BCM (Beam Current Monitor)': dict(shortcut = [], func = CreateBCM, args = [GetMousePos]),

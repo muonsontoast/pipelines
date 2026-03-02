@@ -6,8 +6,6 @@ from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import matplotlib.style as mplstyle
 mplstyle.use('fast')
-import asyncio
-from threading import Thread
 from ..draggable import Draggable
 from ...components.kernel import KernelComponent
 from ... import shared
