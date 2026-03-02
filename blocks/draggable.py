@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QGraphicsProxyWidget, QComboBox, QListWidget, QListWidgetItem, QWidget, QSpacerItem, QPushButton, QLabel, QGraphicsLineItem, QHBoxLayout, QVBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QListWidget, QListWidgetItem, QWidget, QPushButton, QLabel, QGraphicsLineItem, QHBoxLayout, QVBoxLayout, QSizePolicy
 from PySide6.QtGui import QPen, QColor
-from PySide6.QtCore import Qt, QLineF, QPoint, QPointF
+from PySide6.QtCore import Qt, QLineF, QPointF
 import time
+from datetime import datetime
 from threading import Lock, Event
 # from multiprocessing import Event
 from ..components.slider import SliderComponent
@@ -275,6 +276,15 @@ class Draggable(Entity, QWidget):
 
     def SetRect(self):
         shared.PVs[self.ID]['rect'] = MapDraggableRectToScene(self)
+
+    def Timestamp(self, includeDate = False, stripColons = False):
+        if includeDate:
+            timestamp = datetime.now().strftime('%Y-%m-%d__%H:%M:%S')
+        else:
+            timestamp = datetime.now().strftime('%H:%M:%S')
+        if stripColons:
+            timestamp = '-'.join(timestamp.split(':'))
+        return timestamp
 
     def CheckState(self):
         '''Checks whether the block will run in online or offline (physics engine) mode.'''

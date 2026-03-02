@@ -12,6 +12,7 @@ from collections import deque
 import time
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from .draggable import Draggable
 from .pv import PV
 from .. import shared
@@ -29,7 +30,7 @@ class Profiler(Draggable):
             type = 'Profiler',
             size = kwargs.pop('size', [650, 525]),
             windowSizeInSeconds = kwargs.pop('windowSizeInSeconds', 30), # captures the last 60 seconds of profiling data by default.
-            postProcessOption = kwargs.pop('postProcessOption', 'raw'), # options are 'raw', 'mean', 'stddev', 'zscore'.
+            postProcessOption = kwargs.pop('postProcessOption', 'raw'), # options are 'raw', 'mean', 'stddev'.
             headerColor = "#2E30C7",
             **kwargs
         )
@@ -44,6 +45,12 @@ class Profiler(Draggable):
         self.SelectPostProcessOption()
         self.postProcessOptionWasChanged = False
         Thread(target = self.FetchValues).start()
+
+    def Start(self):
+        if self.data.shape[0] == 0:
+            return np.nan
+        self.stopCheckThread.wait(timeout = self.settings['windowSizeInSeconds'])
+        return self.lineData[next(iter(self.lineData))][0]
 
     def UpdatePlot(self):
         self.canvas.restore_region(self.background)
@@ -83,8 +90,9 @@ class Profiler(Draggable):
                     pass
         if not newMn == mn or not newMx == mx:
             rng = newMx - newMn if newMn != newMx else 1
-            self.ax.set_ylim(newMn - .25 * rng, newMx + .25 * rng)
-            self.canvas.draw()
+            if not np.isinf(newMn) and not np.isinf(newMx):
+                self.ax.set_ylim(newMn - .25 * rng, newMx + .25 * rng)
+                self.canvas.draw()
         self.canvas.blit(self.ax.bbox)
         if self.postProcessOptionWasChanged:
             self.postProcessOptionWasChanged = False
@@ -170,15 +178,11 @@ class Profiler(Draggable):
         self.stddevBtn = QPushButton('Std Dev')
         self.stddevBtn.clicked.connect(lambda: self.SelectPostProcessOption('stddev'))
         self.postprocessBtns.append(self.stddevBtn)
-        self.zScoreBtn = QPushButton('Z-Score')
-        self.zScoreBtn.clicked.connect(lambda: self.SelectPostProcessOption('zscore'))
-        self.postprocessBtns.append(self.zScoreBtn)
         for btn in self.postprocessBtns:
             btn.setFixedWidth(80)
         self.postprocessData.layout().addWidget(self.rawBtn)
         self.postprocessData.layout().addWidget(self.meanBtn)
         self.postprocessData.layout().addWidget(self.stddevBtn)
-        self.postprocessData.layout().addWidget(self.zScoreBtn)
         self.widget.layout().addWidget(QLabel('POST-PROCESSING'), 4, 0, 1, 4, alignment = Qt.AlignCenter)
         self.widget.layout().addWidget(self.postprocessData, 5, 0, 1, 4, alignment = Qt.AlignCenter)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding), 6, 0, 1, 4)
@@ -196,9 +200,6 @@ class Profiler(Draggable):
         elif self.settings['postProcessOption'] == 'stddev':
             self.postProcessOptionWasChanged = True
             self.stddevBtn.setStyleSheet(style.PushButtonStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 5, borderColor = '#EB9423'))
-        elif self.settings['postProcessOption'] == 'zscore':
-            self.postProcessOptionWasChanged = True
-            self.zScoreBtn.setStyleSheet(style.PushButtonStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 5, borderColor = '#EB9423'))
     
     def SelectTimeWindow(self, timeInSeconds: int = None):
         padding = 0
@@ -238,17 +239,19 @@ class Profiler(Draggable):
         self.canvas.draw()
 
     def AddLinkIn(self, ID, socket, streamTypeIn = '', updateGroupLinks = True, **kwargs):
-        super().AddLinkIn(ID, socket, streamTypeIn, updateGroupLinks, **kwargs)
-        self.data[ID] = np.nan
-        line, = self.ax.plot([], [], label = shared.entities[ID].name, lw = .5)
-        line.set_animated(True)  # Enable blitting for this line
-        self.plotLines[ID] = line
-        self.lineData[ID] = deque([])
-        self.ax.legend(loc='upper right', fontsize = 3, ncols = 4, frameon = False, labelcolor = '#6e6e6e')
-        self.canvas.draw()
-        self.background = self.canvas.copy_from_bbox(self.ax.bbox)
-        self.canvas.blit(self.ax.bbox)
-        return True
+        success = super().AddLinkIn(ID, socket, streamTypeIn, updateGroupLinks, **kwargs)
+        if success:
+            self.timestamp = self.Timestamp(includeDate = True, stripColons = True)
+            self.data[ID] = np.nan
+            line, = self.ax.plot([], [], label = shared.entities[ID].name, lw = .5)
+            line.set_animated(True)  # Enable blitting for this line
+            self.plotLines[ID] = line
+            self.lineData[ID] = deque([])
+            self.ax.legend(loc='upper right', fontsize = 3, ncols = 4, frameon = False, labelcolor = '#6e6e6e')
+            self.canvas.draw()
+            self.background = self.canvas.copy_from_bbox(self.ax.bbox)
+            self.canvas.blit(self.ax.bbox)
+        return success
 
     def RemoveLinkIn(self, ID):
         super().RemoveLinkIn(ID)
@@ -274,8 +277,8 @@ class Profiler(Draggable):
             newData = {}
             newData['timestamp'] = nowTime
             for ID in self.linksIn:
-                # newData[ID] = shared.entities[ID].Start()
-                newData[ID] = np.random.randn() * ID
+                newData[ID] = shared.entities[ID].Start()
+                # newData[ID] = np.random.randn() * ID
             newData = pd.DataFrame([newData])
             self.data = pd.concat([self.data, newData], ignore_index = True)
             self.data = self.data[nowTime - self.data['timestamp'] <= self.settings['windowSizeInSeconds']].reset_index(drop = True)
@@ -297,4 +300,3 @@ class Profiler(Draggable):
             self.rawBtn.setStyleSheet(style.PushButtonStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 5))
             self.meanBtn.setStyleSheet(style.PushButtonStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 5))
             self.stddevBtn.setStyleSheet(style.PushButtonStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 5))
-            self.zScoreBtn.setStyleSheet(style.PushButtonStyle(color = '#3e3e3e', fontColor = '#c4c4c4', borderRadius = 5))
