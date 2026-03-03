@@ -737,7 +737,8 @@ class SingleTaskGP(Draggable):
             self.activeDims[d.ID] = _
             nm = f'{d.name} (ID: {d.ID})'
             variables[nm] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
-            initialDecisionDict[nm] = self.initialDecisions[_]
+            if self.settings['includeNominal']:
+                initialDecisionDict[nm] = self.initialDecisions[_]
             self.variableNameToID[nm] = d.ID
         # Treat each block attached to a constraint as its own individual constraint.
         for _, c in enumerate(self.constraints):
@@ -752,13 +753,15 @@ class SingleTaskGP(Draggable):
                 else:
                     self.optimiserConstraints[nm] = ['GREATER_THAN', c.settings['threshold']]
                 self.constraintsIDToName[ID] = nm
-                initialConstraintDict[nm] = c.Start()
-        for o in self.objectives:
-            nm = f'{o.name} (ID: {o.ID})'
-            initialObjectiveDict[nm] = o.Start()
-        for o in self.observers:
-            nm = f'{o.name} (ID: {o.ID})'
-            initialObserverDict[nm] = o.Start()
+                if self.settings['includeNominal']:
+                    initialConstraintDict[nm] = c.Start()
+        if self.settings['includeNominal']:
+            for o in self.objectives:
+                nm = f'{o.name} (ID: {o.ID})'
+                initialObjectiveDict[nm] = o.Start()
+            for o in self.observers:
+                nm = f'{o.name} (ID: {o.ID})'
+                initialObserverDict[nm] = o.Start()
 
         vocs = VOCS(
             variables = variables,
