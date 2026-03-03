@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QSizePolicy, QGridLayout, QHBoxLayout, QSpacerItem
+from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QSizePolicy, QGridLayout, QHBoxLayout, QVBoxLayout, QSpacerItem
 from PySide6.QtCore import Qt, Signal
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -44,6 +44,7 @@ class Profiler(Draggable):
         self.SelectTimeWindow()
         self.SelectPostProcessOption()
         self.postProcessOptionWasChanged = False
+        self.saveName = None
         Thread(target = self.FetchValues).start()
 
     def Start(self):
@@ -96,6 +97,11 @@ class Profiler(Draggable):
         self.canvas.blit(self.ax.bbox)
         if self.postProcessOptionWasChanged:
             self.postProcessOptionWasChanged = False
+            self.saveName = f'profiler_{'_'.join([''.join(''.join('-'.join((' '.join(shared.entities[ID].name.split(':'))).split()).split('(')).split(')')) for ID in self.linksIn])}_{self.settings['postProcessOption']}_{self.timestamp}.csv'
+            self.savePath = Path(shared.cwd) / 'datadump' / self.saveName
+            self.data.to_csv(self.savePath, index = False)
+        elif self.data.shape[0] > 0:
+            self.data.iloc[0:1].to_csv(self.savePath, mode = 'a', index = False, header = False)
 
     def Push(self):
         super().Push()
@@ -130,9 +136,13 @@ class Profiler(Draggable):
         self.background = self.canvas.copy_from_bbox(self.ax.bbox)
         self.widget.layout().addWidget(self.canvas, 1, 0, 1, 4)
         # Adjust window size
+        self.windowWidget = QWidget()
+        self.windowWidget.setLayout(QVBoxLayout())
+        self.windowWidget.layout().setContentsMargins(5, 0, 0, 0)
+        self.windowWidget.layout().setSpacing(5)
         self.windowSize = QWidget()
         self.windowSize.setLayout(QHBoxLayout())
-        self.windowSize.layout().setContentsMargins(15, 0, 15, 0)
+        self.windowSize.layout().setContentsMargins(15, 0, 20, 0)
         self.windowSize.layout().setSpacing(5)
         self.trailingBtns = []
         self.trailing5secBtn = QPushButton('5 sec')
@@ -161,14 +171,19 @@ class Profiler(Draggable):
         self.windowSize.layout().addWidget(self.trailing1minBtn)
         self.windowSize.layout().addWidget(self.trailing5minBtn)
         self.windowSize.layout().addWidget(self.trailing15minBtn)
-        self.widget.layout().addWidget(QLabel('TIME WINDOW'), 2, 0, 1, 4, alignment = Qt.AlignCenter)
-        self.widget.layout().addWidget(self.windowSize, 3, 0, 1, 4)
+        self.windowWidget.layout().addWidget(QLabel('TIME WINDOW'), alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        self.windowWidget.layout().addWidget(self.windowSize)
+        self.widget.layout().addWidget(self.windowWidget, 2, 0, 2, 4)
         # Post Processing Options
+        self.postprocessWidget = QWidget()
+        self.postprocessWidget.setLayout(QVBoxLayout())
+        self.postprocessWidget.layout().setContentsMargins(5, 0, 0, 0)
+        self.postprocessWidget.layout().setSpacing(5)
         self.postprocessBtns = []
         self.postprocessData = QWidget()
         self.postprocessData.setLayout(QHBoxLayout())
-        self.postprocessData.layout().setContentsMargins(15, 0, 15, 0)
-        self.postprocessData.layout().setSpacing(5)
+        self.postprocessData.layout().setContentsMargins(15, 0, 20, 0)
+        self.postprocessData.layout().setSpacing(3)
         self.rawBtn = QPushButton('Raw')
         self.rawBtn.clicked.connect(lambda: self.SelectPostProcessOption('raw'))
         self.postprocessBtns.append(self.rawBtn)
@@ -180,11 +195,13 @@ class Profiler(Draggable):
         self.postprocessBtns.append(self.stddevBtn)
         for btn in self.postprocessBtns:
             btn.setFixedWidth(80)
-        self.postprocessData.layout().addWidget(self.rawBtn)
-        self.postprocessData.layout().addWidget(self.meanBtn)
-        self.postprocessData.layout().addWidget(self.stddevBtn)
-        self.widget.layout().addWidget(QLabel('POST-PROCESSING'), 4, 0, 1, 4, alignment = Qt.AlignCenter)
-        self.widget.layout().addWidget(self.postprocessData, 5, 0, 1, 4, alignment = Qt.AlignCenter)
+        self.postprocessData.layout().addWidget(self.rawBtn, alignment = Qt.AlignLeft)
+        self.postprocessData.layout().addWidget(self.meanBtn, alignment = Qt.AlignLeft)
+        self.postprocessData.layout().addWidget(self.stddevBtn, alignment = Qt.AlignLeft)
+        self.postprocessData.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.postprocessWidget.layout().addWidget(QLabel('POST-PROCESSING'), alignment = Qt.AlignLeft | Qt.AlignVCenter)
+        self.postprocessWidget.layout().addWidget(self.postprocessData)
+        self.widget.layout().addWidget(self.postprocessWidget, 4, 0, 2, 4)
         self.widget.layout().addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Expanding), 6, 0, 1, 4)
     
     def SelectPostProcessOption(self, option: str = None):
@@ -251,6 +268,9 @@ class Profiler(Draggable):
             self.canvas.draw()
             self.background = self.canvas.copy_from_bbox(self.ax.bbox)
             self.canvas.blit(self.ax.bbox)
+            self.saveName = f'profiler_{'_'.join([''.join(''.join('-'.join((' '.join(shared.entities[ID].name.split(':'))).split()).split('(')).split(')')) for ID in self.linksIn])}_{self.settings['postProcessOption']}_{self.timestamp}.csv'
+            self.savePath = Path(shared.cwd) / 'datadump' / self.saveName
+            self.data.to_csv(self.savePath, index = False)
         return success
 
     def RemoveLinkIn(self, ID):

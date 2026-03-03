@@ -77,7 +77,10 @@ def CreatePersistentWorkerProcess(entity, emptyArray, inQueue, outQueue, action,
         outQueue.put(result)
         runningActions[entity.ID][-1] += 1
     outPipe.close()
-    runningActions.pop(entity.ID)
+    try:
+        runningActions.pop(entity.ID)
+    except:
+        pass
 
 # def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, loop, **kwargs):
 def PersistentWorkerThread(pause, stop, error, action, inQueue, outQueue, **kwargs):

@@ -691,7 +691,6 @@ class SingleTaskGP(Draggable):
             
     def SetupAndRunOptimiser(self, evaluateFunction):
         try:
-            print('1')
             self.updateAssistantSignal.emit(f'{self.name} is setting up for the first time, which may take a few seconds.', '')
             mode = 'MAXIMIZE' if self.settings['mode'].upper() == 'MAXIMISE' else 'MINIMIZE'
             variables = dict()
@@ -700,7 +699,6 @@ class SingleTaskGP(Draggable):
             self.constraintsIDToName = dict()
             self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
             self.observerValues = np.zeros((self.settings['numSamples'] + self.settings['numSteps'], self.numObservers))
-            print('2')
             for _, d in enumerate(self.decisions):
                 if d.type == 'Group':
                     continue
@@ -709,7 +707,6 @@ class SingleTaskGP(Draggable):
                 variables[nm] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
                 self.variableNameToID[nm] = d.ID
             # Treat each block attached to a constraint as its own individual constraint.
-            print('3')
             for _, c in enumerate(self.constraints):
                 if c.type == 'Group':
                     continue
@@ -722,7 +719,6 @@ class SingleTaskGP(Draggable):
                     else:
                         self.optimiserConstraints[nm] = ['GREATER_THAN', c.settings['threshold']]
                     self.constraintsIDToName[ID] = nm
-            print('4')
             vocs = VOCS(
                 variables = variables,
                 objectives = {
@@ -730,22 +726,18 @@ class SingleTaskGP(Draggable):
                 },
                 constraints = self.optimiserConstraints,
             )
-            print('5')
             kernel = self.ConstructKernel()
-            print('5.5')
             constructor = StandardModelConstructor(
                 covar_modules = {
                     self.immediateObjectiveName: kernel,
                 },
             )
-            print('6')
             generatorKwargs = dict(
                 vocs = vocs,
                 gp_constructor = constructor,
                 n_monte_carlo_samples = 256,
                 n_candidates = 10,
             )
-            print('7')
             # TuRBO
             if self.settings['turbo'] == 'OPTIMISE':
                 generatorKwargs['turbo_controller'] = 'optimize'
@@ -760,7 +752,6 @@ class SingleTaskGP(Draggable):
                 generator = UpperConfidenceBoundGenerator(**generatorKwargs)
             else:
                 generator = ExpectedImprovementGenerator(**generatorKwargs)
-            print('8')
             if self.settings['turbo'] != 'DISABLED':
                 generator.turbo_controller.length = (
                     .05 # 5% of the range.
@@ -771,7 +762,6 @@ class SingleTaskGP(Draggable):
                 generator = generator,
                 evaluator = evaluator,
             )
-            print('9')
             self.bestValue = None
             self.bestCandidate = None
             self.runningAverageWindow = 5
@@ -783,9 +773,7 @@ class SingleTaskGP(Draggable):
             try:
                 self.X.random_evaluate(1) # run once to initialise shared memory array
             except Exception as e:
-                print('loooool')
-                print(e)
-            print('10')
+                pass
 
             self.initialised = True
             self.X.data.drop(0, inplace = True)
@@ -798,7 +786,6 @@ class SingleTaskGP(Draggable):
                     o.ID: f'{o.name} (ID: {o.ID})'
                     for o in self.observers
                 }
-            print('11')
             #### JUST FOR NOW ...
             numEvals = 0
             for it in range(numSamples):
@@ -821,7 +808,6 @@ class SingleTaskGP(Draggable):
                     self.inQueue.join()
                     self.outQueue.join()
                     return
-            print('12')
             # For testing - add the known good solution ...
             # if self.settings['turbo'] != 'DEFAULT':
             #     HSTRs = [.4178, -.4341, 3.27, .71, 3.5, -1.06]
@@ -835,7 +821,6 @@ class SingleTaskGP(Draggable):
             #     # self.X.data = pd.read_csv(Path(shared.cwd) / 'datadump' / '2026-02-24__17-25-23.csv')
             #     self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs[-4:], best, *BPMy, 0, False]], columns = self.X.data.columns))
             ####################
-            print('13')
             # train the model on the LH samples and centre the trust region if TuRBO is being used.
             # if self.notAllNaNs:
             #     self.X.generator.train_model()
