@@ -651,7 +651,6 @@ class SingleTaskGP(Draggable):
     def CheckDecisionStatesAgree(self):
         for d in self.decisions:
             if d.online != self.decisions[0].online:
-                print(f'{d.name} is online?', d.online)
                 shared.workspace.assistant.PushMessage(f'All decision variables of {self.name} must share the same Online or Offline state.', 'Error')
                 return False
             if d.online and np.isinf(d.data[1]):
@@ -721,6 +720,9 @@ class SingleTaskGP(Draggable):
             self.observerValues = np.zeros((self.settings['numSamples'] + self.settings['numSteps'], self.numObservers))
 
             initialDecisionDict = {}
+            initialObjectiveDict = {}
+            initialConstraintDict = {}
+            initialObserverDict = {}
 
             if self.settings['includeNominal']:
                 # store the initial values of the decision variables and objectives
@@ -750,6 +752,14 @@ class SingleTaskGP(Draggable):
                     else:
                         self.optimiserConstraints[nm] = ['GREATER_THAN', c.settings['threshold']]
                     self.constraintsIDToName[ID] = nm
+                    initialConstraintDict[nm] = c.Start()
+            for o in self.objectives:
+                nm = f'{o.name} (ID: {o.ID})'
+                initialObjectiveDict[nm] = o.Start()
+            for o in self.observers:
+                nm = f'{o.name} (ID: {o.ID})'
+                initialObserverDict[nm] = o.Start()
+
             vocs = VOCS(
                 variables = variables,
                 objectives = {
@@ -844,10 +854,16 @@ class SingleTaskGP(Draggable):
             if self.settings['includeNominal'] and not np.any(~np.isfinite([*self.initialDecisions, *self.initialObjectives, *self.initialConstraints])):
                 message = f'{message} At least one nominal readback value was not finite and no nominal vector was passed to the optimiser.'
                 messageType = 'Warning'
-                df = pd.DataFrame(
-                    [[*self.initialDecisions, *self.initialObjectives, *self.initialConstraints, *self.initialObservers, 0, False]],
-                    columns = self.X.data.columns
-                )
+
+                # df = pd.DataFrame(
+                #     [[*self.initialDecisions, *self.initialObjectives, *self.initialConstraints, *self.initialObservers, 0, False]],
+                #     columns = self.X.data.columns
+                # )
+                initialDict = {**initialDecisionDict, **initialObjectiveDict, **initialConstraintDict, **initialObserverDict}
+                df = pd.DataFrame(initialDict)
+                print('df looks like ths:')
+                print(df)
+                print('----------')
                 self.X.add_data(df)
             # For testing - add the known good solution ...
             # if self.settings['turbo'] != 'DEFAULT':
