@@ -860,7 +860,7 @@ class SingleTaskGP(Draggable):
             #     columns = self.X.data.columns
             # )
             initialDict = {**initialDecisionDict, **initialObjectiveDict, **initialConstraintDict, **initialObserverDict}
-            df = pd.DataFrame(initialDict)
+            df = pd.DataFrame([initialDict])
             print('df looks like ths:')
             print(df)
             print('----------')
