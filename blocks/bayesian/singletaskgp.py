@@ -859,12 +859,18 @@ class SingleTaskGP(Draggable):
             #     [[*self.initialDecisions, *self.initialObjectives, *self.initialConstraints, *self.initialObservers, 0, False]],
             #     columns = self.X.data.columns
             # )
-            initialDict = {**initialDecisionDict, **initialObjectiveDict, **initialConstraintDict, **initialObserverDict}
-            df = pd.DataFrame([initialDict])
-            print('df looks like ths:')
-            print(df)
-            print('----------')
-            
+            # initialDict = {**initialDecisionDict, **initialObjectiveDict, **initialConstraintDict, **initialObserverDict}
+            # df = pd.DataFrame([initialDict])
+            # print('df looks like ths:')
+            # print(df)
+            # print('----------')
+            # HSTRs = [.4178, -.4341, 3.27, .71, 3.5, -1.06]
+            # VSTRs = [3.8198, -4.18, -.28, .46, 1.1, 2.18]    
+            STRs = [2.8222, -.7047, .2179, -3.1151, 2.7212, -2.9693, -1.4127, 2.9378, 2.8741, 1.5146, .7807, -4.2992]
+            df = pd.DataFrame(
+                [[*STRs, *self.initialObjectives, 0, False]],
+                columns = self.X.data.columns
+            )
             self.X.add_data(df)
         # For testing - add the known good solution ...
         # if self.settings['turbo'] != 'DEFAULT':
