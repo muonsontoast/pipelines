@@ -112,6 +112,7 @@ def Load(path):
                             mode = v.get('mode', None),
                             turbo = v.get('turbo', None),
                             includeNominal = v.get('includeNominal', None),
+                            windowSizeInSeconds = v.get('windowSizeInSeconds', None),
                             dtype = v.get('dtype', None),
                             numberValue = v.get('numberValue', None),
                             numBlocks = v.get('numBlocks', None),

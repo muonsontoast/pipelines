@@ -54,12 +54,18 @@ def StopActions():
 
 def PersistentWorkerProcess(pause, stop, error, sharedMemoryName, shape, action, pipe, **kwargs):
     while True:
-        params = pipe.recv()
-        if params is None:
+        try:
+            params = pipe.recv()
+            if params is None:
+                break
+            result = action(pause, stop, error, sharedMemoryName, shape, params, **kwargs)
+            pipe.send(result)
+        except:
             break
-        result = action(pause, stop, error, sharedMemoryName, shape, params, **kwargs)
-        pipe.send(result)
-    pipe.close()
+    try:
+        pipe.close()
+    except:
+        pass
     sys.exit(0)
 
 def CreatePersistentWorkerProcess(entity, emptyArray, inQueue, outQueue, action, **kwargs):

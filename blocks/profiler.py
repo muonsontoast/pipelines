@@ -45,19 +45,21 @@ class Profiler(Draggable):
         self.SelectPostProcessOption()
         self.postProcessOptionWasChanged = False
         self.saveName = None
+        self.oldDataRng = 0
         Thread(target = self.FetchValues).start()
 
     def Start(self):
         if self.data.shape[0] == 0:
             return np.nan
-        self.stopCheckThread.wait(timeout = self.settings['windowSizeInSeconds'])
+        self.stopCheckThread.wait(timeout = 1.05 * self.settings['windowSizeInSeconds'])
         return self.lineData[next(iter(self.lineData))][0]
 
     def UpdatePlot(self):
         self.canvas.restore_region(self.background)
         nowTime = time.time()
         mn, mx = self.ax.get_ylim()
-        newMn, newMx = self.ax.get_ylim()
+        newMn, newMx = mn, mx
+        dataMn, dataMx = 1e20, -1e20
         for ID in self.linksIn:
             try:
                 y = self.data[ID]
@@ -81,8 +83,12 @@ class Profiler(Draggable):
             x = nowTime - self.data['timestamp'] - self.pollPeriod
             if self.settings['windowSizeInSeconds'] > 60:
                 x /= 60
-            newMn = min(newMn, np.nanmin(self.lineData[ID]))
-            newMx = max(newMx, np.nanmax(self.lineData[ID]))
+            currentMin = np.nanmin(self.lineData[ID])
+            currentMax = np.nanmax(self.lineData[ID])
+            dataMn = min(dataMn, currentMin)
+            dataMx = max(dataMx, currentMax)
+            newMn = min(newMn, currentMin)
+            newMx = max(newMx, currentMax)
             self.plotLines[ID].set_data(x, self.lineData[ID])
             if len(self.data) > 0:
                 try:
@@ -94,6 +100,14 @@ class Profiler(Draggable):
             if not np.isinf(newMn) and not np.isinf(newMx):
                 self.ax.set_ylim(newMn - .25 * rng, newMx + .25 * rng)
                 self.canvas.draw()
+        else:
+            dataRng = dataMx - dataMn
+            if dataRng != self.oldDataRng:
+                currentRng = mx - mn
+                if dataRng < .25 * currentRng:
+                    self.ax.set_ylim(dataMn - .25 * dataRng, dataMx + .25 * dataRng)
+                    self.canvas.draw()
+
         self.canvas.blit(self.ax.bbox)
         if self.postProcessOptionWasChanged:
             self.postProcessOptionWasChanged = False
@@ -298,7 +312,6 @@ class Profiler(Draggable):
             newData['timestamp'] = nowTime
             for ID in self.linksIn:
                 newData[ID] = shared.entities[ID].Start()
-                # newData[ID] = np.random.randn() * ID
             newData = pd.DataFrame([newData])
             self.data = pd.concat([self.data, newData], ignore_index = True)
             self.data = self.data[nowTime - self.data['timestamp'] <= self.settings['windowSizeInSeconds']].reset_index(drop = True)
