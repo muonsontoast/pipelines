@@ -651,6 +651,7 @@ class SingleTaskGP(Draggable):
     def CheckDecisionStatesAgree(self):
         for d in self.decisions:
             if d.online != self.decisions[0].online:
+                print(f'{d.name} is online?', d.online)
                 shared.workspace.assistant.PushMessage(f'All decision variables of {self.name} must share the same Online or Offline state.', 'Error')
                 return False
             if d.online and np.isinf(d.data[1]):
