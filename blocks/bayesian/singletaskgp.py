@@ -709,244 +709,129 @@ class SingleTaskGP(Draggable):
                 pass
             
     def SetupAndRunOptimiser(self, evaluateFunction):
-        try:
-            self.updateAssistantSignal.emit(f'{self.name} is setting up for the first time, which may take a few seconds.', '')
-            mode = 'MAXIMIZE' if self.settings['mode'].upper() == 'MAXIMISE' else 'MINIMIZE'
-            variables = dict()
-            self.variableNameToID = dict()
-            self.optimiserConstraints = dict()
-            self.constraintsIDToName = dict()
-            self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
-            self.observerValues = np.zeros((self.settings['numSamples'] + self.settings['numSteps'], self.numObservers))
+        # try:
+        self.updateAssistantSignal.emit(f'{self.name} is setting up for the first time, which may take a few seconds.', '')
+        mode = 'MAXIMIZE' if self.settings['mode'].upper() == 'MAXIMISE' else 'MINIMIZE'
+        variables = dict()
+        self.variableNameToID = dict()
+        self.optimiserConstraints = dict()
+        self.constraintsIDToName = dict()
+        self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
+        self.observerValues = np.zeros((self.settings['numSamples'] + self.settings['numSteps'], self.numObservers))
 
-            initialDecisionDict = {}
-            initialObjectiveDict = {}
-            initialConstraintDict = {}
-            initialObserverDict = {}
+        initialDecisionDict = {}
+        initialObjectiveDict = {}
+        initialConstraintDict = {}
+        initialObserverDict = {}
 
-            if self.settings['includeNominal']:
-                # store the initial values of the decision variables and objectives
-                self.initialDecisions = np.array([d.Start(setOnly = True) for d in self.decisions])
-                self.initialObjectives = np.array([o.Start() for o in self.objectives])
-                self.initialConstraints = np.array([c.Start() for c in self.constraints])
-                self.initialObservers = np.array([o.Start() for o in self.observers])
+        if self.settings['includeNominal']:
+            # store the initial values of the decision variables and objectives
+            self.initialDecisions = np.array([d.Start(setOnly = True) for d in self.decisions])
+            self.initialObjectives = np.array([o.Start() for o in self.objectives])
+            self.initialConstraints = np.array([c.Start() for c in self.constraints])
+            self.initialObservers = np.array([o.Start() for o in self.observers])
 
-            for _, d in enumerate(self.decisions):
-                if d.type == 'Group':
+        for _, d in enumerate(self.decisions):
+            if d.type == 'Group':
+                continue
+            self.activeDims[d.ID] = _
+            nm = f'{d.name} (ID: {d.ID})'
+            variables[nm] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
+            initialDecisionDict[nm] = self.initialDecisions[_]
+            self.variableNameToID[nm] = d.ID
+        # Treat each block attached to a constraint as its own individual constraint.
+        for _, c in enumerate(self.constraints):
+            if c.type == 'Group':
+                continue
+            for ID in c.linksIn:
+                if shared.entities[ID].type == 'Group':
                     continue
-                self.activeDims[d.ID] = _
-                nm = f'{d.name} (ID: {d.ID})'
-                variables[nm] = [d.settings['components']['value']['min'], d.settings['components']['value']['max']]
-                initialDecisionDict[nm] = self.initialDecisions[_]
-                self.variableNameToID[nm] = d.ID
-            # Treat each block attached to a constraint as its own individual constraint.
-            for _, c in enumerate(self.constraints):
-                if c.type == 'Group':
-                    continue
-                for ID in c.linksIn:
-                    if shared.entities[ID].type == 'Group':
-                        continue
-                    nm = f'{shared.entities[ID].name} (ID: {ID})'
-                    if c.type == '< (Constraint)':
-                        self.optimiserConstraints[nm] = ['LESS_THAN', c.settings['threshold']]
-                    else:
-                        self.optimiserConstraints[nm] = ['GREATER_THAN', c.settings['threshold']]
-                    self.constraintsIDToName[ID] = nm
-                    initialConstraintDict[nm] = c.Start()
-            for o in self.objectives:
-                nm = f'{o.name} (ID: {o.ID})'
-                initialObjectiveDict[nm] = o.Start()
-            for o in self.observers:
-                nm = f'{o.name} (ID: {o.ID})'
-                initialObserverDict[nm] = o.Start()
+                nm = f'{shared.entities[ID].name} (ID: {ID})'
+                if c.type == '< (Constraint)':
+                    self.optimiserConstraints[nm] = ['LESS_THAN', c.settings['threshold']]
+                else:
+                    self.optimiserConstraints[nm] = ['GREATER_THAN', c.settings['threshold']]
+                self.constraintsIDToName[ID] = nm
+                initialConstraintDict[nm] = c.Start()
+        for o in self.objectives:
+            nm = f'{o.name} (ID: {o.ID})'
+            initialObjectiveDict[nm] = o.Start()
+        for o in self.observers:
+            nm = f'{o.name} (ID: {o.ID})'
+            initialObserverDict[nm] = o.Start()
 
-            vocs = VOCS(
-                variables = variables,
-                objectives = {
-                    self.immediateObjectiveName: mode,
-                },
-                constraints = self.optimiserConstraints,
-            )
-            kernel = self.ConstructKernel()
-            constructor = StandardModelConstructor(
-                covar_modules = {
-                    self.immediateObjectiveName: kernel,
-                },
-            )
-            generatorKwargs = dict(
-                vocs = vocs,
-                gp_constructor = constructor,
-                n_monte_carlo_samples = 256,
-                n_candidates = 10,
-            )
-            # TuRBO
-            if self.settings['turbo'] == 'OPTIMISE':
+        vocs = VOCS(
+            variables = variables,
+            objectives = {
+                self.immediateObjectiveName: mode,
+            },
+            constraints = self.optimiserConstraints,
+        )
+        kernel = self.ConstructKernel()
+        constructor = StandardModelConstructor(
+            covar_modules = {
+                self.immediateObjectiveName: kernel,
+            },
+        )
+        generatorKwargs = dict(
+            vocs = vocs,
+            gp_constructor = constructor,
+            n_monte_carlo_samples = 256,
+            n_candidates = 10,
+        )
+        # TuRBO
+        if self.settings['turbo'] == 'OPTIMISE':
+            generatorKwargs['turbo_controller'] = 'optimize'
+        elif self.settings['turbo'] == 'SAFETY':
+            if len(self.constraints) > 0:
+                generatorKwargs['turbo_controller'] = 'safety'
+            else:
                 generatorKwargs['turbo_controller'] = 'optimize'
-            elif self.settings['turbo'] == 'SAFETY':
-                if len(self.constraints) > 0:
-                    generatorKwargs['turbo_controller'] = 'safety'
-                else:
-                    generatorKwargs['turbo_controller'] = 'optimize'
-                    self.updateAssistantSignal.emit(f'TuRBO mode of {self.name} is falling back to OPTIMISE because there are no constraints.', 'Warning')
-            if self.settings['acqFunction'] == 'UCB':
-                generatorKwargs['beta'] = self.settings['acqHyperparameter']
-                generator = UpperConfidenceBoundGenerator(**generatorKwargs)
-            else:
-                generator = ExpectedImprovementGenerator(**generatorKwargs)
-            if self.settings['turbo'] != 'DISABLED':
-                generator.turbo_controller.length = (
-                    .05 # 5% of the range.
-                )
-            evaluator = Evaluator(function = evaluateFunction)
-            self.X = Xopt(
-                vocs = vocs,
-                generator = generator,
-                evaluator = evaluator,
+                self.updateAssistantSignal.emit(f'TuRBO mode of {self.name} is falling back to OPTIMISE because there are no constraints.', 'Warning')
+        if self.settings['acqFunction'] == 'UCB':
+            generatorKwargs['beta'] = self.settings['acqHyperparameter']
+            generator = UpperConfidenceBoundGenerator(**generatorKwargs)
+        else:
+            generator = ExpectedImprovementGenerator(**generatorKwargs)
+        if self.settings['turbo'] != 'DISABLED':
+            generator.turbo_controller.length = (
+                .05 # 5% of the range.
             )
-            self.bestValue = None
-            self.bestCandidate = None
-            self.runningAverageWindow = 5
-            self.lastValues = np.array([])
-            self.initialised = False
-            self.notAllNaNs = False
-            timestamp = self.Timestamp(includeDate = True, stripColons = True)
+        evaluator = Evaluator(function = evaluateFunction)
+        self.X = Xopt(
+            vocs = vocs,
+            generator = generator,
+            evaluator = evaluator,
+        )
+        self.bestValue = None
+        self.bestCandidate = None
+        self.runningAverageWindow = 5
+        self.lastValues = np.array([])
+        self.initialised = False
+        self.notAllNaNs = False
+        timestamp = self.Timestamp(includeDate = True, stripColons = True)
 
-            self.updateAssistantSignal.emit(f'{self.name} is now running.', '')
-            try:
-                self.X.random_evaluate(1) # run once to initialise shared memory array
-            except Exception as e:
-                pass
+        self.updateAssistantSignal.emit(f'{self.name} is now running.', '')
+        try:
+            self.X.random_evaluate(1) # run once to initialise shared memory array
+        except Exception as e:
+            pass
 
-            self.initialised = True
-            self.X.data.drop(0, inplace = True)
-            self.numEvals = 0
-            # random samples
-            numSamples = max(self.settings['numSamples'], 1)
-            if self.numObservers > 0:
-                insertIdx = self.numDecisions + self.numFundamentalConstraints + self.numObjectives
-                observerIDToName = {
-                    o.ID: f'{o.name} (ID: {o.ID})'
-                    for o in self.observers
-                }
-            numEvals = 0
-            for it in range(numSamples):
-                self.X.random_evaluate(1)
-                self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
-                if self.numObservers > 0:
-                    dataToSave = self.X.data.copy()
-                    for it, o in enumerate(self.observers):
-                        dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
-                    dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-                else:
-                    self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-                self.progressAmount = (numEvals + 1) / self.maxEvals
-                self.updateProgressSignal.emit(self.progressAmount)
-                numEvals += 1
-                self.GetBestRow()
-                self.UpdateBestMetrics()
-                if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1]):
-                    self.inQueue.put(None)
-                    self.inQueue.join()
-                    self.outQueue.join()
-                    return
-            message = f'{self.name} has taken initial random samples.'
-            messageType = ''
-            if self.settings['includeNominal'] and not np.any(~np.isfinite([*self.initialDecisions, *self.initialObjectives, *self.initialConstraints])):
-                message = f'{message} At least one nominal readback value was not finite and no nominal vector was passed to the optimiser.'
-                messageType = 'Warning'
-
-                # df = pd.DataFrame(
-                #     [[*self.initialDecisions, *self.initialObjectives, *self.initialConstraints, *self.initialObservers, 0, False]],
-                #     columns = self.X.data.columns
-                # )
-                initialDict = {**initialDecisionDict, **initialObjectiveDict, **initialConstraintDict, **initialObserverDict}
-                df = pd.DataFrame(initialDict)
-                print('df looks like ths:')
-                print(df)
-                print('----------')
-                self.X.add_data(df)
-            # For testing - add the known good solution ...
-            # if self.settings['turbo'] != 'DEFAULT':
-            #     HSTRs = [.4178, -.4341, 3.27, .71, 3.5, -1.06]
-            #     VSTRs = [3.8198, -4.18, -.28, .46, 1.1, 2.18]
-            #     QUADs = [2.3857, -1.8666, -2.4557, 2.1872, 2.2825, 2.5736, -1.9105, 1.5804]
-            #     # first two BPM trajectories are too large, constrain them.
-            #     # BPMy = [-6, -2.5]
-            #     BPMy = [6, 2.5, 1.5]
-            #     BPMx = [3, -1]
-            #     best = 3.63
-            #     # self.X.data = pd.read_csv(Path(shared.cwd) / 'datadump' / '2026-02-24__17-25-23.csv')
-            #     self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs[-4:], best, *BPMy, 0, False]], columns = self.X.data.columns))
-            ####################
-            # train the model on the LH samples and centre the trust region if TuRBO is being used.
-            if self.settings['turbo'] != 'DISABLED':
-                self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
-                if self.notAllNaNs:
-                    self.X.generator.train_model()
-                    self.X.generator.turbo_controller.update_state(self.X.generator)
-            self.updateAssistantSignal.emit(message, messageType)
-            # optimiser steps
-            if self.settings['numSteps'] > 0:
-                for it in range(self.settings['numSteps']):
-                    print(f'Step {it + 1}/{self.settings['numSteps']}')
-                    self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
-                    if self.notAllNaNs:
-                        try:
-                            self.X.step()
-                        except:
-                            self.X.random_evaluate(1)
-                    else:
-                        self.X.random_evaluate(1)
-                    # except Exception as e: # TuRBO will fail if no solutions in the dataset satisfy all constraints or due to ill-conditioned matrix.
-                    #     print('B')
-                    #     print(e)
-                    #     self.X.random_evaluate(1)
-                    # else:
-                    #     self.X.random_evaluate(1)
-                    # Handle observers if they exist.
-                    if self.numObservers > 0:
-                        dataToSave = self.X.data.copy()
-                        for it, o in enumerate(self.observers):
-                            dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
-                        dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-                    else:
-                        self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-                    self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
-                    self.progressAmount = self.numEvals / self.maxEvals
-                    self.updateProgressSignal.emit(self.progressAmount)
-                    try:
-                        self.GetBestRow()
-                        if self.bestRow is not None:
-                            self.bestValue = self.bestRow.iloc[self.numDecisions]
-                            with self.lock:
-                                if self.lastValues.shape[0] > self.runningAverageWindow:
-                                    self.lastValues = np.delete(self.lastValues, 0)
-                                self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
-                            self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
-                            self.updateAverageSignal.emit(np.nanmean(self.lastValues))
-                            self.updateBestSignal.emit(self.bestValue)
-                    except Exception as e:
-                        print(e)
-                    try:
-                        if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .1):
-                            self.inQueue.put(None)
-                            self.inQueue.join()
-                            self.outQueue.join()
-                            return
-                    except:
-                        pass
-            if self.bestRow is None:
-                if self.numConstraints > 0:
-                    self.updateAssistantSignal.emit(f'{self.name} has finished, but it failed to find a candidate satisfying the constraints.', 'Warning')
-                else:
-                    self.updateAssistantSignal.emit(f'{self.name} has finished, but it only recorded NaNs.', 'Warning')
-            else:
-                if self.numConstraints > 0:
-                    self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution satisfying the constraints.', '')    
-                else:
-                    self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution.', '')
-            print('Done with optimiser steps!')
-            # Handle observers if they exist.
+        self.initialised = True
+        self.X.data.drop(0, inplace = True)
+        self.numEvals = 0
+        # random samples
+        numSamples = max(self.settings['numSamples'], 1)
+        if self.numObservers > 0:
+            insertIdx = self.numDecisions + self.numFundamentalConstraints + self.numObjectives
+            observerIDToName = {
+                o.ID: f'{o.name} (ID: {o.ID})'
+                for o in self.observers
+            }
+        numEvals = 0
+        for it in range(numSamples):
+            self.X.random_evaluate(1)
+            self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
             if self.numObservers > 0:
                 dataToSave = self.X.data.copy()
                 for it, o in enumerate(self.observers):
@@ -954,8 +839,124 @@ class SingleTaskGP(Draggable):
                 dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
             else:
                 self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
-        except Exception as e:
-            pass
+            self.progressAmount = (numEvals + 1) / self.maxEvals
+            self.updateProgressSignal.emit(self.progressAmount)
+            numEvals += 1
+            self.GetBestRow()
+            self.UpdateBestMetrics()
+            if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1]):
+                self.inQueue.put(None)
+                self.inQueue.join()
+                self.outQueue.join()
+                return
+        message = f'{self.name} has taken initial random samples.'
+        messageType = ''
+        if self.settings['includeNominal'] and not np.any(~np.isfinite([*self.initialDecisions, *self.initialObjectives, *self.initialConstraints])):
+            message = f'{message} At least one nominal readback value was not finite and no nominal vector was passed to the optimiser.'
+            messageType = 'Warning'
+
+            # df = pd.DataFrame(
+            #     [[*self.initialDecisions, *self.initialObjectives, *self.initialConstraints, *self.initialObservers, 0, False]],
+            #     columns = self.X.data.columns
+            # )
+            initialDict = {**initialDecisionDict, **initialObjectiveDict, **initialConstraintDict, **initialObserverDict}
+            df = pd.DataFrame(initialDict)
+            print('df looks like ths:')
+            print(df)
+            print('----------')
+            
+            self.X.add_data(df)
+        # For testing - add the known good solution ...
+        # if self.settings['turbo'] != 'DEFAULT':
+        #     HSTRs = [.4178, -.4341, 3.27, .71, 3.5, -1.06]
+        #     VSTRs = [3.8198, -4.18, -.28, .46, 1.1, 2.18]
+        #     QUADs = [2.3857, -1.8666, -2.4557, 2.1872, 2.2825, 2.5736, -1.9105, 1.5804]
+        #     # first two BPM trajectories are too large, constrain them.
+        #     # BPMy = [-6, -2.5]
+        #     BPMy = [6, 2.5, 1.5]
+        #     BPMx = [3, -1]
+        #     best = 3.63
+        #     # self.X.data = pd.read_csv(Path(shared.cwd) / 'datadump' / '2026-02-24__17-25-23.csv')
+        #     self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs[-4:], best, *BPMy, 0, False]], columns = self.X.data.columns))
+        ####################
+        # train the model on the LH samples and centre the trust region if TuRBO is being used.
+        if self.settings['turbo'] != 'DISABLED':
+            self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
+            if self.notAllNaNs:
+                self.X.generator.train_model()
+                self.X.generator.turbo_controller.update_state(self.X.generator)
+        self.updateAssistantSignal.emit(message, messageType)
+        # optimiser steps
+        if self.settings['numSteps'] > 0:
+            for it in range(self.settings['numSteps']):
+                print(f'Step {it + 1}/{self.settings['numSteps']}')
+                self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
+                if self.notAllNaNs:
+                    try:
+                        self.X.step()
+                    except:
+                        self.X.random_evaluate(1)
+                else:
+                    self.X.random_evaluate(1)
+                # except Exception as e: # TuRBO will fail if no solutions in the dataset satisfy all constraints or due to ill-conditioned matrix.
+                #     print('B')
+                #     print(e)
+                #     self.X.random_evaluate(1)
+                # else:
+                #     self.X.random_evaluate(1)
+                # Handle observers if they exist.
+                if self.numObservers > 0:
+                    dataToSave = self.X.data.copy()
+                    for it, o in enumerate(self.observers):
+                        dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+                    dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                else:
+                    self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+                self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
+                self.progressAmount = self.numEvals / self.maxEvals
+                self.updateProgressSignal.emit(self.progressAmount)
+                try:
+                    self.GetBestRow()
+                    if self.bestRow is not None:
+                        self.bestValue = self.bestRow.iloc[self.numDecisions]
+                        with self.lock:
+                            if self.lastValues.shape[0] > self.runningAverageWindow:
+                                self.lastValues = np.delete(self.lastValues, 0)
+                            self.lastValues = np.append(self.lastValues, np.array([self.X.data[self.immediateObjectiveName].iloc[-1]]))
+                        self.updateCandidateSignal.emit('  '.join([f'{num:.3f}' for num in self.bestRow.iloc[:self.numDecisions]]))
+                        self.updateAverageSignal.emit(np.nanmean(self.lastValues))
+                        self.updateBestSignal.emit(self.bestValue)
+                except Exception as e:
+                    print(e)
+                try:
+                    if self.CheckForInterrupt(runningActions[self.ID][0], runningActions[self.ID][1], timeout = .1):
+                        self.inQueue.put(None)
+                        self.inQueue.join()
+                        self.outQueue.join()
+                        return
+                except:
+                    pass
+        if self.bestRow is None:
+            if self.numConstraints > 0:
+                self.updateAssistantSignal.emit(f'{self.name} has finished, but it failed to find a candidate satisfying the constraints.', 'Warning')
+            else:
+                self.updateAssistantSignal.emit(f'{self.name} has finished, but it only recorded NaNs.', 'Warning')
+        else:
+            if self.numConstraints > 0:
+                self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution satisfying the constraints.', '')    
+            else:
+                self.updateAssistantSignal.emit(f'{self.name} has finished and found a solution.', '')
+        print('Done with optimiser steps!')
+        # Handle observers if they exist.
+        if self.numObservers > 0:
+            dataToSave = self.X.data.copy()
+            for it, o in enumerate(self.observers):
+                dataToSave.insert(loc = insertIdx, column = observerIDToName[o.ID], value = self.observerValues[:self.numEvals, it])
+            dataToSave.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+        else:
+            self.X.data.to_csv(Path(shared.cwd) / 'datadump' / f'{timestamp}.csv', index = False)
+        # except Exception as e:
+        #     pass
         try:
             if self.online:
                 self.SendMachineInstructions(runningActions[self.ID][0], runningActions[self.ID][1], runningActions[self.ID][2], initialDecisionDict)
