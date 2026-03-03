@@ -21,9 +21,11 @@ from pathlib import Path
 from threading import Thread
 import faulthandler
 faulthandler.enable()
+import shutil
+import matplotlib
+import matplotlib.pyplot as plt
 from .inspector import Inspector
 from .ui.workspace import Workspace
-from .ui.groupmenu import GroupMenu
 from .lattice.latticeglobal import LatticeGlobal
 from .lattice import latticeutils
 from .utils.entity import Entity
@@ -35,6 +37,10 @@ from . import style
 from . import shared
 
 plt.rcParams['font.size'] = 10 # Define the font size for plots.
+if shutil.which('latex') is not None:
+    plt.rcParams['text.usetex'] = True
+else:
+    plt.rcParams['text.usetex'] = False
 cwd = str(Path.cwd().resolve()) # Get the current working directory.
 signal.signal(signal.SIGINT, signal.SIG_DFL) # Allow Ctrl+C interrupt from terminal.
 

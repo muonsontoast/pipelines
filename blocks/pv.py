@@ -192,9 +192,12 @@ class PV(Draggable):
                     self.minimumReadOnlySignal.emit(False)
                     self.maximumReadOnlySignal.emit(False)
 
-    def Start(self):
+    def Start(self, setOnly = False):
         '''Unlike more complex blocks, a PV just returns its current value, indicating the end of a graph.'''
-        return self.data[1] if not self.settings['magnitudeOnly'] else abs(self.data[1])
+        if not setOnly:
+            return self.data[1] if not self.settings['magnitudeOnly'] else abs(self.data[1])
+        else:
+            return self.data[0]
     
     def FetchAndReadValue(self, timeout = .5):
         '''Asynchronously fetch and update current value, without blocking the UI thread.'''

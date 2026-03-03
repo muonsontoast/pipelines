@@ -5,7 +5,7 @@ import matplotlib.style as mplstyle
 mplstyle.use('fast')
 from .kernel import Kernel
 
-plt.rcParams['text.usetex'] = True
+# plt.rcParams['text.usetex'] = True
 plt.rcParams['font.size'] = 14
 
 class LinearKernel(Kernel):

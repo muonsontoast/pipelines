@@ -14,7 +14,7 @@ from ..ui.blitmanager import BlitManager
 from .. import shared
 from .. import style
 
-plt.rcParams['text.usetex'] = True
+# plt.rcParams['text.usetex'] = True
 plt.rcParams['font.size'] = 14
 
 class View(Draggable):

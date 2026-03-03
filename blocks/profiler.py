@@ -18,7 +18,7 @@ from .pv import PV
 from .. import shared
 from .. import style
 
-plt.rcParams['text.usetex'] = False
+# plt.rcParams['text.usetex'] = True
 plt.rcParams['font.size'] = 2
 
 class Profiler(Draggable):
@@ -104,7 +104,7 @@ class Profiler(Draggable):
             dataRng = dataMx - dataMn
             if dataRng != self.oldDataRng:
                 currentRng = mx - mn
-                if dataRng < .25 * currentRng:
+                if dataRng < .25 * currentRng and dataRng > 1e-2:
                     self.ax.set_ylim(dataMn - .25 * dataRng, dataMx + .25 * dataRng)
                     self.canvas.draw()
 
@@ -128,7 +128,7 @@ class Profiler(Draggable):
         self.widget.layout().setSpacing(15)
         self.figure = Figure(figsize = (11, 5), dpi = 300)
         self.figure.set_animated(True)  # Enable blitting for faster redraws
-        self.figure.subplots_adjust(left = .135, right = .95, top = .975, bottom = .25)
+        self.figure.subplots_adjust(left = .135, right = .95, top = .975, bottom = .275)
         self.figure.set_facecolor('none')
         self.plotLines = {}
         self.ax = self.figure.add_subplot(111)
