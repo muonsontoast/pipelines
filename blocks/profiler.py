@@ -101,7 +101,7 @@ class Profiler(Draggable):
             self.savePath = Path(shared.cwd) / 'datadump' / self.saveName
             self.data.to_csv(self.savePath, index = False)
         elif self.data.shape[0] > 0:
-            self.data.iloc[0:1].to_csv(self.savePath, mode = 'a', index = False, header = False)
+            self.data.iloc[-1:].to_csv(self.savePath, mode = 'a', index = False, header = False)
 
     def Push(self):
         super().Push()

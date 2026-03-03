@@ -51,13 +51,14 @@ class SingleTaskGP(Draggable):
             simPrecision = 'fp64'
 
         super().__init__(
-            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 665]), 
+            proxy, name = kwargs.pop('name', 'Single Task GP'), type = 'Single Task GP', size = kwargs.pop('size', [600, 700]), 
             acqFunction = kwargs.pop('acqFunction', 'UCB'),
             acqHyperparameter = kwargs.pop('acqHyperparameter', 2),
             numSamples = kwargs.pop('numSamples', 5),
             numSteps = kwargs.pop('numSteps', 20),
             mode = kwargs.pop('mode', 'MAXIMISE'),
             turbo = kwargs.pop('turbo', 'DISABLED'),
+            includeNominal = kwargs.pop('includeNominal', False),
             numParticles = kwargs.pop('numParticles', 5000),
             simPrecision = simPrecision,
             headerColor = "#a4243b",
@@ -193,7 +194,7 @@ class SingleTaskGP(Draggable):
         self.widget.layout().addWidget(self.content)
         # settings section
         settings = QWidget()
-        settings.setFixedHeight(235)
+        settings.setFixedHeight(270)
         settings.setLayout(QVBoxLayout())
         settings.layout().setContentsMargins(0, 5, 5, 0)
         settingsLabel = QLabel('<b>SETTINGS</b>')
@@ -301,6 +302,24 @@ class SingleTaskGP(Draggable):
         self.stepsEdit.returnPressed.connect(self.ChangeSteps)
         self.steps.layout().addWidget(self.stepsEdit)
         settings.layout().addWidget(self.steps)
+        # Include initial candidate
+        nominalCandidate = QWidget()
+        nominalCandidate.setFixedHeight(30)
+        nominalCandidate.setLayout(QHBoxLayout())
+        nominalCandidate.layout().setContentsMargins(5, 0, 0, 0)
+        nominalLabel = QLabel('Nominal')
+        nominalLabel.setStyleSheet(style.LabelStyle(fontColor = '#c4c4c4', fontSize = 12))
+        nominalCandidate.layout().addWidget(nominalLabel)
+        self.nominalButton = QPushButton()
+        self.nominalButton.pressed.connect(self.ChangeNominal)
+        if self.settings['includeNominal']:
+            self.nominalButton.setText('Yes')
+        else:
+            self.nominalButton.setText('No')
+        self.nominalButton.setStyleSheet(style.PushButtonBorderlessStyle(color = '#3e3e3e', hoverColor = '#3c3c3c', fontColor = '#c4c4c4', fontSize = 12, borderRadius = 6))
+        self.nominalButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        nominalCandidate.layout().addWidget(self.nominalButton)
+        settings.layout().addWidget(nominalCandidate)
         # mode
         self.modeWidget = QWidget()
         self.modeWidget.setFixedHeight(30)
@@ -461,14 +480,14 @@ class SingleTaskGP(Draggable):
                 break
             time.sleep(.2)
 
-    # def Timestamp(self, includeDate = False, stripColons = False):
-    #     if includeDate:
-    #         timestamp = datetime.now().strftime('%Y-%m-%d__%H:%M:%S')
-    #     else:
-    #         timestamp = datetime.now().strftime('%H:%M:%S')
-    #     if stripColons:
-    #         timestamp = '-'.join(timestamp.split(':'))
-    #     return timestamp
+    def ChangeNominal(self):
+        self.settings['includeNominal'] = not self.settings['includeNominal']
+        if self.settings['includeNominal']:
+            self.nominalButton.setText('Yes')
+            shared.workspace.assistant.PushMessage(f'Nominal decision variable values will be included in the initial dataset for {self.name}.')
+        else:
+            self.nominalButton.setText('No')
+            shared.workspace.assistant.PushMessage(f'Nominal decision variable values will not be included in the initial dataset for {self.name}.')
 
     def ChangeMode(self):
         self.settings['mode'] = 'MAXIMISE' if self.settings['mode'] == 'MINIMISE' else 'MINIMISE'
@@ -769,6 +788,14 @@ class SingleTaskGP(Draggable):
             self.initialised = False
             self.notAllNaNs = False
             timestamp = self.Timestamp(includeDate = True, stripColons = True)
+
+            if self.settings['includeNominal']:
+                # store the initial values of the decision variables and objectives
+                self.initialDecisions = np.array([d.Start() for d in self.decisions])
+                self.initialObjectives = np.array([o.Start() for o in self.objectives])
+                self.initialConstraints = np.array([c.Start() for c in self.constraints])
+                self.initialObservers = np.array([o.Start() for o in self.observers])
+
             self.updateAssistantSignal.emit(f'{self.name} is now running.', '')
             try:
                 self.X.random_evaluate(1) # run once to initialise shared memory array
@@ -808,6 +835,18 @@ class SingleTaskGP(Draggable):
                     self.inQueue.join()
                     self.outQueue.join()
                     return
+            message = f'{self.name} has taken initial random samples.'
+            messageType = ''
+            if self.settings['includeNominal'] and not np.any(~np.isfinite(self.initialDecisions)):
+                message = f'{message} At least one nominal readback value was not finite abd no nominal vector was passed to the optimiser.'
+                messageType = 'Warning'
+                print('>> cols:', self.X.data.columns)
+                df = pd.DataFrame(
+                    [[*self.initialDecisions, *self.initialObjectives, *self.initialConstraints, *self.initialObservers, 0, False]],
+                    columns = self.X.data.columns
+                )
+                print('>>', df)
+                self.X.add_data(df)
             # For testing - add the known good solution ...
             # if self.settings['turbo'] != 'DEFAULT':
             #     HSTRs = [.4178, -.4341, 3.27, .71, 3.5, -1.06]
@@ -826,7 +865,7 @@ class SingleTaskGP(Draggable):
             #     self.X.generator.train_model()
             #     self.X.generator.turbo_controller.update_state(self.X.generator)
 
-            self.updateAssistantSignal.emit(f'{self.name} has taken initial random samples.', '')
+            self.updateAssistantSignal.emit(message, messageType)
             # optimiser steps
             if self.settings['numSteps'] > 0:
                 for it in range(self.settings['numSteps']):
