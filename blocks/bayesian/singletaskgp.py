@@ -718,7 +718,6 @@ class SingleTaskGP(Draggable):
         self.constraintsIDToName = dict()
         self.immediateObjectiveName = f'{self.objectives[0].name} (ID: {self.objectives[0].ID})'
         self.observerValues = np.zeros((self.settings['numSamples'] + self.settings['numSteps'], self.numObservers))
-
         initialDecisionDict = {}
         initialObjectiveDict = {}
         initialConstraintDict = {}
@@ -730,7 +729,6 @@ class SingleTaskGP(Draggable):
             self.initialObjectives = np.array([o.Start() for o in self.objectives])
             self.initialConstraints = np.array([c.Start() for c in self.constraints])
             self.initialObservers = np.array([o.Start() for o in self.observers])
-
         for _, d in enumerate(self.decisions):
             if d.type == 'Group':
                 continue
@@ -798,7 +796,7 @@ class SingleTaskGP(Draggable):
             generator = ExpectedImprovementGenerator(**generatorKwargs)
         if self.settings['turbo'] != 'DISABLED':
             generator.turbo_controller.length = (
-                .05 # 5% of the range.
+                .1 # 10% of the range.
             )
         evaluator = Evaluator(function = evaluateFunction)
         self.X = Xopt(
@@ -813,15 +811,16 @@ class SingleTaskGP(Draggable):
         self.initialised = False
         self.notAllNaNs = False
         timestamp = self.Timestamp(includeDate = True, stripColons = True)
-
         self.updateAssistantSignal.emit(f'{self.name} is now running.', '')
-        try:
-            self.X.random_evaluate(1) # run once to initialise shared memory array
-        except Exception as e:
-            pass
-
-        self.initialised = True
-        self.X.data.drop(0, inplace = True)
+        # try:
+        #     self.X.random_evaluate(1) # run once to initialise shared memory array
+        # except Exception as e:
+        #     self.inQueue.put(None)
+        #     self.inQueue.join()
+        #     self.outQueue.join()
+        #     return
+        # self.initialised = True
+        # self.X.data.drop(0, inplace = True)
         self.numEvals = 0
         # random samples
         numSamples = max(self.settings['numSamples'], 1)
@@ -854,46 +853,21 @@ class SingleTaskGP(Draggable):
                 return
         message = f'{self.name} has taken initial random samples.'
         messageType = ''
-        if self.settings['includeNominal'] and not np.any(~np.isfinite([*self.initialDecisions, *self.initialObjectives, *self.initialConstraints])):
-            message = f'{message} At least one nominal readback value was not finite and no nominal vector was passed to the optimiser.'
-            messageType = 'Warning'
-
-            # df = pd.DataFrame(
-            #     [[*self.initialDecisions, *self.initialObjectives, *self.initialConstraints, *self.initialObservers, 0, False]],
-            #     columns = self.X.data.columns
-            # )
-            # initialDict = {**initialDecisionDict, **initialObjectiveDict, **initialConstraintDict, **initialObserverDict}
-            # df = pd.DataFrame([initialDict])
-            # print('df looks like ths:')
-            # print(df)
-            # print('----------')
-            # STRs = [.4178, -.4341, .71, 3.27, 3.5, -1.06, 2.18, 1.1, -.28, .46, -4.18, 3.8198]
-            # newSTRs = [.2283, -.4329, .9979, 2.8289, 3.2052, -.8246, 2.2775, 1.0136, -.1399, .2326, -.3900, 3.8227]
-            STRs = [.264, -.492, 1.001, 2.711, 3.13, -.783, 2.16, 1.099, -.141, .278, -3.816, 3.772]
-            df = pd.DataFrame(
-                [[*STRs, 3.27, 0, False]],
-                columns = self.X.data.columns
-            )
-            self.X.add_data(df)
-        # For testing - add the known good solution ...
-        # if self.settings['turbo'] != 'DEFAULT':
-        #     HSTRs = [.4178, -.4341, 3.27, .71, 3.5, -1.06]
-        #     VSTRs = [3.8198, -4.18, -.28, .46, 1.1, 2.18]
-        #     QUADs = [2.3857, -1.8666, -2.4557, 2.1872, 2.2825, 2.5736, -1.9105, 1.5804]
-        #     # first two BPM trajectories are too large, constrain them.
-        #     # BPMy = [-6, -2.5]
-        #     BPMy = [6, 2.5, 1.5]
-        #     BPMx = [3, -1]
-        #     best = 3.63
-        #     # self.X.data = pd.read_csv(Path(shared.cwd) / 'datadump' / '2026-02-24__17-25-23.csv')
-        #     self.X.add_data(pd.DataFrame([[*HSTRs[1:], VSTRs[-1], HSTRs[0], *(VSTRs[::-1][1:]), *QUADs[-4:], best, *BPMy, 0, False]], columns = self.X.data.columns))
-        ####################
+        if self.settings['includeNominal']:
+            if not np.any(~np.isfinite([*self.initialDecisions, *self.initialObjectives, *self.initialConstraints])):
+                initialDict = {**initialDecisionDict, **initialObjectiveDict, **initialConstraintDict, **initialObserverDict, 'xopt_runtime': 0, 'xopt_error': False}
+                df = pd.DataFrame([initialDict])
+                self.X.add_data(df)
+            else:
+                message = f'{message} Nominal vector not passed to the optimiser because at least one value is not finite.'
+                messageType = 'Warning'
         # train the model on the LH samples and centre the trust region if TuRBO is being used.
         if self.settings['turbo'] != 'DISABLED':
             self.notAllNaNs = self.X.data.iloc[:, self.numDecisions:-2].notna().all(axis = 1).any()
             if self.notAllNaNs:
                 self.X.generator.train_model()
                 self.X.generator.turbo_controller.update_state(self.X.generator)
+
         self.updateAssistantSignal.emit(message, messageType)
         # optimiser steps
         if self.settings['numSteps'] > 0:
@@ -907,12 +881,6 @@ class SingleTaskGP(Draggable):
                         self.X.random_evaluate(1)
                 else:
                     self.X.random_evaluate(1)
-                # except Exception as e: # TuRBO will fail if no solutions in the dataset satisfy all constraints or due to ill-conditioned matrix.
-                #     print('B')
-                #     print(e)
-                #     self.X.random_evaluate(1)
-                # else:
-                #     self.X.random_evaluate(1)
                 # Handle observers if they exist.
                 if self.numObservers > 0:
                     dataToSave = self.X.data.copy()
@@ -945,6 +913,10 @@ class SingleTaskGP(Draggable):
                         return
                 except:
                     pass
+                print('** TRUST REGION **')
+                print(self.X.generator.turbo_controller.get_trust_region(self.X.generator))
+                print('Centre:', self.X.generator.turbo_controller.center_x)
+                print('= = = = = = = = = = = = =')
         if self.bestRow is None:
             if self.numConstraints > 0:
                 self.updateAssistantSignal.emit(f'{self.name} has finished, but it failed to find a candidate satisfying the constraints.', 'Warning')
@@ -1046,9 +1018,6 @@ class SingleTaskGP(Draggable):
             runningActions[self.ID] = [ThreadingEvent(), ThreadingEvent(), ThreadingEvent(), 0.] # pause, stop, error, progress
         else:
             runningActions[self.ID] = [Event(), Event(), Event(), 0.] # pause, stop, error, progress
-        # # FOR TESTNG #
-        # self.online = True
-        # ##############
         if self.online:
             Thread(target = CreatePersistentWorkerThread, args = (self, self.inQueue, self.outQueue, self.SendMachineInstructions)).start()
         else:
@@ -1094,11 +1063,6 @@ class SingleTaskGP(Draggable):
                     for k in constraints[0]
                 }
                 constraints = newConstraints
-
-            #### Replace NaNs with large numbers to allow the optimiser to perform inference ####
-            # for k, v in constraints.items():
-            #     if np.isnan(v):
-            #         constraints[k] = 1e5 if self.optimiserConstraints[k][0] == 'LESS_THAN' else -1e5
             with self.lock:
                 self.numEvals += 1
             return {immediateObjectiveName: result, **constraints}
@@ -1203,7 +1167,7 @@ class SingleTaskGP(Draggable):
             3. Return
         '''
         dtype = kwargs.pop('dtype', np.float32)
-        numRepeats = 5
+        numRepeats = 1
         self.simulator.numParticles = self.numParticles
         if not self.sharedMemoryCreated:
             self.sharedMemory = SharedMemory(name = sharedMemoryName)
@@ -1214,10 +1178,10 @@ class SingleTaskGP(Draggable):
             idx = int(d.split('Index: ')[1].split(')')[0])
             # convert steerer values to mrad.
             if 'HSTR' in d:
-                self.lattice[idx].KickAngle[0] = parameters[d] * 1e-3
+                self.simulator.lattice[idx].KickAngle[0] = parameters[d] * 1e-3
                 self.simulator.lattice[idx].KickAngle[0] = parameters[d] * 1e-3
             elif 'VSTR' in d:
-                self.lattice[idx].KickAngle[1] = parameters[d] * 1e-3
+                self.simulator.lattice[idx].KickAngle[1] = parameters[d] * 1e-3
                 self.simulator.lattice[idx].KickAngle[1] = parameters[d] * 1e-3
         for r in range(numRepeats):
             tracking, _ = self.simulator.TrackBeam(self.numParticles)

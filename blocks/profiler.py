@@ -14,7 +14,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from .draggable import Draggable
-from .pv import PV
 from .. import shared
 from .. import style
 
@@ -119,7 +118,9 @@ class Profiler(Draggable):
 
     def Push(self):
         super().Push()
-        self.AddSocket('in', 'F', acceptableTypes = [PV])
+        from .pv import PV
+        from .composition.composition import Composition
+        self.AddSocket('in', 'F', acceptableTypes = [PV, Composition])
         self.AddSocket('out', 'M')
         self.widget = QWidget()
         self.main.layout().addWidget(self.widget)
@@ -278,7 +279,7 @@ class Profiler(Draggable):
             line.set_animated(True)  # Enable blitting for this line
             self.plotLines[ID] = line
             self.lineData[ID] = deque([])
-            self.ax.legend(loc='upper right', fontsize = 3, ncols = 4, frameon = False, labelcolor = '#6e6e6e')
+            self.ax.legend(loc='upper right', fontsize = 3, ncols = 3, frameon = False, labelcolor = '#6e6e6e')
             self.canvas.draw()
             self.background = self.canvas.copy_from_bbox(self.ax.bbox)
             self.canvas.blit(self.ax.bbox)

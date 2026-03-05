@@ -81,7 +81,10 @@ def CreatePersistentWorkerProcess(entity, emptyArray, inQueue, outQueue, action,
             break
         result = outPipe.recv()
         outQueue.put(result)
-        runningActions[entity.ID][-1] += 1
+        try:
+            runningActions[entity.ID][-1] += 1
+        except:
+            break
     outPipe.close()
     try:
         runningActions.pop(entity.ID)
